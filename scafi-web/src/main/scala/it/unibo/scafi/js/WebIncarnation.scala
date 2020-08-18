@@ -52,4 +52,5 @@ object WebIncarnation extends BasicWebIncarnation
     new Basic3DSpace(elems.toMap) with EuclideanStrategy {
       override val proximityThreshold = range
     }
+
 }

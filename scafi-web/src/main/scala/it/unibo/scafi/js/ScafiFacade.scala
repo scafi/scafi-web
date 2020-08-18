@@ -3,8 +3,9 @@ package it.unibo.scafi.js
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, _}
 import WebIncarnation._
-import it.unibo.scafi.incarnations.BasicSimulationIncarnation
-
+import it.unibo.scafi.incarnations.{BasicSimulationIncarnation, Incarnation}
+import it.unibo.scafi.js.dsl.ScafiDslJs
+//TODO remove this part of code. It was a exploration done by @methapori
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -45,7 +46,6 @@ object ScafiFacade {
   @JSExport
   def round(program: AggregateProgram, context: CONTEXT): EXPORT =
     program.round(context)
-
 
   @JSExport
   def round(program: AggregateProgram, context: CONTEXT, expr: js.Function0[Any]): EXPORT = {
@@ -128,7 +128,6 @@ class ScafiDsl(val p: AggregateProgram = new AggregateProgram {
 
   def nbrvar[A](name: String): A = p.nbrvar(name)
 }
-
 class FromJavaScriptFunctionToAggregateProgram(jsf: js.Function1[AggregateProgram,Any]) extends AggregateProgram {
   override def main(): Any = {
     val f: (AggregateProgram) => Any = jsf
