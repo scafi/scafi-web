@@ -6,13 +6,13 @@ resolvers += Resolver.typesafeRepo("releases")
 // Constants
 val scalaVersionsForCrossCompilation = Seq("2.11.12","2.12.2","2.13.1")
 val akkaVersion = "2.5.31" // NOTE: Akka 2.4.0 REQUIRES Java 8!
-
+val scalaTestVersion = "3.1.1"
 // Managed dependencies
 val akkaActor  = "com.typesafe.akka" %% "akka-actor"  % akkaVersion
 val akkaRemote = "com.typesafe.akka" %% "akka-remote" % akkaVersion
 val bcel       = "org.apache.bcel"   % "bcel"         % "6.4.1"
 val scalaLogging  = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
-val scalatest  = "org.scalatest"     %% "scalatest"   % "3.1.1"     % "test"
+val scalatest  = "org.scalatest"     %% "scalatest"   % scalaTestVersion % "test"
 val scopt      = "com.github.scopt"  %% "scopt"       % "4.0.0-RC2"
 val shapeless  = "com.chuusai"       %% "shapeless"   % "2.3.3"
 val playJson   = "com.typesafe.play" %% "play-json"   % "2.8.1"
@@ -248,7 +248,8 @@ lazy val `demos-new` = project
   )
 
 lazy val `scafi-web` = project
-    .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
+    .enablePlugins(ScalaJSBundlerPlugin,
+    )
     .dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
     .settings(
       name := "scafi-web" ,
@@ -257,8 +258,10 @@ lazy val `scafi-web` = project
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % "1.0.0",
+        "org.scalatest"  %%% "scalatest"    % scalaTestVersion % "test"
         // "org.singlespaced" %%% "scalajs-d3" % "0.3.4" // only ScalaJs 0.6
       ),
+      requireJsDomEnv in Test := true,
       webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
       npmDependencies in Compile ++= Seq(
         "sigma" -> "2.0.0-alpha32",
