@@ -4,7 +4,6 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, _}
 import WebIncarnation._
 import it.unibo.scafi.incarnations.{BasicSimulationIncarnation, Incarnation}
-import it.unibo.scafi.js.dsl.ScafiDslJs
 //TODO remove this part of code. It was a exploration done by @methapori
 import scala.collection.mutable.ArrayBuffer
 

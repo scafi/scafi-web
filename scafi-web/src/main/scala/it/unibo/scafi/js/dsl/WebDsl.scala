@@ -9,7 +9,7 @@ import scala.scalajs.js.annotation.JSExportTopLevel
  * a standard way to define a js program in the browser. this code is executed in a simulator.
  */
 @JSExportTopLevel("scafiDsl")
-object StandardWebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]{
+object WebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]{
   private val program = new AggregateProgram {
     override def main(): Any = {
       throw new IllegalStateException("This method should not be called as the aggregate program only works as API provider.")
@@ -32,7 +32,7 @@ object StandardWebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]
   override def sense[A](name: String): A = program.sense(name)
   override def nbrvar[A](name: String): A = program.nbrvar(name)
 
-  override def toScala(fun: js.Function0[Any]): js.Function1[CONTEXT, EXPORT] = (context : CONTEXT) => {
+  override def toScafiRuntime(fun: js.Function0[Any]): js.Function1[CONTEXT, EXPORT] = (context : CONTEXT) => {
     program.round(context, fun())
   }
 }

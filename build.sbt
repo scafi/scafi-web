@@ -258,7 +258,7 @@ lazy val `scafi-web` = project
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % "1.0.0",
-        "org.scalatest"  %%% "scalatest"    % scalaTestVersion % "test"
+        "org.scalatest"  %%% "scalatest"    % "3.2.0" % "test"
         // "org.singlespaced" %%% "scalajs-d3" % "0.3.4" // only ScalaJs 0.6
       ),
       requireJsDomEnv in Test := true,

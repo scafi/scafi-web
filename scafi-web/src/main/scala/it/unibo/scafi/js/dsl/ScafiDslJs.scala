@@ -22,9 +22,8 @@ trait ScafiDslJs {
 }
 
 object ScafiDslJs {
-
   @JSExportAll
   trait LanguageConverter[CONTEXT, EXPORT] {
-    def toScala(fun : js.Function0[Any]) : js.Function1[CONTEXT,EXPORT]
+    def toScafiRuntime(fun : js.Function0[Any]) : js.Function1[CONTEXT,EXPORT]
   }
 }
