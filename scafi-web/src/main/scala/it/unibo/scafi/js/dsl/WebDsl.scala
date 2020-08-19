@@ -10,12 +10,14 @@ import scala.scalajs.js.annotation.JSExportTopLevel
  */
 @JSExportTopLevel("scafiDsl")
 object WebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]{
+  //hide internally, it is used to has an aggregate interpreter
   private val program = new AggregateProgram {
     override def main(): Any = {
       throw new IllegalStateException("This method should not be called as the aggregate program only works as API provider.")
     }
   }
   override def mux[A](cond: Boolean, ifTrue: A, ifFalse: A): A = program.mux(cond)(ifTrue)(ifFalse)
+  override def nbr[A](expr: js.Function0[A]): A = program.nbr{expr()}
   override def branch[A](cond: js.Function0[Boolean], ifTrue: js.Function0[A], ifFalse: js.Function0[A]): A = {
     program.branch{cond()}{ifTrue()}{ifFalse()}
   }
@@ -32,7 +34,7 @@ object WebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]{
   override def sense[A](name: String): A = program.sense(name)
   override def nbrvar[A](name: String): A = program.nbrvar(name)
 
-  override def toScafiRuntime(fun: js.Function0[Any]): js.Function1[CONTEXT, EXPORT] = (context : CONTEXT) => {
+  override def adaptForScafi(fun: js.Function0[Any]): js.Function1[CONTEXT, EXPORT] = (context : CONTEXT) => {
     program.round(context, fun())
   }
 }
