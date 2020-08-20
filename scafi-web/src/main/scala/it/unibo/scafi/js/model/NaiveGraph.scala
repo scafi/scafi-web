@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.model
-
-
+//TODO think if it is necessary to throws or not an exception
 case class NaiveGraph(nodes : Set[Node], vertices : Set[Vertex]) extends Graph {
   private val internalMap = nodes.map(node => node.id -> node).toMap
   require(vertices.forall(vertex => contains(vertex.from) && contains(vertex.to)))

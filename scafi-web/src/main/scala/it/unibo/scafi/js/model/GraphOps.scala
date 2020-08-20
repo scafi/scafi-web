@@ -1,5 +1,7 @@
 package it.unibo.scafi.js.model
 
+import it.unibo.scafi.space.Point3D
+
 /**
  * define a set of operations used to alter nodes inside a graph
  */
@@ -34,42 +36,43 @@ trait VertexOperation {
 trait NeighbourOperation {
   /**
    * alter the entirely neighbours of a node
-   * @param node
-   * @param neighbour
-   * @return
    */
-  def replaceNeighbours(node : Node, neighbour : Set[Node]) : Graph
+  def replaceNeighbours(node : String, neighbour : Set[String]) : Graph
 }
+object GraphOps {
+  object Implicits {
+    implicit class RichGraph(graph: Graph) extends NodeOperation with VertexOperation with NeighbourOperation {
+      override def removeNode(node: String): Graph = graph match {
+        case g : NodeOperation => g.removeNode(node)
+        case _ =>
+          val nodes = graph.nodes - Node(node, Point3D.Zero) //remove node, equals is on id, not on point.
+          val vertices = graph.vertices.filterNot(vertex => vertex.to == node || vertex.from == node) //remove vertex in witch node is partecipant
+          NaiveGraph(nodes, vertices)
+      }
 
-object Implicits {
-  implicit class RichGraph(graph: Graph) extends NodeOperation with VertexOperation with NeighbourOperation {
-    override def removeNode(node: String): Graph = graph match {
-      case g : NodeOperation => g.removeNode(node)
-      case _ => NaiveGraph(graph.nodes.filter(_.id != node), graph.vertices)
-    }
+      override def insertNode(node: Node): Graph = graph match {
+        case g : NodeOperation => g.insertNode(node)
+        case _ => NaiveGraph((graph.nodes - node) + node, graph.vertices) //first remove old occurrence and then insert new one
+      }
 
-    override def insertNode(node: Node): Graph = graph match {
-      case g : NodeOperation => g.insertNode(node)
-      case _ => NaiveGraph(graph.nodes + node, graph.vertices)
-    }
+      override def unlink(vertex: Vertex): Graph = graph match {
+        case g : VertexOperation => g.link(vertex)
+        case _ => NaiveGraph(graph.nodes, graph.vertices - vertex)
+      }
+      override def link(vertex: Vertex): Graph = graph match {
+        case g : VertexOperation => g.unlink(vertex)
+        case _ => NaiveGraph(graph.nodes, graph.vertices + vertex)
+      }
 
-    override def unlink(vertex: Vertex): Graph = graph match {
-      case g : VertexOperation => g.link(vertex)
-      case _ => NaiveGraph(graph.nodes, graph.vertices - vertex)
-    }
-    override def link(vertex: Vertex): Graph = graph match {
-      case g : VertexOperation => g.unlink(vertex)
-      case _ => NaiveGraph(graph.nodes, graph.vertices + vertex)
-    }
-
-    override def replaceNeighbours(node: Node, neighbours: Set[Node]): Graph = graph match {
-      case g : NeighbourOperation => g.replaceNeighbours(node, neighbours)
-      case _ =>
-        val oldNeighbours = graph.neighbours(node)
-        val vertex = graph.vertices
-        val toRemove = oldNeighbours.map(neighbour => Vertex(node.id, neighbour.id))
-        val toAdd = neighbours.map(neighbour => Vertex(node.id, neighbour.id))
-        NaiveGraph(graph.nodes, (vertex -- toRemove) ++ toAdd)
+      override def replaceNeighbours(node: String, neighbours: Set[String]): Graph = graph match {
+        case g : NeighbourOperation => g.replaceNeighbours(node, neighbours)
+        case _ =>
+          val oldNeighbours = graph.neighbours(node)
+          val vertex = graph.vertices
+          val toRemove = oldNeighbours.map(neighbour => Vertex(node, neighbour.id))
+          val toAdd = neighbours.map(neighbour => Vertex(node, neighbour))
+          NaiveGraph(graph.nodes, (vertex -- toRemove) ++ toAdd)
+      }
     }
   }
 }
