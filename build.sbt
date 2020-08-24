@@ -1,10 +1,11 @@
 import sbt.Keys.target
+import scalajsbundler.Webpack
 // Resolvers
 resolvers += Resolver.sonatypeRepo("snapshots")
 resolvers += Resolver.typesafeRepo("releases")
 
 // Constants
-val scalaVersionsForCrossCompilation = Seq("2.11.12","2.12.2","2.13.1")
+val scalaVersionsForCrossCompilation = Seq(/*"2.11.12",*/"2.12.2","2.13.1") //drop support for 2.11?
 val akkaVersion = "2.5.31" // NOTE: Akka 2.4.0 REQUIRES Java 8!
 val scalaTestVersion = "3.1.1"
 // Managed dependencies
@@ -246,7 +247,6 @@ lazy val `demos-new` = project
     //crossScalaVersions := scalaVersionsForCrossCompilation.filter(!_.startsWith("2.13")),
     compileScalastyle := { }
   )
-
 lazy val `scafi-web` = project
     .enablePlugins(ScalaJSBundlerPlugin,
     )
@@ -258,7 +258,10 @@ lazy val `scafi-web` = project
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % "1.0.0",
-        "org.scalatest"  %%% "scalatest"    % "3.2.0" % "test"
+        "org.scalatest"  %%% "scalatest"    % "3.2.0" % "test",
+        "com.lihaoyi" %%% "scalatags" % "0.9.1",
+        "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
+        "io.monix" %%% "monix-reactive" % "3.2.2"
         // "org.singlespaced" %%% "scalajs-d3" % "0.3.4" // only ScalaJs 0.6
       ),
       requireJsDomEnv in Test := true,
@@ -266,7 +269,14 @@ lazy val `scafi-web` = project
       npmDependencies in Compile ++= Seq(
         "sigma" -> "2.0.0-alpha32",
         "jsnetworkx" -> "0.3.4",
+        "codemirror" -> "5.32.0",
+        "bootstrap-css-only" -> "4.4.1",
+        "css-loader" -> "4.2.1",
+        "style-loader" -> "1.2.1",
+        "phaser" -> "3.24.1",
+        "canvas" -> "2.6.1",
         //"fsevents" -> "1.2.12",
         "d3" -> "3.5.5" // jsnetworkx leverages d3 v3 (i.e., do not upgrade to v4 or v5)
-      )
+      ),
+      webpackConfigFile := Some(baseDirectory.value / "src" /"main" / "resources" / "dev.webpack.config.js"),
     )
