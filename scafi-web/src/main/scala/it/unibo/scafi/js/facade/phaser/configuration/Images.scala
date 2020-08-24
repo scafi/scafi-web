@@ -1,5 +1,7 @@
 package it.unibo.scafi.js.facade.phaser.configuration
 
-object Images {
+import scala.scalajs.js
 
+object Images {
+  class Config() extends js.Object
 }

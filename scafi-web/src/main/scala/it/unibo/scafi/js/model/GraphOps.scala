@@ -45,7 +45,7 @@ object GraphOps {
       override def removeNode(node: String): Graph = graph match {
         case g : NodeOperation => g.removeNode(node)
         case _ =>
-          val nodes = graph.nodes - Node(node, Point3D.Zero) //remove node, equals is on id, not on point.
+          val nodes = graph.nodes - Node.apply(node, Point3D.Zero) //remove node, equals is on id, not on point.
           val vertices = graph.vertices.filterNot(vertex => vertex.to == node || vertex.from == node) //remove vertex in witch node is partecipant
           NaiveGraph(nodes, vertices)
       }

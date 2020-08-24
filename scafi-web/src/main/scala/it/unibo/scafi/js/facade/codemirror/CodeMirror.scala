@@ -1,4 +1,4 @@
-package it.unibo.scafi.js.facade
+package it.unibo.scafi.js.facade.codemirror
 
 import org.scalajs.dom.raw.HTMLTextAreaElement
 

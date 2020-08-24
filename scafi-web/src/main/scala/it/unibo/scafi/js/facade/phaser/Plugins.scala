@@ -1,5 +1,11 @@
 package it.unibo.scafi.js.facade.phaser
 
-object Plugins {
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSImport
 
+@js.native
+@JSImport("phaser", JSImport.Namespace)
+object Plugins extends js.Object {
+  @js.native
+  trait PluginManager extends js.Object
 }

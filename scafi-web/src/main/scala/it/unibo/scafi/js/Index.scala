@@ -1,26 +1,38 @@
 package it.unibo.scafi.js
 
+import java.util.concurrent.TimeUnit
+
 import it.unibo.scafi.config.GridSettings
-import it.unibo.scafi.incarnations.BasicSimulationIncarnation
 import it.unibo.scafi.incarnations.BasicSimulationIncarnation._
+import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Editor, EditorConfiguration}
+import it.unibo.scafi.js.facade.phaser.GameObjects.GameObject
+import it.unibo.scafi.js.facade.phaser.{GameObjects, Phaser}
+import it.unibo.scafi.js.facade.phaser.configuration.{Audio, Banner, Fps, Game, Physics, Plugin, Scene}
+import it.unibo.scafi.js.model.{Graph, Label, NaiveGraph, Vertex, Node => ModelNode}
+import it.unibo.scafi.js.view.dynamic.{CanvasGraphPane, PhaserGraphPane}
+import it.unibo.scafi.js.view.static.SkeletonPage
 import it.unibo.scafi.js.{WebIncarnation => web}
 import it.unibo.scafi.space.Point3D
+import monix.reactive.subjects.PublishSubject
 import org.scalajs.dom
+import org.scalajs.dom.raw.{CanvasRenderingContext2D, HTMLCanvasElement, HTMLElement, HTMLTextAreaElement}
 
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.timers.{SetIntervalHandle, clearInterval, setInterval}
-
+import scala.scalajs.js.{JSConverters, UndefOr, |}
 /**
   * from the main body, scala js produce a javascript file.
   * it is an example of a ScaFi simulation transcompilated in javascript.
   */
+
 @JSExportTopLevel("Index")
 object Index {
   import org.scalajs.dom._
-
+  var codeMirror : Editor = _
+  val subject : PublishSubject[Graph] = PublishSubject()
+  var graphRep : Graph = _
   class FooProgram extends AggregateProgram with StandardSensors {
     override def main(): Any = rep(Double.PositiveInfinity){ case g =>
       mux(sense[Boolean]("source")){ 0.0 }{
@@ -35,24 +47,16 @@ object Index {
     targetNode.appendChild(parNode)
   }
 
-  def appendCanvas(target: dom.Node, id: String): Element = {
-    val div = document.createElement("div")
-    div.setAttribute("style", "width:100%; height:100%; border:5px solid #ababab;")
-    div.id = id
-    target.appendChild(div)
-    div
-  }
 
   var handle: Option[SetIntervalHandle] = None
   var net: NETWORK = _
   var program: CONTEXT => EXPORT = _
 
-  var spatialNet: web.NETWORK = _
+  var spatialNet: web.SpaceAwareSimulator = _
   var spatialProgram: web.CONTEXT => web.EXPORT = _
 
   @JSExport
   def main(args: Array[String]): Unit = {
-    appendPar(document.body, "Hello Scala.js")
     println("Index.main !!!")
 
     configurePage()
@@ -62,14 +66,13 @@ object Index {
     sigma()
 
     jnetworkx()
-
-    plainSimulation()
   }
 
   def spatialSim() = {
+
     val spatialSim = web.simulatorFactory.gridLike(
-      GridSettings(),
-      rng = 150.0
+      GridSettings(stepx = 40, stepy = 40, tolerance = 20, nrows = 20, ncols = 20),
+      rng = 60.0
     ).asInstanceOf[web.SpaceAwareSimulator]
     spatialSim.addSensor("source", false)
     spatialSim.chgSensorValue("source", Set("1", "55", "86"), true)
@@ -84,9 +87,7 @@ object Index {
         spatialGraph.addEdge(id,nbr)
       }
     }
-
-    val nxDiv = appendCanvas(dom.document.getElementById("canvasContainer"), "netDiv")
-    jsnetworkx.Network.draw(spatialGraph, jsnetworkx.DrawOptions("#netDiv"))
+    //jsnetworkx.Network.draw(spatialGraph, jsnetworkx.DrawOptions("#visualizationPane"))
 
     spatialNet = spatialSim
 
@@ -119,27 +120,11 @@ object Index {
     //jsnetworkx.Network.draw(g, jsnetworkx.DrawOptions("#netDiv"))
   }
 
-  def plainSimulation() = {
-    // Plain simulation
-    val nodes = ArrayBuffer((0 to 100):_*)
-    net = BasicSimulationIncarnation.simulatorFactory.simulator(
-      idArray = nodes,
-      nbrMap = mutable.Map(nodes.map((id: Int) => id->(id-3 to id+3+1).filter(x => x>=0 && x<100).toSet).toSeq:_*),
-      nbrSensors = {
-        case NBR_RANGE => { case (id,idn) => 1 }
-      },
-      localSensors = {
-        case "source" => { case id => id == 10 || id == 50 || id == 70 }
-      }
-    )
-    program = new FooProgram()
-  }
-
   @JSExportTopLevel("loadNewProgram")
   def loadNewProgram(): Unit = {
     val programText = s"""var dsl = new ScafiDsl();
                       var f = () => { with(dsl){
-                        var res = ${document.getElementById("program").asInstanceOf[html.Input].value};
+                        var res = ${codeMirror.getValue()};
                         return res;
                       }; };
                       dsl.programExpression = f;
@@ -156,10 +141,30 @@ object Index {
   }
 
   @JSExportTopLevel("switchSimulation")
+  def time() : js.Dynamic = js.Dynamic.global.performance.now()
   def switchSimulation(): Unit = {
     handle match {
       case Some(h) => { clearInterval(h); handle = None }
-      case None => handle = Some(setInterval(100) { println(spatialNet.exec(spatialProgram)) })
+      case None => handle = Some(setInterval(0) {
+        if(graphRep == null) {
+          val exports = spatialNet.exports()
+          val vertices = spatialNet.getAllNeighbours()
+            .flatMap{ case (id, ids) => ids map {Vertex(id, _)}}
+            .toSet
+          val nodes = exports
+            .map { case (id, export) => ModelNode(id, spatialNet.space.getLocation(id), Label("export", export.map(_.root[Any]()).getOrElse("")))}.toSet
+          graphRep = NaiveGraph(nodes, vertices)
+        } else {
+          import it.unibo.scafi.js.model.GraphOps.Implicits._
+          for (i <- 0 to 100) {
+            val res = spatialNet.exec(spatialProgram)
+            val (id, export) = res
+            graphRep = graphRep.insertNode(ModelNode(id, spatialNet.space.getLocation(id), Label("export", export.root[Any]().toString)))
+          }
+        }
+        println("tick")
+        subject.onNext(graphRep)
+      })
     }
   }
 
@@ -167,7 +172,7 @@ object Index {
   def onSelectProgram(): Unit = {
     val p = selectProgram.asInstanceOf[html.Input].value
     println(s"Selected ${p}")
-    document.getElementById("program").innerHTML = programs(p)
+    document.getElementById("editor").innerHTML = programs(p)
     loadNewProgram()
   }
 
@@ -187,34 +192,24 @@ object Index {
   var selectProgram: Element = _
 
   def configurePage(): Unit = {
-    // Add button to set the program
-    selectProgram = document.createElement("select")
-    selectProgram.setAttribute("onchange", "if(this.selectedIndex) onSelectProgram()")
-    var k = 0
-    for(p <- programs.keySet){
-      val c = document.createElement("option")
-      c.setAttribute("value",p)
-      c.innerHTML = p
-      if(k==0) {
-        c.setAttribute("selected","selected")
-        selectProgram.asInstanceOf[html.Input].value = p
-      }
-      selectProgram.appendChild(c)
-      k+=1
-    }
-    onSelectProgram()
-    document.getElementById("config").appendChild(selectProgram)
+    import scalatags.JsDom.all._
+    document.head.appendChild(SkeletonPage.renderedStyle.render)
+    document.body.appendChild(SkeletonPage.content.render)
+    val editor = document.getElementById("editor").asInstanceOf[HTMLTextAreaElement]
+    codeMirror = CodeMirror.fromTextArea(editor, new EditorConfiguration("javascript", "null", true))
+    codeMirror.setValue(programs("round counter"))
+    codeMirror.save()
+    loadNewProgram()
 
-    // Add button to set the program
-    val loadProgramBtn = document.createElement("button")
-    loadProgramBtn.setAttribute("onClick", "loadNewProgram()")
-    loadProgramBtn.textContent = "Load new program";
-    document.getElementById("config").appendChild(loadProgramBtn)
-
-    // Add button to start/stop simulation
-    val runSimBtn = document.createElement("button")
-    runSimBtn.setAttribute("onClick", "switchSimulation()")
-    runSimBtn.textContent = "Start/stop simulation";
-    document.getElementById("config").appendChild(runSimBtn)
+    switchSimulation()
+    /*
+    val visualizationPane = document.getElementById("visualizationPane")
+    val simulationCanvas = canvas().render
+    graphPane = new CanvasGraphPane(simulationCanvas)
+    visualizationPane.appendChild(simulationCanvas)
+    */
+    val phaserRender = new PhaserGraphPane("visualizationPane")
+    import monix.execution.Scheduler.Implicits.global
+    subject.sample(FiniteDuration(1000, TimeUnit.MILLISECONDS)).foreach(phaserRender)
   }
 }

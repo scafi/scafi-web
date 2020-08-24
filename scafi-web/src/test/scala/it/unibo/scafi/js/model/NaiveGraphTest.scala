@@ -25,6 +25,7 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
       graph.neighbours("2") shouldBe Set.empty
       graph neighbours("2") shouldBe graph.neighbours(node("2"))
     }
+    //TODO if there are serious performance problems, this check must be cancelled
     it("should throw exception if vertex set contains a node not present in the graph") {
       val nodes = Set(node("1"))
       val vertices = Set(Vertex("1", "2"))
@@ -61,7 +62,7 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
 
     it("insert node update existing node") {
       val label = Label("label", 10)
-      val newNode = Node("1", Point3D.Zero, Seq(label))
+      val newNode = Node("1", Point3D.Zero, label)
       val newGraph = standardGraph.insertNode(newNode)
       newGraph("1").labels shouldBe Seq(label)
     }

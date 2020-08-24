@@ -1,5 +1,7 @@
 package it.unibo.scafi.js.facade.phaser.configuration
 
-class Physics {
+import scala.scalajs.js
 
+object Physics {
+  class Config() extends js.Object
 }

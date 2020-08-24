@@ -1,5 +1,7 @@
 package it.unibo.scafi.js.facade.phaser.configuration
 
-class Banner {
+import scala.scalajs.js
 
+object Banner {
+  class Config() extends js.Object
 }

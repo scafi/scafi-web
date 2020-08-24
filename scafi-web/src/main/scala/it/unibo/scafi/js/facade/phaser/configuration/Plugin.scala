@@ -1,5 +1,7 @@
 package it.unibo.scafi.js.facade.phaser.configuration
 
-class Plugin {
+import scala.scalajs.js
 
+object Plugin {
+  class ObjectItem() extends js.Object
 }

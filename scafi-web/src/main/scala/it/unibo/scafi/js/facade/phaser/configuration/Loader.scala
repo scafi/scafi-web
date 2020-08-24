@@ -1,5 +1,7 @@
 package it.unibo.scafi.js.facade.phaser.configuration
 
-class Loader {
+import scala.scalajs.js
 
+object Loader {
+  class Config() extends js.Object
 }

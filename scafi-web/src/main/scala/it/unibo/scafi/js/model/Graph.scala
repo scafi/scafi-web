@@ -24,7 +24,7 @@ object Graph {
 }
 case class Vertex(from : String, to : String)
 //position is a first class element or could be ignored?
-case class Node(id : String, position : Point3D, labels : Seq[Label] = Seq()) {
+case class Node(id : String, position : Point3D, labels : Label*) {
   def canEqual(other: Any): Boolean = other.isInstanceOf[Node]
 
   override def equals(other: Any): Boolean = other match {
