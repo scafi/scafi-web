@@ -58,7 +58,11 @@ class WebDslTest extends AnyFunSpec with Matchers with NetworkSupport {
       sensors.contains("1" -> false)
       sensors.contains("5" -> true)
     }
-
+    it("has aggregate construct") {
+      val program = WebDsl.adaptForScafi(rawToFunction(s"aggregate(() => 10)"))
+      val (_, export) = webEngine.exec(program)
+      export.root[Int]() shouldBe 10
+    }
   }
 }
 

@@ -5,23 +5,19 @@ import java.util.concurrent.TimeUnit
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.incarnations.BasicSimulationIncarnation._
 import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Editor, EditorConfiguration}
-import it.unibo.scafi.js.facade.phaser.GameObjects.GameObject
-import it.unibo.scafi.js.facade.phaser.{GameObjects, Phaser}
-import it.unibo.scafi.js.facade.phaser.configuration.{Audio, Banner, Fps, Game, Physics, Plugin, Scene}
 import it.unibo.scafi.js.model.{Graph, Label, NaiveGraph, Vertex, Node => ModelNode}
-import it.unibo.scafi.js.view.dynamic.{CanvasGraphPane, PhaserGraphPane}
+import it.unibo.scafi.js.view.dynamic.PhaserGraphPane
 import it.unibo.scafi.js.view.static.SkeletonPage
 import it.unibo.scafi.js.{WebIncarnation => web}
 import it.unibo.scafi.space.Point3D
 import monix.reactive.subjects.PublishSubject
 import org.scalajs.dom
-import org.scalajs.dom.raw.{CanvasRenderingContext2D, HTMLCanvasElement, HTMLElement, HTMLTextAreaElement}
+import org.scalajs.dom.raw.HTMLTextAreaElement
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.timers.{SetIntervalHandle, clearInterval, setInterval}
-import scala.scalajs.js.{JSConverters, UndefOr, |}
 /**
   * from the main body, scala js produce a javascript file.
   * it is an example of a ScaFi simulation transcompilated in javascript.
@@ -192,7 +188,6 @@ object Index {
   var selectProgram: Element = _
 
   def configurePage(): Unit = {
-    import scalatags.JsDom.all._
     document.head.appendChild(SkeletonPage.renderedStyle.render)
     document.body.appendChild(SkeletonPage.content.render)
     val editor = document.getElementById("editor").asInstanceOf[HTMLTextAreaElement]

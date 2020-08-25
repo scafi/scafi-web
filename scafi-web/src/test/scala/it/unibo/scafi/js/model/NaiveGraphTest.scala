@@ -25,14 +25,14 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
       graph.neighbours("2") shouldBe Set.empty
       graph neighbours("2") shouldBe graph.neighbours(node("2"))
     }
-    //TODO if there are serious performance problems, this check must be cancelled
+    /*TODO if there are serious performance problems, this check must be cancelled
     it("should throw exception if vertex set contains a node not present in the graph") {
       val nodes = Set(node("1"))
       val vertices = Set(Vertex("1", "2"))
       assertThrows[IllegalArgumentException] {
         NaiveGraph(nodes, vertices)
       }
-    }
+    }*/
     it("apply works as expected ") {
       standardGraph("1") shouldBe node("1")
     }
@@ -83,11 +83,11 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
       newGraph.vertices contains newVertex shouldBe true
       newGraph.vertices shouldNot be(standardGraph.vertices)
     }
-
+    /*TODO to performance reason this test can be removed
     it("link a non existing node throws exception") {
       val newVertex : Vertex = "3" -> "1"
       assertThrows[IllegalArgumentException](standardGraph.link(newVertex))
-    }
+    }*/
 
     it("unlink a vertex return an updated graph without that link") {
       val vertexToRemove : Vertex = "1" -> "2"

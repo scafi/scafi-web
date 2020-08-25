@@ -1,5 +1,5 @@
 import sbt.Keys.target
-import scalajsbundler.Webpack
+import scalajsbundler.{JSDOMNodeJSEnv, Webpack}
 // Resolvers
 resolvers += Resolver.sonatypeRepo("snapshots")
 resolvers += Resolver.typesafeRepo("releases")
@@ -264,19 +264,26 @@ lazy val `scafi-web` = project
         "io.monix" %%% "monix-reactive" % "3.2.2"
         // "org.singlespaced" %%% "scalajs-d3" % "0.3.4" // only ScalaJs 0.6
       ),
+      version in installJsdom := "12.0.0",
       requireJsDomEnv in Test := true,
       webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
-      npmDependencies in Compile ++= Seq(
+       npmDependencies in Compile ++= Seq(
         "sigma" -> "2.0.0-alpha32",
         "jsnetworkx" -> "0.3.4",
         "codemirror" -> "5.32.0",
         "bootstrap-css-only" -> "4.4.1",
         "css-loader" -> "4.2.1",
         "style-loader" -> "1.2.1",
-        "phaser" -> "3.24.1",
-        "canvas" -> "2.6.1",
+         "phaser" -> "3.24.1",
         //"fsevents" -> "1.2.12",
         "d3" -> "3.5.5" // jsnetworkx leverages d3 v3 (i.e., do not upgrade to v4 or v5)
       ),
+      npmDevDependencies in Compile ++= Seq(
+        "webpack-merge" -> "4.1.2",
+        "imports-loader" -> "0.8.0",
+        "expose-loader" -> "0.7.5"
+      ),
       webpackConfigFile := Some(baseDirectory.value / "src" /"main" / "resources" / "dev.webpack.config.js"),
+      webpackConfigFile in Test := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),
+
     )
