@@ -1,4 +1,4 @@
-package it.unibo.scafi.js.facade.phaser.configuration
+package it.unibo.scafi.js.facade.phaser.types
 
 import scala.scalajs.js
 

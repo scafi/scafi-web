@@ -21,21 +21,22 @@ object Components extends js.Object {
     var y : JSNumber = js.native
     var z : JSNumber = js.native
     /* methods */
-    def setX(value : JSNumber) : Unit = js.native
-    def setY(value : JSNumber) : Unit = js.native
-    def setW(value : JSNumber) : Unit = js.native
-    def setZ(value : JSNumber) : Unit = js.native
-    def setRotation(angle : JSNumber) : Unit = js.native
-    def setRandomPosition(x : JSNumber = js.native,
+    def setX[Me](value : JSNumber) : Unit = js.native
+    def setY[Me](value : JSNumber) : Unit = js.native
+    def setW[Me](value : JSNumber) : Unit = js.native
+    def setZ[Me](value : JSNumber) : Unit = js.native
+    def setRotation[Me](angle : JSNumber) : Unit = js.native
+    def setRandomPosition[Me](x : JSNumber = js.native,
                           y : JSNumber = js.native,
                           width : JSNumber = js.native,
                           height : JSNumber = js.native) : Unit = js.native
-    def setPosition(x : JSNumber = js.native,
+    def setPosition[Me](x : JSNumber = js.native,
                     y : JSNumber = js.native,
                     w : JSNumber = js.native,
                     z : JSNumber = js.native
                    )
-    def setAngle(degree : Int) : Unit = js.native
+    def setAngle[Me](degree : Int) : Unit = js.native
+    def setScale[Me](x : JSNumber, y : JSNumber = js.native): Me = js.native
     def getParentRotation() : JSNumber = js.native
     def getLocalTransformMatrix(tempMatrix : TransformMatrix) : TransformMatrix
     def getWorldTransformMatrix(tempMatrix : TransformMatrix, parentMatrix : TransformMatrix) : TransformMatrix
@@ -44,7 +45,7 @@ object Components extends js.Object {
   @js.native
   trait Visible extends js.Object {
     var visible : Boolean = js.native
-    def setVisible(value : Boolean) : Unit = js.native
+    def setVisible[Me](value : Boolean) : Me = js.native
   }
 
   @js.native
@@ -56,7 +57,7 @@ object Components extends js.Object {
   @js.native
   trait Depth extends js.Object {
     var depth : JSNumber = js.native
-    def setDepth(value : JSNumber) : Unit = js.native
+    def setDepth[Me](value : JSNumber) : Me = js.native
   }
 
   @js.native
@@ -67,8 +68,8 @@ object Components extends js.Object {
     var height : JSNumber = js.native
     var width : JSNumber = js.native
     /* methods */
-    def setDisplaySize(width : JSNumber, height : JSNumber) : Unit = js.native
-    def setSize(width : JSNumber, height : JSNumber) : Unit = js.native
+    def setDisplaySize[Me](width : JSNumber, height : JSNumber) : Me = js.native
+    def setSize[Me](width : JSNumber, height : JSNumber) : Me = js.native
   }
 
   @js.native
@@ -79,8 +80,8 @@ object Components extends js.Object {
     /* members */
     var alpha : JSNumber = js.native
     /* methods */
-    def clearAlpha() : Unit = js.native
-    def setAlpha(value : JSNumber) : Unit = js.native
+    def clearAlpha[Me]() : Unit = js.native
+    def setAlpha[Me](value : JSNumber) : Unit = js.native
   }
 
   @js.native
@@ -91,10 +92,10 @@ object Components extends js.Object {
     var originX  : JSNumber = js.native
     var originY  : JSNumber = js.native
     /* methods */
-    def setDisplayOrigin(x : JSNumber, y : JSNumber = js.native) : Unit = js.native
-    def setOrigin[Me](x : JSNumber, y : JSNumber = js.native) : Me = js.native
-    def setOriginFromFrame() : Unit = js.native
-    def updateDisplayOrigin() : Unit = js.native
+    def setDisplayOrigin[Me](x : JSNumber, y : JSNumber = js.native) : Me = js.native
+    def setOrigin[Me](x : JSNumber, y : JSNumber = js.native) : Me = js.native //todo think to do all return as is
+    def setOriginFromFrame[Me]() : Me = js.native
+    def updateDisplayOrigin[Me]() : Me = js.native
   }
 
   @js.native
@@ -106,6 +107,36 @@ object Components extends js.Object {
     var scrollFactorX : JSNumber = js.native
     var scrollFactorY : JSNumber = js.native
     /* methods */
-    def setScrollFactor(x : JSNumber, y : JSNumber = js.native) : Unit = js.native
+    def setScrollFactor[Me](x : JSNumber, y : JSNumber = js.native) : Me = js.native
   }
+
+  @js.native
+  trait Alpha extends js.Object {
+    /* members */
+    var alpha : JSNumber = js.native
+    var alphaBottomLeft : JSNumber = js.native
+    var alphaBottomRight : JSNumber = js.native
+    var alphaTopRight : JSNumber = js.native
+    var alphaTopLeft : JSNumber = js.native
+    /* methods */
+    def clearAlpha[Me]() : Me = js.native
+    def setAlpha[Me](
+                    topLeft : JSNumber = js.native,
+                    topRight : JSNumber = js.native,
+                    bottomLeft : JSNumber = js.native,
+                    bottomRight : JSNumber = js.native
+                    ) : Me = js.native
+  }
+
+  @js.native
+  trait Texture extends js.Object { /*todo*/ }
+
+  @js.native
+  trait Tint extends js.Object { /*todo*/ }
+
+  @js.native
+  trait Crop extends js.Object { /*todo*/ }
+
+  @js.native
+  trait Flip extends js.Object { /*todo*/ }
 }

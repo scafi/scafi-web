@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.incarnations.BasicSimulationIncarnation._
+import it.unibo.scafi.js.controller.local.{SimulationExecutionPlatform, SimulationSupport}
 import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Editor, EditorConfiguration}
 import it.unibo.scafi.js.model.{Graph, Label, NaiveGraph, Vertex, Node => ModelNode}
 import it.unibo.scafi.js.view.dynamic.PhaserGraphPane
@@ -29,6 +30,7 @@ object Index {
   var codeMirror : Editor = _
   val subject : PublishSubject[Graph] = PublishSubject()
   var graphRep : Graph = _
+  val support = new SimulationSupport(null) with SimulationExecutionPlatform
   class FooProgram extends AggregateProgram with StandardSensors {
     override def main(): Any = rep(Double.PositiveInfinity){ case g =>
       mux(sense[Boolean]("source")){ 0.0 }{
@@ -67,7 +69,7 @@ object Index {
   def spatialSim() = {
 
     val spatialSim = web.simulatorFactory.gridLike(
-      GridSettings(stepx = 40, stepy = 40, tolerance = 20, nrows = 20, ncols = 20),
+      GridSettings(stepx = 50, stepy = 50, tolerance = 0),
       rng = 60.0
     ).asInstanceOf[web.SpaceAwareSimulator]
     spatialSim.addSensor("source", false)
@@ -152,7 +154,7 @@ object Index {
           graphRep = NaiveGraph(nodes, vertices)
         } else {
           import it.unibo.scafi.js.model.GraphOps.Implicits._
-          for (i <- 0 to 100) {
+          for (i <- 0 to 10) {
             val res = spatialNet.exec(spatialProgram)
             val (id, export) = res
             graphRep = graphRep.insertNode(ModelNode(id, spatialNet.space.getLocation(id), Label("export", export.root[Any]().toString)))
@@ -192,7 +194,7 @@ object Index {
     document.body.appendChild(SkeletonPage.content.render)
     val editor = document.getElementById("editor").asInstanceOf[HTMLTextAreaElement]
     codeMirror = CodeMirror.fromTextArea(editor, new EditorConfiguration("javascript", "null", true))
-    codeMirror.setValue(programs("round counter"))
+    codeMirror.setValue(programs("gradient"))
     codeMirror.save()
     loadNewProgram()
 
@@ -205,6 +207,7 @@ object Index {
     */
     val phaserRender = new PhaserGraphPane("visualizationPane")
     import monix.execution.Scheduler.Implicits.global
-    subject.sample(FiniteDuration(1000, TimeUnit.MILLISECONDS)).foreach(phaserRender)
+    subject.sample(FiniteDuration(66, TimeUnit.MILLISECONDS)).foreach(phaserRender)
+
   }
 }

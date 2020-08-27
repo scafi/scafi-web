@@ -1,7 +1,8 @@
 package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.js.JSNumber
 import it.unibo.scafi.js.facade.phaser.Phaser.Scene
-import it.unibo.scafi.js.facade.phaser.configuration.{Game, Scene}
+import it.unibo.scafi.js.facade.phaser.types.{Game}
+import it.unibo.scafi.js.facade.phaser.types
 import it.unibo.scafi.js.facade.phaser.{Components, GameObjects, Phaser}
 import it.unibo.scafi.js.model.Graph
 
@@ -13,6 +14,7 @@ class PhaserGraphPane(paneId : String) extends (Graph => Unit) {
   private val radius = 5 //TODO put in configuration
   private val nodeColor : Int = 0xff00ff //TODO put in configuration
   private val lineColor : Int = 0x0000ff //TODO put in configuration
+  private val fontSize : Int = 7 //TODO put in configuration
   private val game = new Phaser.Game(
     new Game.Config(
       parent = paneId,
@@ -21,12 +23,18 @@ class PhaserGraphPane(paneId : String) extends (Graph => Unit) {
   )
 
   var mainContainer : GameObjects.Container = _
-  private lazy val sceneHandler = Scene.callbacks(
+  private lazy val sceneHandler = types.Scene.callbacks(
+    preload = (scene) => {
+      scene.load.bitmapFont("font", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml")
+    },
     create = (scene, _) => {
       mainContainer = scene.add.container(0, 0)
-      mainContainer.setSize(800, 600)
+      mainContainer.setSize(Int.MaxValue, Int.MaxValue)
       mainContainer.setInteractive()
       mainContainer.on("drag", dragFunction)
+      mainContainer.on("wheel", (_ : js.Any, _ : js.Any, _ : Double, dy : Double, _ : Double, _ : js.Any) => {
+        mainContainer.scale += dy / 1000
+      })
       scene.input.setDraggable(mainContainer)
     },
     update = scene => model match {
@@ -43,7 +51,7 @@ class PhaserGraphPane(paneId : String) extends (Graph => Unit) {
   }
 
   override def apply(v1: Graph): Unit = { model = (Some(v1), true) }
-
+var done = false
   private def onSameGraph(graph : Graph, scene : Phaser.Scene) : Unit = {}
 
   private def onNewGraph(graph : Graph, scene : Phaser.Scene) : Unit = {
@@ -56,6 +64,13 @@ class PhaserGraphPane(paneId : String) extends (Graph => Unit) {
 
     graph.nodes.map(node => scene.add.circle(node.position.x, node.position.y, radius, nodeColor))
       .foreach(mainContainer.add(_))
+
+    graph.nodes.map(node => node -> node.labels.map(label => s"${label.value.toString}").toList)
+        .map { case (node, labelList) => node -> (s"id:${node.id}" :: labelList).mkString("\n")}
+        .map { case (node, labelList) => scene.add.bitmapText(node.position.x, node.position.y, "font", labelList, fontSize)}
+        .map(_.setLeftAlign())
+        .foreach(mainContainer.add(_))
+
 
     model = model.copy(_2 = false)
   }

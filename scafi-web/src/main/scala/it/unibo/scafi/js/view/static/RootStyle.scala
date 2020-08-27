@@ -48,7 +48,6 @@ object RootStyle extends StyleSheet.Standalone {
 
   "#visualizationPane" - (
     margin(1 px),
-    border(1 px, solid, black),
     height(visualizationHeight)
   )
 
@@ -59,7 +58,6 @@ object RootStyle extends StyleSheet.Standalone {
   "canvas" -(
     height(100 %%),
     width(100 %%),
-    objectFit.contain,
-    border(1 px, solid, black)
+    objectFit.contain
   )
 }

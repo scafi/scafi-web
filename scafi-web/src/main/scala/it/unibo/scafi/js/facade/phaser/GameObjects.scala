@@ -1,27 +1,31 @@
 package it.unibo.scafi.js.facade.phaser
 
-import it.unibo.scafi.js.facade.phaser.Components._
+import it.unibo.scafi.js.facade.phaser.Components.{Alpha, BlendMode, Depth, Mask, Origin, Pipeline, ScrollFactor, Tint, Transform, Visible, _}
+import it.unibo.scafi.js.facade.phaser.GameObjects.GameObject
 import it.unibo.scafi.js.{JSNumber, Nullable}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSImport, JSName}
 import scala.scalajs.js.{ThisFunction, |}
+//todo conver trait in class
+/** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.html]] */
 @js.native
 @JSImport("phaser", JSImport.Namespace)
 object GameObjects extends js.Object {
+  /* classes */
   @js.native
   trait GameObject extends Events.EventEmitter {
     /* members */
     var active : Boolean = js.native
-    var data : Data.DataManager = js.native
+    def data : Data.DataManager = js.native
     var ignoreDestroy : Boolean = js.native
-    var input : configuration.Input.InteractiveObject = js.native
+    def input : types.Input.InteractiveObject = js.native
     var name : String = js.native
-    var parentContainer : Container = js.native
+    def parentContainer : Container = js.native
     var state : Int | String = js.native
-    var tabIndex : Int = js.native
+    def tabIndex : Int = js.native
     @JSName("type")
-    var tpe :  String = js.native
+    def tpe :  String = js.native
     /* methods */
     def destroy(fromScene : Boolean = js.native) : Unit
     def setActive(value : Boolean) : Unit = js.native
@@ -30,7 +34,7 @@ object GameObjects extends js.Object {
     def setDataEnabled() : Unit = js.native
     def setData(key : String | js.Object, data : js.Any): Unit = js.native
     def getData(key : String) : js.Any = js.native
-    def setInteractive(shape : configuration.Input.Config | js.Any = js.native,
+    def setInteractive(shape : types.Input.Config | js.Any = js.native,
                        callback : js.Function4[js.Any, JSNumber, JSNumber, GameObject, Unit] = js.native,
                        dropZone : Boolean = js.native): Unit = js.native
     def disableInteractive() : Unit = js.native
@@ -43,10 +47,10 @@ object GameObjects extends js.Object {
   @js.native
   trait Container extends GameObject with AlphaSingle with BlendMode with ComputedSize with Depth with Mask with Transform with Visible {
     /* members */
-    var list : js.Array[GameObject] = js.native
-    var exclusive : Boolean = js.native
-    var maxSize : Int = js.native
-    var position : Int = js.native
+    def list : js.Array[GameObject] = js.native
+    def exclusive : Boolean = js.native
+    def maxSize : Int = js.native
+    def position : Int = js.native
     var scrollFactorX : JSNumber = js.native
     var scrollFactorY : JSNumber = js.native
     /* method */
@@ -97,18 +101,6 @@ object GameObjects extends js.Object {
   }
 
   @js.native
-  trait Shape extends GameObject with Transform with BlendMode with ComputedSize
-    with Depth with Origin with Mask with Pipeline with ScrollFactor with Visible {
-
-  }
-
-  @js.native
-  trait Line extends Shape
-
-  @js.native
-  trait Arc extends Shape
-
-  @js.native
   trait GameObjectFactory extends js.Object {
     def displayList : DisplayList = js.native
 
@@ -122,10 +114,86 @@ object GameObjects extends js.Object {
              y1 : JSNumber = js.native,
              x2 : JSNumber = js.native,
              y2 : JSNumber = js.native, strokeColor : Int = js.native, strokeAlpha : Int = js.native) : Line = js.native
+
+    def bitmapText(x : JSNumber, y : JSNumber, font : String, text : String, size  : JSNumber = js.native) : BitmapText = js.native
+    def text(x : JSNumber, y : JSNumber, text : String, style : types.Text.TextStyle = js.native) : Text = js.native
     def container(x : JSNumber = js.native, y : JSNumber = js.native, children : js.Array[GameObject] = js.native) : Container
   }
+
+  @js.native
+  class GameObjectCreator(val scene : Phaser.Scene) extends js.Object { /* todo */}
+
   @js.native
   trait DisplayList extends js.Object {
     def getChildren() : js.Array[GameObject] = js.native
   }
+
+  @js.native
+  trait LightsManager extends js.Object { /* todo */ }
+
+
+  @js.native
+  trait Shape extends GameObject with Transform with BlendMode with ComputedSize
+    with Depth with Origin with Mask with Pipeline with ScrollFactor with Visible {
+
+  }
+
+  @js.native
+  trait Line extends Shape
+
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Arc.html]] */
+  @js.native
+  trait Arc extends Shape {
+    /* members */
+    var startAngle : Int = js.native
+    var endAngle : Int = js.native
+    var radius : JSNumber = js.native
+    var anticlockwise : Boolean = js.native
+    var iterations : JSNumber = js.native
+    /* methods */
+    def setEndAngle(value : Int) : Arc = js.native
+    def setStartAngle(value : Int) : Arc = js.native
+    def setRadius(value : JSNumber) : Arc = js.native
+    def setIterations(valeu : Int) : Arc = js.native
+  }
+
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.BitmapText.html]] */
+  @js.native
+  trait BitmapText extends GameObject with Alpha with BlendMode with Depth
+    with Mask with Origin with Pipeline with ScrollFactor with Tint with Transform
+    with Visible {
+    /* static */
+    val ALIGN_CENTER : Int = js.native
+    val ALIGN_LEFT : Int = js.native
+    val ALIGN_RIGHT : Int = js.native
+    /* members */
+    var font : String = js.native
+    var text : String = js.native
+    var fontData : types.BitmapText.BitmapFontData = js.native
+    var letterSpacing : JSNumber = js.native
+    var align : Int = js.native
+    var bounds : types.BitmapText.BitmapTextSize = js.native
+    var dirty : Boolean = js.native
+    var wordWrapCharCode : JSNumber = js.native
+    /* methods */
+    def setLeftAlign() : BitmapText = js.native
+    def setCenterAlign() : BitmapText = js.native
+    def setRightAlign() : BitmapText = js.native
+    def setFontSize(size : JSNumber) : BitmapText = js.native
+    def setLetterSpacing(spacing : JSNumber) : BitmapText = js.native
+    def setText(text : String) : BitmapText = js.native
+    def getTextBounds(round : Boolean) : types.BitmapText.BitmapTextSize = js.native
+    def setFont(key : String, size : JSNumber, align : Int = js.native) : BitmapText = js.native
+    def setMaxWidth(value : JSNumber, wordWrapCharCode : JSNumber) : BitmapText = js.native
+  }
+
+  @js.native
+  trait Text extends GameObject with Alpha with BlendMode with Depth with ComputedSize
+    with Mask with Origin with Pipeline with ScrollFactor with Tint with Transform
+    with Visible with Crop with Flip {
+
+  }
+
+  @js.native
+  trait Sprite extends js.Object { /* todo */ }
 }

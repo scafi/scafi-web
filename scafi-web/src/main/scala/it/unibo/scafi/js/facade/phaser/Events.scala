@@ -9,6 +9,7 @@ import scala.scalajs.js.annotation.JSImport
 object Events extends js.Object {
   @js.native
   trait EventEmitter extends js.Object {
+    /* methods */
     def addListener(event : String, fn : ThisFunction, context : js.Any = js.native) : Unit = js.native
     def destroy() : Unit = js.native
     def emit(event : String, args : js.Any = js.native) : Boolean = js.native

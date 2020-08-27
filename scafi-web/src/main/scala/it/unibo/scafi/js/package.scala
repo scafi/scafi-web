@@ -1,5 +1,9 @@
 package it.unibo.scafi
 
+import monix.execution.ExecutionModel.AlwaysAsyncExecution
+import monix.execution.Scheduler
+
+import scala.scalajs.js.timers.SetIntervalHandle
 import scala.scalajs.js.|
 import scala.scalajs.{js => jsLib}
 package object js {
@@ -28,5 +32,4 @@ package object js {
     @inline def toOption : Option[A] = Option(forceGet)
   }
 
-  def immediate(fun : => Unit) : Unit = jsLib.timers.setTimeout(0){fun}
 }

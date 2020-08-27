@@ -13,19 +13,19 @@ object Input extends js.Object {
   @js.native
   class InputManager(val game : Phaser.Game = js.native, conf : js.Object) extends js.Object {
     /* members */
-    var activePointer : Pointer = js.native
-    var canvas : HTMLCanvasElement = js.native
-    var config : Phaser.Core.Config = js.native
-    var defaultCursor : String = js.native
-    var enabled : Boolean = js.native
-    var events : Events.EventEmitter = js.native
-    var globalTopOnly : Boolean = js.native
-    val isOver : Boolean = js.native
-    var keyboard : Nullable[Keyboard.KeyboardManager] = js.native
-    var mouse : Nullable[Mouse.MouseManager] = js.native
-    var mousePointer : Pointer = js.native
-    var pointers : js.Array[Pointer] = js.native
-    val pointersTotal : Int = js.native
+    def activePointer : Pointer = js.native
+    def canvas : HTMLCanvasElement = js.native
+    def config : Phaser.Core.Config = js.native
+    def defaultCursor : String = js.native
+    def enabled : Boolean = js.native
+    def events : Events.EventEmitter = js.native
+    def globalTopOnly : Boolean = js.native
+    def isOver : Boolean = js.native
+    def keyboard : Nullable[Keyboard.KeyboardManager] = js.native
+    def mouse : Nullable[Mouse.MouseManager] = js.native
+    def mousePointer : Pointer = js.native
+    def pointers : js.Array[Pointer] = js.native
+    def pointersTotal : Int = js.native
     val time : JSName = js.native
 
     /* methods */
