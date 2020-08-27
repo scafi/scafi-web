@@ -1,11 +1,6 @@
 package it.unibo.scafi
 
-import monix.execution.ExecutionModel.AlwaysAsyncExecution
-import monix.execution.Scheduler
-
-import scala.scalajs.js.timers.SetIntervalHandle
 import scala.scalajs.js.|
-import scala.scalajs.{js => jsLib}
 package object js {
   type JSNumber = Double
   type Nullable[A] = A | Null

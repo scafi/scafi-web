@@ -14,6 +14,7 @@ class SimulationSupport(systemConfig: ShapeSettings) extends AggregateSystemSupp
   protected var backend: SpaceAwareSimulator = fromConfig(systemConfig)
 
   protected val sideEffectsStream : PublishSubject[SimulationSideEffect] = PublishSubject()
+  sideEffectsStream.onNext(Invalidated)
 
   import monix.execution.Scheduler.Implicits.global
 

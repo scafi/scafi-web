@@ -5,7 +5,7 @@ import org.scalajs.dom.html.Canvas
 
 import scala.scalajs.js
 
-class CanvasGraphPane(canvas : Canvas) extends (Graph => Unit) {
+class CanvasGraphSection(canvas : Canvas) extends (Graph => Unit) {
   private val graphics = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
   private val nodeSize = 4
   canvas.width = 600

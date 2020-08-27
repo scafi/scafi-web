@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.view.static
 
-import org.scalajs.dom.html.{Button, Div}
+import org.scalajs.dom.html.{Button, Div, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
@@ -9,7 +9,10 @@ import scalacss.ScalatagsCss._
 import CssSettings._
 object SkeletonPage {
   lazy val renderedStyle = RootStyle.render[TypedTag[HTMLStyleElement]]
-
+  lazy val editorSection : TextArea = textarea(id := "editor").render
+  lazy val selectionProgram : Select = select(id := "selectProgram").render
+  lazy val controlsDiv : Div = div(id := "controls").render
+  lazy val visualizationSection : Div = div(id := "visualizationPane").render
   //TODO find a good way to model bootstrap class (with a dedicated module?)
   val content : TypedTag[Div] = div(
     cls:= "container-fluid d-flex flex-column p-0",
@@ -47,24 +50,14 @@ object SkeletonPage {
 
   def editor : TypedTag[Div] = div(
     cls := "col-4 bg-dark",
-    textarea(
-      id := "editor"
-    )
+    selectionProgram,
+    editorSection
   )
-
-  def buttons(values : String *) : Seq[TypedTag[Button]] = values.map(button(
-    cls := "btn btn-primary mr-1", _
-  ))
 
   def visualization : TypedTag[Div] = div(
     cls := "col-6 bg-dark",
     id := "visualization",
-    div(
-      id := "controls",
-      buttons("load", "start", "stop", "tick"),
-    ),
-    div(
-        id := "visualizationPane"
-    ),
+    controlsDiv,
+    visualizationSection
   )
 }

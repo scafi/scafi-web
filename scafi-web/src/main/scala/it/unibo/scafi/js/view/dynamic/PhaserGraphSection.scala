@@ -1,15 +1,15 @@
 package it.unibo.scafi.js.view.dynamic
+import it.unibo.scafi.core.Core
 import it.unibo.scafi.js.JSNumber
-import it.unibo.scafi.js.facade.phaser.Phaser.Scene
-import it.unibo.scafi.js.facade.phaser.types.{Game}
-import it.unibo.scafi.js.facade.phaser.types
-import it.unibo.scafi.js.facade.phaser.{Components, GameObjects, Phaser}
-import it.unibo.scafi.js.model.Graph
+import it.unibo.scafi.js.facade.phaser.types.Game
+import it.unibo.scafi.js.facade.phaser.{Components, GameObjects, Phaser, types}
+import it.unibo.scafi.js.model.{Graph, Label}
+import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
-import scala.scalajs.js.{ThisFunction3, ThisFunction4}
+import scala.scalajs.js.{ThisFunction4, |}
 
-class PhaserGraphPane(paneId : String) extends (Graph => Unit) {
+class PhaserGraphSection(paneSection : String | HTMLElement) extends (Graph => Unit) {
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val radius = 5 //TODO put in configuration
   private val nodeColor : Int = 0xff00ff //TODO put in configuration
@@ -17,7 +17,7 @@ class PhaserGraphPane(paneId : String) extends (Graph => Unit) {
   private val fontSize : Int = 7 //TODO put in configuration
   private val game = new Phaser.Game(
     new Game.Config(
-      parent = paneId,
+      parent = paneSection,
       scene = sceneHandler
     )
   )
@@ -25,6 +25,7 @@ class PhaserGraphPane(paneId : String) extends (Graph => Unit) {
   var mainContainer : GameObjects.Container = _
   private lazy val sceneHandler = types.Scene.callbacks(
     preload = (scene) => {
+      //TODO put in configuration
       scene.load.bitmapFont("font", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml")
     },
     create = (scene, _) => {
@@ -51,7 +52,7 @@ class PhaserGraphPane(paneId : String) extends (Graph => Unit) {
   }
 
   override def apply(v1: Graph): Unit = { model = (Some(v1), true) }
-var done = false
+
   private def onSameGraph(graph : Graph, scene : Phaser.Scene) : Unit = {}
 
   private def onNewGraph(graph : Graph, scene : Phaser.Scene) : Unit = {
@@ -65,13 +66,17 @@ var done = false
     graph.nodes.map(node => scene.add.circle(node.position.x, node.position.y, radius, nodeColor))
       .foreach(mainContainer.add(_))
 
-    graph.nodes.map(node => node -> node.labels.map(label => s"${label.value.toString}").toList)
+    graph.nodes.map(node => node -> node.labels.map(onLabel).toList)
         .map { case (node, labelList) => node -> (s"id:${node.id}" :: labelList).mkString("\n")}
         .map { case (node, labelList) => scene.add.bitmapText(node.position.x, node.position.y, "font", labelList, fontSize)}
         .map(_.setLeftAlign())
         .foreach(mainContainer.add(_))
 
-
     model = model.copy(_2 = false)
+  }
+
+  private def onLabel(label : Label) : String = label match {
+    case Label(_, e : Core#Export) => e.root[Any]().toString
+    case Label(_, any) => any.toString
   }
 }

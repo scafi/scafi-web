@@ -1,7 +1,8 @@
 package it.unibo.scafi.js.controller.local
 
-sealed trait SimulationSideEffect
+
 import it.unibo.scafi.js.WebIncarnation._
+sealed trait SimulationSideEffect
 object SimulationSideEffect {
   case object NewConfiguration extends SimulationSideEffect
   case object Invalidated extends SimulationSideEffect
