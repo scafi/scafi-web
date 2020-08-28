@@ -27,6 +27,8 @@ class SimulationSupport(private var systemConfig: SupportConfiguration)
 
   override def evolve(config: SupportConfiguration): Future[Unit] = Task.eval[Unit]{ fromConfig(systemConfig) } runToFuture
 
+  def invalidate() : Unit = sideEffectsStream.onNext(Invalidated)
+
   private def fromConfig(config: SupportConfiguration) : SpaceAwareSimulator = {
     backend = (config.network, config.neighbour) match {
       case (grid : GridLikeNetwork, SpatialRadius(range)) =>

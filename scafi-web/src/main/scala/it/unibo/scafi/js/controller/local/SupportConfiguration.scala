@@ -37,6 +37,7 @@ case class DeviceConfiguration(sensors : js.Dictionary[Any], initialValues : js.
 @JSExportAll
 object DeviceConfiguration {
   def standard: DeviceConfiguration = DeviceConfiguration(js.Dictionary("source" -> false, "obstacle" -> false))
+  def none: DeviceConfiguration = DeviceConfiguration(js.Dictionary())
 }
 
 @JSExportTopLevel("SimulationSeed")

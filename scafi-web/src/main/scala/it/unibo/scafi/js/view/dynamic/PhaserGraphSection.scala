@@ -2,14 +2,16 @@ package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.core.Core
 import it.unibo.scafi.js.JSNumber
 import it.unibo.scafi.js.facade.phaser.types.Game
-import it.unibo.scafi.js.facade.phaser.{Components, GameObjects, Phaser, types}
+import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.Graph
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
 import scala.scalajs.js.{ThisFunction4, |}
 
 class PhaserGraphSection(paneSection : String | HTMLElement) extends (Graph => Unit) {
+  import Phaser._
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val radius = 5 //TODO put in configuration
   private val nodeColor : Int = 0xff00ff //TODO put in configuration
@@ -23,7 +25,7 @@ class PhaserGraphSection(paneSection : String | HTMLElement) extends (Graph => U
   )
 
   var mainContainer : GameObjects.Container = _
-  private lazy val sceneHandler = types.Scene.callbacks(
+  private lazy val sceneHandler : types.Scene.HandlerConfiguration = types.Scene.callbacks(
     preload = (scene) => {
       //TODO put in configuration
       scene.load.bitmapFont("font", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml")
@@ -34,19 +36,30 @@ class PhaserGraphSection(paneSection : String | HTMLElement) extends (Graph => U
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
       mainContainer.setInteractive()
       mainContainer.on("drag", dragFunction)
-      mainContainer.on("wheel", (_ : js.Any, _ : js.Any, _ : Double, dy : Double, _ : Double, _ : js.Any) => {
+      scene.input.on("wheel", (self : js.Any, pointer : js.Any, _ : js.Any, dx : JSNumber, dy : JSNumber, dz : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
       scene.input.setDraggable(mainContainer)
     },
-    update = scene => model match {
-      case (Some(graph), true) => onNewGraph(graph, scene)
-      case (Some(graph), false) => onSameGraph(graph, scene)
-      case _ =>
+    update = scene => {
+      val drag = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
+      if(drag.isDown) {
+        mainContainer.setInteractive()
+        this.game.canvas.style.cursor = "grab"
+      } else {
+        mainContainer.disableInteractive()
+        this.game.canvas.style.cursor = "auto"
+      }
+      model match {
+        case (Some(graph), true) => onNewGraph(graph, scene)
+        case (Some(graph), false) => onSameGraph(graph, scene)
+        case _ =>
+      }
     }
   )
-  private val dragFunction : ThisFunction4[Components.Transform, Components.Transform, JSNumber, JSNumber, js.Any, Unit] = {
-    (obj, self, dragX, dragY, _) => {
+  import Phaser.GameObjects.Components._
+  private val dragFunction : ThisFunction4[Transform,Transform, JSNumber, JSNumber, js.Any, Unit] = {
+    (obj, _, dragX, dragY, _) => {
       obj.x = dragX
       obj.y = dragY
     }

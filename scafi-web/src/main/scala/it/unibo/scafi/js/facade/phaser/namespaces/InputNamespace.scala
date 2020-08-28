@@ -1,15 +1,16 @@
-package it.unibo.scafi.js.facade.phaser
+package it.unibo.scafi.js.facade.phaser.namespaces
 
+import it.unibo.scafi.js.facade.phaser.Phaser
 import it.unibo.scafi.js.{JSNumber, Nullable}
 import org.scalajs.dom.raw.HTMLCanvasElement
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, JSName}
+import scala.scalajs.js.annotation.JSName
 import scala.scalajs.js.|
 
 @js.native
-@JSImport("phaser", JSImport.Namespace)
-object Input extends js.Object {
+trait InputNamespace extends js.Any {
+  import Phaser._
   @js.native
   class InputManager(val game : Phaser.Game = js.native, conf : js.Object) extends js.Object {
     /* members */
@@ -32,7 +33,7 @@ object Input extends js.Object {
     def addPointer(quantity : Int = js.native) : Unit = js.native
     def destroy() : Unit = js.native
     def hitTest(pointer: Pointer, gameobjects : js.Array[GameObjects.GameObject],
-                camera : Scene2D.Camera, output : js.Array[GameObjects.GameObject] = js.native): Unit = js.native
+                camera : Cameras.Scene2D.Camera, output : js.Array[GameObjects.GameObject] = js.native): Unit = js.native
     def pointWithinHitArea(gameObject: GameObjects.GameObject, x : JSNumber, y : JSNumber) : Boolean = js.native
     def pointWithinInteractiveObject(gameObject: GameObjects.GameObject, x : JSNumber, y : JSNumber) : Boolean = js.native
     def setDefaultCursor(cursor : String) : Unit = js.native
@@ -44,8 +45,28 @@ object Input extends js.Object {
 
   @js.native
   object Keyboard extends js.Object {
+    /* todo static */
     @js.native
-    trait KeyboardManager extends js.Object { /* todo */ }
+    trait KeyboardManager extends js.Object {
+      /* members todo */
+     }
+    @js.native
+    trait KeyboardPlugin extends js.Object {
+      def addKey(key : Key | String | Int, enableCapture : Boolean = js.native, emitOnRepeat : Boolean = js.native) : Key
+      def addKeys(key : js.Array[Key | String | Int], enableCapture : Boolean = js.native, emitOnRepeat : Boolean = js.native) : js.Dictionary[Key]
+      /* todo */
+    }
+
+    @js.native
+    object KeyCodes extends js.Object {
+      val CTRL : Int = js.native
+    }
+    @js.native
+    trait Key extends js.Object {
+      def isDown : Boolean = js.native
+      def isUp : Boolean = js.native
+      /* todo */
+    }
   }
 
   @js.native
@@ -60,9 +81,9 @@ object Input extends js.Object {
     trait TouchManager extends js.Object { /* todo */ }
   }
   @js.native
-  trait InputPlugin extends js.Object {
+  trait InputPlugin extends js.Object with Events.EventEmitter {
     /* fields */
-
+    var keyboard : Nullable[Keyboard.KeyboardPlugin] = js.native
     /* methods */
     def setDraggable(gameobject : GameObjects.GameObject) : Unit = js.native
   }

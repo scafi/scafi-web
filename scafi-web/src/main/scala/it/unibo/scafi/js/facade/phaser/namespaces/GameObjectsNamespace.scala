@@ -1,17 +1,20 @@
-package it.unibo.scafi.js.facade.phaser
+package it.unibo.scafi.js.facade.phaser.namespaces
 
-import it.unibo.scafi.js.facade.phaser.Components.{Alpha, BlendMode, Depth, Mask, Origin, Pipeline, ScrollFactor, Tint, Transform, Visible, _}
-import it.unibo.scafi.js.facade.phaser.GameObjects.GameObject
+import it.unibo.scafi.js.facade.phaser._
+import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace
 import it.unibo.scafi.js.{JSNumber, Nullable}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, JSName}
+import scala.scalajs.js.annotation.JSName
 import scala.scalajs.js.{ThisFunction, |}
-//todo conver trait in class
+
 /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.html]] */
 @js.native
-@JSImport("phaser", JSImport.Namespace)
-object GameObjects extends js.Object {
+trait GameObjectsNamespace extends js.Object {
+  /* NAMESPACES */
+  val Components : ComponentsNamespace = js.native
+  import Components._
+  import Phaser._
   /* classes */
   @js.native
   trait GameObject extends Events.EventEmitter {
@@ -40,7 +43,7 @@ object GameObjects extends js.Object {
     def disableInteractive() : Unit = js.native
     def removeInteractive() : Unit = js.native
     def update() : Unit = js.native
-    def willRender(camera : Scene2D.Camera) : Boolean = js.native
+    def willRender(camera : Cameras.Scene2D.Camera) : Boolean = js.native
     def getIndexList() : js.Array[Int] = js.native
   }
 

@@ -25,6 +25,8 @@ package object js {
       fold[B](ifEmpty)(identity)
 
     @inline def toOption : Option[A] = Option(forceGet)
+
+    @inline def foreach(f : A => Unit) : Unit = toOption.foreach(f)
   }
 
 }

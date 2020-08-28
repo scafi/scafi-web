@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.facade.phaser
 
 import it.unibo.scafi.js.JSNumber
-import it.unibo.scafi.js.facade.phaser.Data.DataManager
+import it.unibo.scafi.js.facade.phaser.namespaces._
 import org.scalajs.dom.raw.{CanvasRenderingContext2D, HTMLCanvasElement, HTMLDivElement, WebGLRenderingContext}
 
 import scala.scalajs.js
@@ -21,6 +21,24 @@ object Phaser extends js.Object {
   val DOWN : Int = js.native
   val RIGHT : Int = js.native
   val LEFT : Int = js.native
+  /* NAMESPACES */
+  val Input : InputNamespace = js.native
+  val Loader : LoaderNamespace = js.native
+  val Math : MathNamespace = js.native
+  val GameObjects : GameObjectsNamespace = js.native
+  val Geom : GeomNamespace = js.native
+  val Physics : PhysicsNamespace = js.native
+  val Plugins : PluginsNamespace = js.native
+  val Renderer : RendererNamespace = js.native
+  val Animations : AnimationsNamespace = js.native
+  val Scale : ScaleNamespace = js.native
+  val Cache : CacheNamespace = js.native
+  val Cameras : CamerasNamespace = js.native
+  val Data : DataNamespace = js.native
+  val Scenes : ScenesNamespace = js.native
+  val Textures : TexturesNamespace = js.native
+  val Events : EventsNamespace = js.native
+  val Time : TimeNamespace = js.native
   /* CLASSES */
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Game.html]] */
   @js.native
@@ -61,7 +79,7 @@ object Phaser extends js.Object {
     def add : GameObjects.GameObjectFactory = js.native
     def anims : Animations.AnimationManager = js.native
     def cache : Cache.CacheManager = js.native
-    def cameras : Scene2D.CameraManager = js.native
+    def cameras : Cameras.Scene2D.CameraManager = js.native
     def children : GameObjects.DisplayList = js.native
     def data : Data.DataManager = js.native
     def events : Events.EventEmitter = js.native

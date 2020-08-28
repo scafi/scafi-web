@@ -1,15 +1,15 @@
 package it.unibo.scafi.js.facade.phaser.types
 
 import it.unibo.scafi.js.JSNumber
-import it.unibo.scafi.js.facade.phaser.GameObjects.GameObject
-import it.unibo.scafi.js.facade.phaser.GameObjects.Shape
-import it.unibo.scafi.js.facade.phaser.Scene2D
+import it.unibo.scafi.js.facade.phaser.Phaser.GameObjects.GameObject
+import it.unibo.scafi.js.facade.phaser.Phaser.GameObjects.Shape
+import it.unibo.scafi.js.facade.phaser.Phaser
 import org.scalajs.dom.window
 import scala.scalajs.js
 import scala.scalajs.js.|
 
 object Input {
-
+  import Phaser.Cameras._
   class Config(
                 val keyboard : Boolean | KeyboardConfig = true,
                 val mouse : Boolean | MouseConfig = true,

@@ -1,13 +1,11 @@
-package it.unibo.scafi.js.facade.phaser
+package it.unibo.scafi.js.facade.phaser.namespaces.gameobjects
 
 import it.unibo.scafi.js.JSNumber
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("phaser", JSImport.Namespace)
-object Components extends js.Object {
+trait ComponentsNamespace extends js.Object {
   @js.native
   trait Transform extends js.Object {
     /* members */

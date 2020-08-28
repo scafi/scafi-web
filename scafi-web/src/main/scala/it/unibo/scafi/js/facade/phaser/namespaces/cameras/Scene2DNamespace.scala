@@ -1,15 +1,13 @@
-package it.unibo.scafi.js.facade.phaser
+package it.unibo.scafi.js.facade.phaser.namespaces.cameras
 
 import it.unibo.scafi.js.JSNumber
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
 import scala.scalajs.js.|
 
 
 @js.native
-@JSImport("phaser", JSImport.Namespace)
-object Scene2D extends js.Object {
+trait Scene2DNamespace extends js.Object {
   @js.native
   trait Camera extends js.Object {
     var zoom : JSNumber = js.native

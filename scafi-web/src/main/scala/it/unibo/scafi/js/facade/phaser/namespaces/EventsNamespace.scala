@@ -1,12 +1,10 @@
-package it.unibo.scafi.js.facade.phaser
+package it.unibo.scafi.js.facade.phaser.namespaces
 
 import scala.scalajs.js
-import scala.scalajs.js.{ThisFunction, ThisFunction0}
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.ThisFunction
 
 @js.native
-@JSImport("phaser", JSImport.Namespace)
-object Events extends js.Object {
+trait EventsNamespace extends js.Object {
   @js.native
   trait EventEmitter extends js.Object {
     /* methods */
