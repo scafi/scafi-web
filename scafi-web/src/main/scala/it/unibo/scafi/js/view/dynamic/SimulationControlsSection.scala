@@ -14,8 +14,8 @@ object SimulationControlsSection {
   private val loadButton = button("load", buttonClass).render
   private val startButton = button("start", buttonClass).render
   private val stopButton = button("stop", buttonClass).render
-  private val (rangeBatch, labelBatch) = rangeWithLabel("batch", 1, 100, 1)
-  private val (rangeDelta, labelDelta) = rangeWithLabel("delta", 0, 1000, 0)
+  private val (rangeBatch, labelBatch, valueBatch) = rangeWithLabel("batch", 1, 1000, 1)
+  private val (rangeDelta, labelDelta, valueDelta) = rangeWithLabel("delta", 0, 1000, 0)
   private val tick = button("tick", buttonClass).render
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,7 +23,7 @@ object SimulationControlsSection {
     var simulation : Option[SimulationExecution] = None
 
     (loadButton :: startButton :: stopButton :: tick :: Nil) foreach (el => controlDiv.appendChild(el))
-    (labelBatch :: rangeBatch :: labelDelta :: rangeDelta :: Nil) foreach (el => controlDiv.appendChild(el))
+    (labelBatch :: rangeBatch :: valueBatch :: labelDelta :: rangeDelta :: valueDelta :: Nil) foreach (el => controlDiv.appendChild(el))
     (tick :: stopButton :: startButton :: Nil) foreach {el => el.disabled = true }
 
     loadButton.onclick = event => execution.loadScript(Script.javascript(editor.getValue())).onComplete {
@@ -64,12 +64,13 @@ object SimulationControlsSection {
     def intValue : Int = input.value.toInt
   }
 
-  private def rangeWithLabel(name : String, min : Int = 0, max : Int, value : Int = 0) : (Input, Label) = {
-    val range = input(tpe := "range", id := name).render
+  private def rangeWithLabel(name : String, min : Int = 0, max : Int, value : Int = 0) : (Input, Label, Label) = {
+    val range = input(tpe := "range", cls := "mt-2", id := name).render
     range.min = min.toString
     range.max = max.toString
     range.value = value.toString
-
-    (range, label(`for` := name, name, cls := "mr-3 ml-3 text-light").render)
+    val valueLabel = label(range.value,cls := "mr-3 ml-3 text-light", `for` := name).render
+    range.oninput = _ => valueLabel.textContent = range.value
+    (range, label(`for` := name, name, cls := "mr-3 ml-3 text-light").render, valueLabel)
   }
 }

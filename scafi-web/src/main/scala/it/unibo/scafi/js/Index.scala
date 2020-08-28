@@ -2,10 +2,11 @@ package it.unibo.scafi.js
 
 import java.util.concurrent.TimeUnit
 
-import it.unibo.scafi.js.controller.local.{SimulationExecutionPlatform, SimulationSupport}
+import it.unibo.scafi.js.WebIncarnation.P
+import it.unibo.scafi.js.controller.local.{DeviceConfiguration, GridLikeNetwork, RandomNetwork, SimulationExecutionPlatform, SimulationSeeds, SimulationSupport, SpatialRadius, SupportConfiguration}
 import it.unibo.scafi.js.view.dynamic.{EditorSection, PhaserGraphSection, SimulationControlsSection}
 import it.unibo.scafi.js.view.static.SkeletonPage
-import org.scalajs.dom.html.Div
+import it.unibo.scafi.space.optimization.nn.QuadTree
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
@@ -13,13 +14,19 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
   * from the main body, scala js produce a javascript file.
   * it is an example of a ScaFi simulation transcompilated in javascript.
   */
-
 @JSExportTopLevel("Index")
 object Index {
   import org.scalajs.dom._
-  val updateTime = 100 //todo think to put into a configuration
-  val support = new SimulationSupport(null) with SimulationExecutionPlatform
 
+  val configuration = SupportConfiguration(
+    RandomNetwork(min = 0, max = 600, howMany = 300),
+    SpatialRadius(range = 60),
+    deviceShape = DeviceConfiguration.standard,
+    seed = SimulationSeeds(),
+  )
+
+  val updateTime = 100 //todo think to put into a configuration
+  val support = new SimulationSupport(configuration) with SimulationExecutionPlatform
   @JSExport
   def main(args: Array[String]): Unit = {
     println("Index.main !!!")
@@ -42,7 +49,7 @@ object Index {
     document.body.appendChild(SkeletonPage.content.render)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
     implicit val context = Utils.timeoutBasedScheduler
-    SimulationControlsSection.render(support, editor.editor, document.getElementById("controls").asInstanceOf[Div])
+    SimulationControlsSection.render(support, editor.editor, SkeletonPage.controlsDiv)
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection)
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
   }

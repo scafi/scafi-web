@@ -3,7 +3,7 @@ import it.unibo.scafi.core.Core
 import it.unibo.scafi.js.JSNumber
 import it.unibo.scafi.js.facade.phaser.types.Game
 import it.unibo.scafi.js.facade.phaser.{Components, GameObjects, Phaser, types}
-import it.unibo.scafi.js.model.{Graph, Label}
+import it.unibo.scafi.js.model.Graph
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
@@ -75,8 +75,8 @@ class PhaserGraphSection(paneSection : String | HTMLElement) extends (Graph => U
     model = model.copy(_2 = false)
   }
 
-  private def onLabel(label : Label) : String = label match {
-    case Label(_, e : Core#Export) => e.root[Any]().toString
-    case Label(_, any) => any.toString
+  private def onLabel(label : (String, Any)) : String = label match {
+    case (_, e : Core#Export) => e.root[Any]().toString
+    case (_, any) => any.toString
   }
 }

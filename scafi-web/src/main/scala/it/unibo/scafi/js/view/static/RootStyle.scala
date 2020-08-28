@@ -11,7 +11,7 @@ object RootStyle extends StyleSheet.Standalone {
   private val pageContentHeight = 88 vh
   private val contentHeight = 86 vh
   private val visualizationHeight = 81 vh
-  private val editorHeight = 83 vh
+  private val editorHeight = 82 vh
   private val utilsVisualizationHeight = 5 vh
 
   "html, body" - (

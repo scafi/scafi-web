@@ -10,7 +10,7 @@ import CssSettings._
 object SkeletonPage {
   lazy val renderedStyle = RootStyle.render[TypedTag[HTMLStyleElement]]
   lazy val editorSection : TextArea = textarea(id := "editor").render
-  lazy val selectionProgram : Select = select(id := "selectProgram").render
+  lazy val selectionProgram : Select = select(id := "selectProgram", cls := "form-control").render
   lazy val controlsDiv : Div = div(id := "controls").render
   lazy val visualizationSection : Div = div(id := "visualizationPane").render
   //TODO find a good way to model bootstrap class (with a dedicated module?)

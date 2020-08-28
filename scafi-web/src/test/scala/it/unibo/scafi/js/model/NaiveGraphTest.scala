@@ -61,10 +61,10 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
     }
 
     it("insert node update existing node") {
-      val label = Label("label", 10)
+      val label = Map("label" -> 10)
       val newNode = Node("1", Point3D.Zero, label)
       val newGraph = standardGraph.insertNode(newNode)
-      newGraph("1").labels shouldBe Seq(label)
+      newGraph("1").labels shouldBe label
     }
 
     it("remove node return graph without the node node") {

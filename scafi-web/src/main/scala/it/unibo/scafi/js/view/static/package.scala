@@ -2,7 +2,6 @@ package it.unibo.scafi.js.view
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
-
 package object static {
   //TODO improve this setting
   val CssSettings = scalacss.DevDefaults
@@ -20,7 +19,17 @@ package object static {
   CodeMirrorStyle
   //bootstrap css style
   @js.native
-  @JSImport("bootstrap-css-only/css/bootstrap.min.css", JSImport.Namespace)
+  @JSImport("bootstrap/dist/css/bootstrap.min.css", JSImport.Namespace)
+  object BootstrapCSS extends js.Any
+  BootstrapCSS
+  //jquery
+  import org.querki.jquery._
+  @js.native
+  @JSImport("jquery", JSImport.Namespace)
+  object jQuery extends js.Any
+  //bootstrap and popper
+  @js.native
+  @JSImport("bootstrap/dist/js/bootstrap.bundle.js", JSImport.Namespace)
   object Bootstrap extends js.Any
   Bootstrap
 }

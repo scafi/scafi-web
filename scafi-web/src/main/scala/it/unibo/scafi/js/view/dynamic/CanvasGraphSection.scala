@@ -11,7 +11,6 @@ class CanvasGraphSection(canvas : Canvas) extends (Graph => Unit) {
   canvas.width = 600
   canvas.height = 600
   override def apply(graph: Graph): Unit = {
-    val init = js.Dynamic.global.performance.now()
     graphics.clearRect(0, 0, canvas.width, canvas.height)
     graphics.fillStyle = "red"
     graphics.strokeStyle = "white"
@@ -19,8 +18,6 @@ class CanvasGraphSection(canvas : Canvas) extends (Graph => Unit) {
     graph.nodes foreach drawNode
     graphics.strokeStyle = "rgba(125, 125, 125, 0.1)"
     graph.vertices foreach { vertex => drawVertex(vertex, graph) }
-    val end = js.Dynamic.global.performance.now()
-    println("render time = " + (end - init))
   }
 
   def drawNode(node : Node) : Unit = {
@@ -28,7 +25,7 @@ class CanvasGraphSection(canvas : Canvas) extends (Graph => Unit) {
     val y = node.position.y
     graphics.fillRect(x, y, nodeSize, nodeSize)
     graphics.strokeText(node.id, x, y)
-    graphics.strokeText(node.labels.head.value.toString, x, y + 10)
+    graphics.strokeText(node.labels.head._2.toString, x, y + 10)
   }
 
   def drawVertex(vertex : Vertex, graph : Graph) : Unit = {

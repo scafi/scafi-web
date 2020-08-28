@@ -261,7 +261,8 @@ lazy val `scafi-web` = project
         "org.scalatest"  %%% "scalatest"    % "3.2.0" % "test",
         "com.lihaoyi" %%% "scalatags" % "0.9.1",
         "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
-        "io.monix" %%% "monix-reactive" % "3.2.2"
+        "io.monix" %%% "monix-reactive" % "3.2.2",
+        "org.querki" %%% "jquery-facade" % "2.0"
         // "org.singlespaced" %%% "scalajs-d3" % "0.3.4" // only ScalaJs 0.6
       ),
       version in installJsdom := "12.0.0",
@@ -271,7 +272,8 @@ lazy val `scafi-web` = project
         "sigma" -> "2.0.0-alpha32",
         "jsnetworkx" -> "0.3.4",
         "codemirror" -> "5.32.0",
-        "bootstrap-css-only" -> "4.4.1",
+        "bootstrap" -> "4.5.2",
+        "jquery" -> "3.5.1",
         "css-loader" -> "4.2.1",
         "style-loader" -> "1.2.1",
          "phaser" -> "3.24.1",
