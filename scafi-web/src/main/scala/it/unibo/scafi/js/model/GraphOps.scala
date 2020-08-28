@@ -18,6 +18,21 @@ trait NodeOperation {
    */
   def insertNode(node : Node) : Graph
 }
+
+/**
+  * define a set of operations used to alters a set of node inside a graph
+  */
+trait BulkNodeOperation {
+  /**
+    * Remove nodes selected from the graph (if they are present).
+    */
+  def removeNodes(node : Seq[String]) : Graph
+
+  /**
+    * Insert nodes in the graph. If the node is already in the graph, this method update the nodes
+    */
+  def insertNodes(node : Seq[Node]) : Graph
+}
 /**
  * define a set of operations used to alter vertex inside a graph
  */
@@ -41,7 +56,7 @@ trait NeighbourOperation {
 }
 object GraphOps {
   object Implicits {
-    implicit class RichGraph(graph: Graph) extends NodeOperation with VertexOperation with NeighbourOperation {
+    implicit class RichGraph(graph: Graph) extends NodeOperation with VertexOperation with NeighbourOperation with BulkNodeOperation {
       override def removeNode(node: String): Graph = graph match {
         case g : NodeOperation => g.removeNode(node)
         case _ =>
@@ -72,6 +87,18 @@ object GraphOps {
           val toRemove = oldNeighbours.map(neighbour => Vertex(node, neighbour.id))
           val toAdd = neighbours.map(neighbour => Vertex(node, neighbour))
           NaiveGraph(graph.nodes, (vertex -- toRemove) ++ toAdd)
+      }
+
+      override def removeNodes(nodes: Seq[String]): Graph = graph match {
+        case g : BulkNodeOperation => g.removeNodes(nodes)
+        case _ => val nodesToRemove = nodes map { graph.get } collect { case Some(n) => n }
+          val newVertices = graph.vertices filter { vertex => nodes.contains(vertex.from) || nodes.contains(vertex.to) }
+          NaiveGraph(graph.nodes -- nodesToRemove, newVertices)
+      }
+
+      override def insertNodes(node: Seq[Node]): Graph = graph match {
+        case g : BulkNodeOperation => g.insertNodes(node)
+        case _ => NaiveGraph((graph.nodes -- node) ++ node, graph.vertices)
       }
     }
   }

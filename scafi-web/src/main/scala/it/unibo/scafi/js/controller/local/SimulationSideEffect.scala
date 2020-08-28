@@ -7,6 +7,6 @@ object SimulationSideEffect {
   case object NewConfiguration extends SimulationSideEffect
   case object Invalidated extends SimulationSideEffect
   case class ExportProduced(elements : Seq[(ID, EXPORT)]) extends SimulationSideEffect
-  case class SensorChanged(id : ID, name : LSNS, value : Any) extends SimulationSideEffect
-  case class PositionChanged(id : ID, position : P) extends SimulationSideEffect
+  case class SensorChanged(sensorMap : Map[ID, Map[LSNS, Any]]) extends SimulationSideEffect
+  case class PositionChanged(positionMap : Map[ID, P]) extends SimulationSideEffect
 }

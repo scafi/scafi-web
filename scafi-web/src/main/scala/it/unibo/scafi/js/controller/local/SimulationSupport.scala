@@ -2,8 +2,9 @@ package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.js.WebIncarnation._
 import it.unibo.scafi.js.controller.AggregateSystemSupport
-import it.unibo.scafi.js.controller.local.SimulationSideEffect.{ExportProduced, Invalidated, NewConfiguration}
+import it.unibo.scafi.js.controller.local.SimulationSideEffect.{ExportProduced, Invalidated, NewConfiguration, PositionChanged, SensorChanged}
 import it.unibo.scafi.js.model._
+import it.unibo.scafi.space.Point3D
 import monix.eval.Task
 import monix.execution.Cancelable
 import monix.reactive.Observable
@@ -41,17 +42,17 @@ class SimulationSupport(private var systemConfig: SupportConfiguration)
         backend.chgSensorValue(sensorName, Set(id), sensorValue)
       }
     }
+    systemConfig = config
     backend
   }
-  //todo move in web incarnation
-  private def randomSpace(randomNet : RandomNetwork, range : Double, settings : SupportConfiguration) : SpaceAwareSimulator = {
-    null
-  }
+
   private def mapSideEffect(graph : Graph, sideEffect : SimulationSideEffect) : Graph = {
     (sideEffect, graph) match {
       case (NewConfiguration, _) => produceGraphFromNetwork()
       case (Invalidated, _) => produceGraphFromNetwork()
       case (ExportProduced(elements), graph) => updateGraphWithExports(elements, graph)
+      case (PositionChanged(positionMap), graph) => updateGraphWithPosition(positionMap, graph)
+      case (SensorChanged(sensorMap), graph) => updateGraphWithSensor(sensorMap, graph)
       case _ => produceGraphFromNetwork()
     }
   }
@@ -65,15 +66,32 @@ class SimulationSupport(private var systemConfig: SupportConfiguration)
       }
       .map { case (dev, labels) => Node(dev.id, dev.pos, labels)}
       .toSet
-    val vertices = backend.getAllNeighbours()
-      .flatMap { case (id, elements) => elements.map(Vertex(id, _)) }
-      .toSet
+    val vertices = computeVertices()
     NaiveGraph(nodes, vertices)
   }
 
+  import GraphOps.Implicits._
   private def updateGraphWithExports(exports: Seq[(ID, EXPORT)], graph: Graph) : Graph = {
-    val newNodes = exports.map { case (id, export) => export -> graph(id) }
+    val newExports = exports.map { case (id, export) => export -> graph(id) }
       .map { case (export, node) => node.copy(labels = node.labels + ("export" -> export))}
-    NaiveGraph((graph.nodes -- newNodes) ++ newNodes, graph.vertices)
+    graph.insertNodes(newExports)
   }
+  Point3D
+  private def updateGraphWithPosition(positionMap : Map[ID, P], graph : Graph) : Graph = {
+    val nodesUpdated = positionMap.map { case (id, pos) => pos -> graph(id) }
+      .map { case (pos, node) => node.copy(position = pos) }
+      .toSeq
+    NaiveGraph(graph.insertNodes(nodesUpdated).nodes, computeVertices()) //neighbour could be change, todo improve performance
+  }
+
+  private def updateGraphWithSensor(sensorMap : Map[ID, Map[LSNS, Any]], graph : Graph) = {
+    val nodeUpdated = sensorMap.map { case (id, labels) => labels -> graph(id)}
+      .map { case (labels, node) => node.copy(labels = node.labels ++ labels) }
+      .toSeq
+    graph.insertNodes(nodeUpdated)
+  }
+
+  private def computeVertices() : Set[Vertex] = backend.getAllNeighbours()
+    .flatMap { case (id, elements) => elements.map(Vertex(id, _)) }
+    .toSet
 }

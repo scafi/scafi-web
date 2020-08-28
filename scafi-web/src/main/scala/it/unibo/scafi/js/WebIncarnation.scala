@@ -70,7 +70,6 @@ object WebIncarnation extends BasicWebIncarnation
         def randomPosition() : P = new P(rangeRandom(), rangeRandom())
         val nodePosition = (0 until howMany).map(id => id.toString -> randomPosition()).toMap
         val deviceMap = nodePosition.map { case (id, pos) => id -> new DevInfo(id, pos, nsns = nsns => (id : ID) => _)}
-        new QuadTreeSpace[]()
         val space : SPACE[ID] = new Basic3DSpace(nodePosition, range) //TODO fix quad tree space for being scala.js supported
         new SpaceAwareSimulator(space, deviceMap, simulationSeed = seeds.simulationSeed, randomSensorSeed = seeds.randomSensorSeed)
       }

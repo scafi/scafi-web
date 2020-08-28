@@ -2,11 +2,9 @@ package it.unibo.scafi.js
 
 import java.util.concurrent.TimeUnit
 
-import it.unibo.scafi.js.WebIncarnation.P
-import it.unibo.scafi.js.controller.local.{DeviceConfiguration, GridLikeNetwork, RandomNetwork, SimulationExecutionPlatform, SimulationSeeds, SimulationSupport, SpatialRadius, SupportConfiguration}
+import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.view.dynamic.{EditorSection, PhaserGraphSection, SimulationControlsSection}
 import it.unibo.scafi.js.view.static.SkeletonPage
-import it.unibo.scafi.space.optimization.nn.QuadTree
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
@@ -19,8 +17,8 @@ object Index {
   import org.scalajs.dom._
 
   val configuration = SupportConfiguration(
-    RandomNetwork(min = 0, max = 600, howMany = 300),
-    SpatialRadius(range = 60),
+    RandomNetwork(min = 0, max = 800, howMany = 500),
+    SpatialRadius(range = 30),
     deviceShape = DeviceConfiguration.standard,
     seed = SimulationSeeds(),
   )
