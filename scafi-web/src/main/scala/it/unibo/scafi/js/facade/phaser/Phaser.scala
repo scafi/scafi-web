@@ -61,7 +61,7 @@ object Phaser extends js.Object {
     def add : GameObjects.GameObjectFactory = js.native
     def anims : Animations.AnimationManager = js.native
     def cache : Cache.CacheManager = js.native
-    def cameras : Scene2D.Camera = js.native
+    def cameras : Scene2D.CameraManager = js.native
     def children : GameObjects.DisplayList = js.native
     def data : Data.DataManager = js.native
     def events : Events.EventEmitter = js.native

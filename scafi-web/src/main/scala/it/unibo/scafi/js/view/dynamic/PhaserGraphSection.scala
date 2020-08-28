@@ -29,12 +29,13 @@ class PhaserGraphSection(paneSection : String | HTMLElement) extends (Graph => U
       scene.load.bitmapFont("font", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml")
     },
     create = (scene, _) => {
+      val mainCamera = scene.cameras.main
       mainContainer = scene.add.container(0, 0)
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
       mainContainer.setInteractive()
       mainContainer.on("drag", dragFunction)
       mainContainer.on("wheel", (_ : js.Any, _ : js.Any, _ : Double, dy : Double, _ : Double, _ : js.Any) => {
-        mainContainer.scale += dy / 1000
+        mainCamera.zoom -= (dy / 1000)
       })
       scene.input.setDraggable(mainContainer)
     },
