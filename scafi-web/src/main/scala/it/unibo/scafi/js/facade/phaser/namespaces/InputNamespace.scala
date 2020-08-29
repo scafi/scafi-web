@@ -41,7 +41,16 @@ trait InputNamespace extends js.Any {
     def updateInputPlugins(tpe : Int, pointers : js.Array[Pointer]) : Unit = js.native
   }
   @js.native
-  trait Pointer extends js.Object {}
+  trait Pointer extends js.Object {
+    /* members */
+    var x : JSNumber = js.native
+    var y : JSNumber = js.native
+    var worldX : JSNumber = js.native
+    var worldY : JSNumber = js.native
+    var deltaX : JSNumber = js.native
+    var deltaY : JSNumber = js.native
+    var deltaZ : JSNumber = js.native
+  }
 
   @js.native
   object Keyboard extends js.Object {

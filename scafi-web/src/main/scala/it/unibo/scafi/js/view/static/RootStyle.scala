@@ -60,6 +60,5 @@ object RootStyle extends StyleSheet.Standalone {
   "canvas" -(
     height(100 %%),
     width(100 %%),
-    objectFit.contain
   )
 }

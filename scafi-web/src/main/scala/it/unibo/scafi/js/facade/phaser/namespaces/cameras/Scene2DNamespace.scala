@@ -23,5 +23,7 @@ trait Scene2DNamespace extends js.Object {
   trait CameraManager extends js.Object {
     /* members */
     def main : Camera
+    /* methods */
+    def resize(width : Double, height : Double)
   }
 }

@@ -42,7 +42,7 @@ object Phaser extends js.Object {
   /* CLASSES */
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Game.html]] */
   @js.native
-  class Game(conf : types.Game.Config) extends js.Object {
+  class Game(conf : types.core.GameConfig) extends js.Object {
     /* members */
     def anims : Animations.AnimationManager = js.native
     def cache : Cache.CacheManager = js.native
@@ -74,7 +74,7 @@ object Phaser extends js.Object {
   }
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Scene.html]] */
   @js.native
-  class Scene(config : types.Scene.Settings = js.native) extends js.Object {
+  class Scene(config : types.scenes.SceneSetting = js.native) extends js.Object {
     /* members */
     def add : GameObjects.GameObjectFactory = js.native
     def anims : Animations.AnimationManager = js.native

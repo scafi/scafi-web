@@ -213,6 +213,7 @@ trait BasicSpatialAbstraction extends MetricSpatialAbstraction {
       getDistance(p1,p2) <= proximityThreshold
 
     override def getDistance(p1: P, p2: P): Double = {
+
       p1.distance(p2)
     }
   }
@@ -220,7 +221,6 @@ trait BasicSpatialAbstraction extends MetricSpatialAbstraction {
   object EuclideanStrategy {
     val DefaultProximityThreshold: Double = 1
   }
-
   /**
     * a space that used quad tree index to compute neighbour
     * @param pos the position of noe

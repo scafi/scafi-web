@@ -8,12 +8,15 @@ import it.unibo.scafi.js.view.dynamic.{EditorSection, PhaserGraphSection, Simula
 import it.unibo.scafi.js.view.static.SkeletonPage
 
 import scala.concurrent.duration.FiniteDuration
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
+
 @JSExportTopLevel("A")
 @JSExportAll
 object prova {
   val input = Phaser
-
+  val list = Seq("a" -> (10 : js.Any))
+  val prova = js.special.objectLiteral(list:_*)
 }
 /**
   * from the main body, scala js produce a javascript file.

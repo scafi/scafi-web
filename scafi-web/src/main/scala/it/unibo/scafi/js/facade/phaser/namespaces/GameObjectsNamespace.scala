@@ -22,7 +22,7 @@ trait GameObjectsNamespace extends js.Object {
     var active : Boolean = js.native
     def data : Data.DataManager = js.native
     var ignoreDestroy : Boolean = js.native
-    def input : types.Input.InteractiveObject = js.native
+    def input : types.input.InteractiveObject = js.native
     var name : String = js.native
     def parentContainer : Container = js.native
     var state : Int | String = js.native
@@ -37,7 +37,7 @@ trait GameObjectsNamespace extends js.Object {
     def setDataEnabled() : Unit = js.native
     def setData(key : String | js.Object, data : js.Any): Unit = js.native
     def getData(key : String) : js.Any = js.native
-    def setInteractive(shape : types.Input.Config | js.Any = js.native,
+    def setInteractive(shape : types.input.InputConfiguration | js.Any = js.native,
                        callback : js.Function4[js.Any, JSNumber, JSNumber, GameObject, Unit] = js.native,
                        dropZone : Boolean = js.native): Unit = js.native
     def disableInteractive() : Unit = js.native
@@ -119,7 +119,7 @@ trait GameObjectsNamespace extends js.Object {
              y2 : JSNumber = js.native, strokeColor : Int = js.native, strokeAlpha : Int = js.native) : Line = js.native
 
     def bitmapText(x : JSNumber, y : JSNumber, font : String, text : String, size  : JSNumber = js.native) : BitmapText = js.native
-    def text(x : JSNumber, y : JSNumber, text : String, style : types.Text.TextStyle = js.native) : Text = js.native
+    def text(x : JSNumber, y : JSNumber, text : String, style : types.gameobjects.text.TextStyle = js.native) : Text = js.native
     def container(x : JSNumber = js.native, y : JSNumber = js.native, children : js.Array[GameObject] = js.native) : Container
   }
 
@@ -172,10 +172,10 @@ trait GameObjectsNamespace extends js.Object {
     /* members */
     var font : String = js.native
     var text : String = js.native
-    var fontData : types.BitmapText.BitmapFontData = js.native
+    var fontData : types.gameobjects.bitmaptext.BitmapFontData = js.native
     var letterSpacing : JSNumber = js.native
     var align : Int = js.native
-    var bounds : types.BitmapText.BitmapTextSize = js.native
+    var bounds : types.gameobjects.bitmaptext.BitmapTextSize = js.native
     var dirty : Boolean = js.native
     var wordWrapCharCode : JSNumber = js.native
     /* methods */
@@ -185,7 +185,7 @@ trait GameObjectsNamespace extends js.Object {
     def setFontSize(size : JSNumber) : BitmapText = js.native
     def setLetterSpacing(spacing : JSNumber) : BitmapText = js.native
     def setText(text : String) : BitmapText = js.native
-    def getTextBounds(round : Boolean) : types.BitmapText.BitmapTextSize = js.native
+    def getTextBounds(round : Boolean) : types.gameobjects.bitmaptext.BitmapTextSize = js.native
     def setFont(key : String, size : JSNumber, align : Int = js.native) : BitmapText = js.native
     def setMaxWidth(value : JSNumber, wordWrapCharCode : JSNumber) : BitmapText = js.native
   }
