@@ -5,14 +5,15 @@ import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespac
 import it.unibo.scafi.js.{JSNumber, Nullable}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.{JSGlobal, JSName}
 import scala.scalajs.js.{ThisFunction, |}
 
 /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.html]] */
 @js.native
-trait GameObjectsNamespace extends js.Object {
+@JSGlobal("Phaser.GameObjects")
+object GameObjectsNamespace extends js.Object {
   /* NAMESPACES */
-  val Components : ComponentsNamespace = js.native
+  val Components : ComponentsNamespace.type = js.native
   import Components._
   import Phaser._
   /* classes */
@@ -109,14 +110,19 @@ trait GameObjectsNamespace extends js.Object {
 
     def scene : Phaser.Scene = js.native
 
-    def circle(x : JSNumber = js.native, y : JSNumber, radius : JSNumber, fillColor : Int = js.native, fillAlpha : Int = js.native) : Arc = js.native
+    def circle(x : JSNumber = js.native, y : JSNumber, radius : JSNumber, fillColor : Int = js.native, fillAlpha : JSNumber = js.native) : Arc = js.native
 
     def line(x : JSNumber = js.native,
              y : JSNumber = js.native,
              x1 : JSNumber = js.native,
              y1 : JSNumber = js.native,
              x2 : JSNumber = js.native,
-             y2 : JSNumber = js.native, strokeColor : Int = js.native, strokeAlpha : Int = js.native) : Line = js.native
+             y2 : JSNumber = js.native, strokeColor : Int = js.native, strokeAlpha : JSNumber = js.native) : Line = js.native
+    def rectangle(x : JSNumber = js.native,
+                  y : JSNumber, width : JSNumber,
+                  height : JSNumber,
+                  fillColor : Int = js.native,
+                  fillAlpha : JSNumber = js.native) : Rectangle = js.native
 
     def bitmapText(x : JSNumber, y : JSNumber, font : String, text : String, size  : JSNumber = js.native) : BitmapText = js.native
     def text(x : JSNumber, y : JSNumber, text : String, style : types.gameobjects.text.TextStyle = js.native) : Text = js.native
@@ -138,12 +144,13 @@ trait GameObjectsNamespace extends js.Object {
   @js.native
   trait Shape extends GameObject with Transform with BlendMode with ComputedSize
     with Depth with Origin with Mask with Pipeline with ScrollFactor with Visible {
-
   }
 
   @js.native
   trait Line extends Shape
 
+  @js.native
+  trait Rectangle extends Shape
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Arc.html]] */
   @js.native
   trait Arc extends Shape {

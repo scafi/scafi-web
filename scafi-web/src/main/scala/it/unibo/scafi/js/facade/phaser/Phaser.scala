@@ -1,15 +1,16 @@
 package it.unibo.scafi.js.facade.phaser
 
 import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.facade.phaser.Phaser.Loader
 import it.unibo.scafi.js.facade.phaser.namespaces._
 import org.scalajs.dom.raw.{CanvasRenderingContext2D, HTMLCanvasElement, HTMLDivElement, WebGLRenderingContext}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.annotation.{JSGlobal, JSImport}
 import scala.scalajs.js.|
 /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.html]] */
 @js.native
-@JSImport("phaser", JSImport.Namespace)
+@JSGlobal("Phaser")
 object Phaser extends js.Object {
   /* CONSTANT */
   val AUTO : Int = js.native
@@ -22,23 +23,23 @@ object Phaser extends js.Object {
   val RIGHT : Int = js.native
   val LEFT : Int = js.native
   /* NAMESPACES */
-  val Input : InputNamespace = js.native
-  val Loader : LoaderNamespace = js.native
-  val Math : MathNamespace = js.native
-  val GameObjects : GameObjectsNamespace = js.native
-  val Geom : GeomNamespace = js.native
-  val Physics : PhysicsNamespace = js.native
-  val Plugins : PluginsNamespace = js.native
-  val Renderer : RendererNamespace = js.native
-  val Animations : AnimationsNamespace = js.native
-  val Scale : ScaleNamespace = js.native
-  val Cache : CacheNamespace = js.native
-  val Cameras : CamerasNamespace = js.native
-  val Data : DataNamespace = js.native
-  val Scenes : ScenesNamespace = js.native
-  val Textures : TexturesNamespace = js.native
-  val Events : EventsNamespace = js.native
-  val Time : TimeNamespace = js.native
+  val Input : InputNamespace.type = js.native
+  val Loader : LoaderNamespace.type = js.native
+  val Math : MathNamespace.type = js.native
+  val GameObjects : GameObjectsNamespace.type = js.native
+  val Geom : GeomNamespace.type = js.native
+  val Physics : PhysicsNamespace.type = js.native
+  val Plugins : PluginsNamespace.type = js.native
+  val Renderer : RendererNamespace.type = js.native
+  val Animations : AnimationsNamespace.type = js.native
+  val Scale : ScaleNamespace.type = js.native
+  val Cache : CacheNamespace.type = js.native
+  val Cameras : CamerasNamespace.type = js.native
+  val Data : DataNamespace.type = js.native
+  val Scenes : ScenesNamespace.type = js.native
+  val Textures : TexturesNamespace.type = js.native
+  val Events : EventsNamespace.type = js.native
+  val Time : TimeNamespace.type = js.native
   /* CLASSES */
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Game.html]] */
   @js.native

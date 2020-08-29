@@ -34,26 +34,20 @@ class PhaserGraphSection(paneSection : HTMLElement) extends (Graph => Unit) {
       mainCamera.zoom = 1
       mainContainer = scene.add.container(0, 0)
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
-      mainContainer.setInteractive()
+      createInteractionFsm(scene)
       mainContainer.on("pointerdown", (self : Any, other : Input.Pointer) => {
-        mainContainer.add(scene.add.circle(other.worldX, other.worldY, 10, nodeColor))
+        val selection = new Geom.Point(other.x, other.y)
+        val altered = mainContainer.pointToContainer(selection)
+        altered match {
+          case point : Geom.Point =>  mainContainer.add(scene.add.circle(point.x, point.y, radius, nodeColor, 0.5))
+          case vect : Math.Vector2 =>  mainContainer.add(scene.add.circle(vect.x, vect.y, radius, nodeColor, 0.5))
+        }
       })
       scene.input.on("wheel", (self : js.Any, pointer : js.Any, _ : js.Any, dx : JSNumber, dy : JSNumber, dz : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
-      scene.input.setDraggable(mainContainer)
     },
     update = scene => {
-      val drag = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
-      if(drag.isDown) {
-        mainContainer.off("drag")
-        mainContainer.off("pointerdown")
-        mainContainer.on("drag", dragFunction)
-        this.game.canvas.style.cursor = "grab"
-      } else {
-        mainContainer.off("drag")
-        this.game.canvas.style.cursor = "auto"
-      }
       model match {
         case (Some(graph), true) => onNewGraph(graph, scene)
         case (Some(graph), false) => onSameGraph(graph, scene)
@@ -62,16 +56,10 @@ class PhaserGraphSection(paneSection : HTMLElement) extends (Graph => Unit) {
     }
   )
   import Phaser.GameObjects.Components._
-  private val dragFunction : ThisFunction4[Transform,Transform, JSNumber, JSNumber, js.Any, Unit] = {
+  private val dragFunction: ThisFunction4[Transform,Transform, JSNumber, JSNumber, js.Any, Unit] = {
     (obj, _, dragX, dragY, _) => {
       obj.x = dragX
       obj.y = dragY
-    }
-  }
-
-  private val selection : ThisFunction4[Transform,Transform, JSNumber, JSNumber, js.Any, Unit] = {
-    (obj, _, dragX, dragY, _) => {
-      println(dragX, dragY)
     }
   }
 
@@ -102,5 +90,40 @@ class PhaserGraphSection(paneSection : HTMLElement) extends (Graph => Unit) {
   private def onLabel(label : (String, Any)) : String = label match {
     case (_, e : Core#Export) => e.root[Any]().toString
     case (_, any) => any.toString
+  }
+
+  private def createInteractionFsm(scene : Scene) : Unit = {
+    mainContainer.setInteractive()
+    scene.input.setDraggable(mainContainer)
+    import it.unibo.scafi.js.FSM._
+    import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace._
+    val rectangleSelection = scene.add.rectangle(0, 0, 0, 0, 0xFFFF)
+
+    val controlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
+    val altkey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
+
+    lazy val idle : State = state {
+      val controlDownHandler : Handler1[Scene] = (scene, _ : Any) => {
+        idle.evolve(onDrag)
+        this.game.canvas.style.cursor = "grab"
+      }
+      controlKey.on("down", controlDownHandler)
+    }
+
+    lazy val onDrag : State = state {
+      val controlUpHandler : Handler1[Scene] = (scene, _ : Any) => {
+        idle.evolve(idle)
+        this.game.canvas.style.cursor = "auto"
+        mainContainer.off("drag")
+      }
+      mainContainer.on("drag", dragFunction)
+      controlKey.on("up", controlUpHandler)
+    }
+
+
+    lazy val onSelection : State = state {
+      scene.input
+    }
+    start(idle)
   }
 }

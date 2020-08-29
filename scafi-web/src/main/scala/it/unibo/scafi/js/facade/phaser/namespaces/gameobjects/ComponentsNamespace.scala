@@ -3,9 +3,11 @@ package it.unibo.scafi.js.facade.phaser.namespaces.gameobjects
 import it.unibo.scafi.js.JSNumber
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 @js.native
-trait ComponentsNamespace extends js.Object {
+@JSGlobal("Phaser.Components")
+object ComponentsNamespace extends js.Object {
   @js.native
   trait Transform extends js.Object {
     /* members */

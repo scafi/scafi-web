@@ -3,9 +3,11 @@ package it.unibo.scafi.js.facade.phaser.namespaces
 import it.unibo.scafi.js.JSNumber
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 @js.native
-trait ScaleNamespace extends js.Object {
+@JSGlobal("Phaser.Scale")
+object ScaleNamespace extends js.Object {
   /* NAMESPACE */
   @js.native
   object ScaleModes extends js.Object {

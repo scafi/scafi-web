@@ -5,11 +5,12 @@ import it.unibo.scafi.js.{JSNumber, Nullable}
 import org.scalajs.dom.raw.HTMLCanvasElement
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.{JSGlobal, JSName}
 import scala.scalajs.js.|
 
 @js.native
-trait InputNamespace extends js.Any {
+@JSGlobal("Phaser.Input")
+object InputNamespace extends js.Any {
   import Phaser._
   @js.native
   class InputManager(val game : Phaser.Game = js.native, conf : js.Object) extends js.Object {
@@ -69,9 +70,10 @@ trait InputNamespace extends js.Any {
     @js.native
     object KeyCodes extends js.Object {
       val CTRL : Int = js.native
+      val ALT : Int = js.native
     }
     @js.native
-    trait Key extends js.Object {
+    trait Key extends EventsNamespace.EventEmitter {
       def isDown : Boolean = js.native
       def isUp : Boolean = js.native
       /* todo */

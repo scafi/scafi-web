@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.view
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel, JSImport}
 package object static {
   //TODO improve this setting
   val CssSettings = scalacss.DevDefaults
@@ -32,4 +32,10 @@ package object static {
   @JSImport("bootstrap/dist/js/bootstrap.bundle.js", JSImport.Namespace)
   object Bootstrap extends js.Any
   Bootstrap
+
+  @js.native
+  @JSImport("phaser", JSImport.Namespace)
+  object PhaserGlobal extends js.Any //global import phaser
+  PhaserGlobal
+
 }
