@@ -51,6 +51,8 @@ object InputNamespace extends js.Any {
     var deltaX : JSNumber = js.native
     var deltaY : JSNumber = js.native
     var deltaZ : JSNumber = js.native
+    var primaryDown : Boolean = js.native
+    var isDown : Boolean = js.native
   }
 
   @js.native
@@ -96,6 +98,6 @@ object InputNamespace extends js.Any {
     /* fields */
     var keyboard : Nullable[Keyboard.KeyboardPlugin] = js.native
     /* methods */
-    def setDraggable(gameobject : GameObjects.GameObject) : Unit = js.native
+    def setDraggable(gameobject : GameObjects.GameObject, value : Boolean = js.native) : Unit = js.native
   }
 }

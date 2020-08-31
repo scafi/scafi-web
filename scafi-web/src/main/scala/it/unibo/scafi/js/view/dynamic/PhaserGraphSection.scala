@@ -1,29 +1,47 @@
 package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.core.Core
-import it.unibo.scafi.js.JSNumber
-import it.unibo.scafi.js.facade.phaser.types.core.GameConfig
+import it.unibo.scafi.js.controller.local.SimulationCommand.Move
+import it.unibo.scafi.js.controller.local.SimulationCommandInterpreter
+import it.unibo.scafi.js.{JSNumber, Utils}
+import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.{Handler1, Handler4}
+import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.Pointer
+import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes
+import it.unibo.scafi.js.facade.phaser.types.core.{GameConfig, PhysicsConfig, ScaleConfig}
+import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
-import it.unibo.scafi.js.model.Graph
+import it.unibo.scafi.js.model.{Graph, Node}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
-import scala.scalajs.js.ThisFunction4
 //TODO manage resize
-class PhaserGraphSection(paneSection : HTMLElement) extends (Graph => Unit) {
+class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : SimulationCommandInterpreter) extends (Graph => Unit) {
   import Phaser._
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
-  private val radius = 5 //TODO put in configuration
+  private val size = 5 //TODO put in configuration
   private val nodeColor : Int = 0xff00ff //TODO put in configuration
+  private val selectionColor : Int = 0xff0000 //TODO put in configuration
   private val lineColor : Int = 0x0000ff //TODO put in configuration
-  private val fontSize : Int = 7 //TODO put in configuration
+  private val fontSize : Int = 10 //TODO put in configuration
+
   private val game = new Phaser.Game(
     new GameConfig(
       parent = paneSection,
-      scene = sceneHandler
+      scene = sceneHandler,
+      physics = new PhysicsConfig (
+        default = PhysicsConfig.ARCADE,
+        arcade = new ArcadeWorldConfig()
+      ),
+      scale = new ScaleConfig ( mode = ScaleModes.RESIZE )
     )
   )
 
-  var mainContainer : GameObjects.Container = _
+  protected var mainContainer : GameObjects.Container = _
+  protected var vertexContainer : GameObjects.Container = _
+  protected var nodeContainer : GameObjects.Container = _
+  protected var labelContainer : GameObjects.Container = _
+  protected var rectangleSelection : GameObjects.Rectangle = _
+  protected var selectionContainer : GameObjects.Container = _
+
   private lazy val sceneHandler : types.scenes.CreateSceneFromObjectConfig =  types.scenes.callbacks(
     preload = (scene) => {
       //TODO put in configuration
@@ -32,17 +50,14 @@ class PhaserGraphSection(paneSection : HTMLElement) extends (Graph => Unit) {
     create = (scene, _) => {
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
-      mainContainer = scene.add.container(0, 0)
+      vertexContainer = scene.add.container(0, 0)
+      labelContainer = scene.add.container(0, 0)
+      nodeContainer = scene.add.container(0, 0)
+      selectionContainer = scene.add.container(0, 0)
+      mainContainer = scene.add.container(0, 0, js.Array(vertexContainer, nodeContainer, labelContainer, selectionContainer))
+      rectangleSelection = scene.add.rectangle(0, 0, 0, 0, fillColor = 0xFFFFFF, fillAlpha = 0.5)
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
       createInteractionFsm(scene)
-      mainContainer.on("pointerdown", (self : Any, other : Input.Pointer) => {
-        val selection = new Geom.Point(other.x, other.y)
-        val altered = mainContainer.pointToContainer(selection)
-        altered match {
-          case point : Geom.Point =>  mainContainer.add(scene.add.circle(point.x, point.y, radius, nodeColor, 0.5))
-          case vect : Math.Vector2 =>  mainContainer.add(scene.add.circle(vect.x, vect.y, radius, nodeColor, 0.5))
-        }
-      })
       scene.input.on("wheel", (self : js.Any, pointer : js.Any, _ : js.Any, dx : JSNumber, dy : JSNumber, dz : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
@@ -56,74 +71,168 @@ class PhaserGraphSection(paneSection : HTMLElement) extends (Graph => Unit) {
     }
   )
   import Phaser.GameObjects.Components._
-  private val dragFunction: ThisFunction4[Transform,Transform, JSNumber, JSNumber, js.Any, Unit] = {
-    (obj, _, dragX, dragY, _) => {
-      obj.x = dragX
-      obj.y = dragY
-    }
-  }
 
-  override def apply(v1: Graph): Unit = { model = (Some(v1), true) }
+
+  override def apply(v1: Graph): Unit = model = (Some(v1), true)
 
   private def onSameGraph(graph : Graph, scene : Phaser.Scene) : Unit = {}
 
   private def onNewGraph(graph : Graph, scene : Phaser.Scene) : Unit = {
-    mainContainer.removeAll(true)
+    //TODO improve performance (e.g. via caching)
+    vertexContainer.removeAll(true)
+    nodeContainer.removeAll(true)
+    labelContainer.removeAll(true)
 
     graph.vertices.map(vertex =>  (graph(vertex.from), graph(vertex.to)))
       .map { case (from, to) => scene.add.line(x1 = from.position.x, y1 = from.position.y, x2 = to.position.x, y2 = to.position.y, strokeColor = lineColor ) }
       .map { _.setOrigin[GameObjects.Line](0)}
-      .foreach(mainContainer.add(_))
+      .foreach(vertexContainer.add(_))
 
-    graph.nodes.map(node => scene.add.circle(node.position.x, node.position.y, radius, nodeColor))
-      .foreach(mainContainer.add(_))
+    val nodes = graph.nodes.map(node => {
+      val circle = scene.add.circle(node.position.x, node.position.y, size, nodeColor)
+      circle.setData[GameObjects.Arc]("id", node.id)
+    })
+    nodes.foreach(nodeContainer.add(_))
+    import js.JSConverters._
+    scene.physics.add.staticGroup(nodes.toJSArray)
 
     graph.nodes.map(node => node -> node.labels.map(onLabel).toList)
-        .map { case (node, labelList) => node -> (s"id:${node.id}" :: labelList).mkString("\n")}
-        .map { case (node, labelList) => scene.add.bitmapText(node.position.x, node.position.y, "font", labelList, fontSize)}
+        .map { case (node, labelList) => node -> (s"${node.id}" :: labelList).mkString("\n")}
+        .map { case (node, labelList) => scene.add.bitmapText(node.position.x , node.position.y, "font", labelList, fontSize)}
         .map(_.setLeftAlign())
-        .foreach(mainContainer.add(_))
+        .foreach(labelContainer.add(_))
+
+    graph.nodes.map(node => node -> node.labels.map(onLabel).toList)
+      .map { case (node, labelList) => node -> (s"${node.id}" :: Nil).mkString("\n")}
+      .map { case (node, labelList) => scene.add.bitmapText(node.position.x , node.position.y, "font", labelList, fontSize)}
+      .map(_.setLeftAlign())
+      .foreach(labelContainer.add(_))
 
     model = model.copy(_2 = false)
   }
 
   private def onLabel(label : (String, Any)) : String = label match {
-    case (_, e : Core#Export) => e.root[Any]().toString
-    case (_, any) => any.toString
+    case (_, e: Core#Export) => e.root[Any]() match {
+      case (other : Double) => ""  + other % 0.01
+    }
+    case (_, other: Double) => "" + other % 0.01
+    case (_, e) => e.toString
   }
+
+  private trait State
+  private case object MoveWorld extends State
+  private case object MoveSelection extends State
+  private case object OnSelection extends State
+  private case object Idle extends State
+  private var state : State = Idle
 
   private def createInteractionFsm(scene : Scene) : Unit = {
     mainContainer.setInteractive()
     scene.input.setDraggable(mainContainer)
-    import it.unibo.scafi.js.FSM._
-    import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace._
-    val rectangleSelection = scene.add.rectangle(0, 0, 0, 0, 0xFFFF)
-
-    val controlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
-    val altkey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
-
-    lazy val idle : State = state {
-      val controlDownHandler : Handler1[Scene] = (scene, _ : Any) => {
-        idle.evolve(onDrag)
-        this.game.canvas.style.cursor = "grab"
-      }
-      controlKey.on("down", controlDownHandler)
-    }
-
-    lazy val onDrag : State = state {
-      val controlUpHandler : Handler1[Scene] = (scene, _ : Any) => {
-        idle.evolve(idle)
-        this.game.canvas.style.cursor = "auto"
-        mainContainer.off("drag")
-      }
-      mainContainer.on("drag", dragFunction)
-      controlKey.on("up", controlUpHandler)
-    }
-
-
-    lazy val onSelection : State = state {
-      scene.input
-    }
-    start(idle)
+    //fsm actions
+    onPointerDown(scene)
+    onPointerUp(scene)
+    onMainContainerDrag(scene)
+    onMainContainerDrag(scene)
+    controlKeyEvents(scene)
+    altKeyEvents(scene)
   }
+
+  private def onPointerDown(scene : Scene) : Unit = {
+    mainContainer.on("pointerdown", (_ : Any, pointer : Input.Pointer) => state match {
+      case Idle if ! pointer.primaryDown => resetSelection()
+      case Idle => rectangleSelection.setPosition(pointer.worldX, pointer.worldY)
+        state = OnSelection
+      case _ =>
+    })
+  }
+
+  private def onPointerUp(scene  : Scene) : Unit = {
+    scene.input.on("pointerup", (self : Any, pointer : Input.Pointer) => state match {
+      case OnSelection => state = Idle
+        val (overlapX, overlapY) = (rectangleSelection.x - mainContainer.x, rectangleSelection.y - mainContainer.y)
+        val (overlapWidth, overlapHeight) = (rectangleSelection.width, rectangleSelection.height)
+        val elements = scene.physics.overlapRect(overlapX, overlapY, overlapWidth, overlapHeight, includeStatic = true)
+        elements.map(body => {
+          val selected = scene.add.circle(body.center.x, body.center.y, size, selectionColor)
+          selected.setData[GameObjects.Arc]("id", body.gameObject.getData("id"))
+        }).foreach(selectionContainer.add(_))
+      case _ =>
+    })
+  }
+
+  private def onMainContainerDrag(scene: Phaser.Scene) : Unit = {
+    val dragFunction: Handler4[Transform] = (obj : Transform, pointer : Pointer, dragX : JSNumber, dragY : JSNumber, _ : Any) => state match {
+      case MoveWorld => obj.setPosition(dragX, dragY)
+      case OnSelection =>
+        rectangleSelection.setSize[GameObjects.Rectangle](pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)
+      case _ =>
+    }
+    mainContainer.on("drag", dragFunction)
+  }
+
+  private def controlKeyEvents(scene : Phaser.Scene) : Unit = {
+    val controlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
+    val controlUpHandler : Handler1[Scene] = (scene, _ : Any) => state match {
+      case MoveWorld => state = Idle
+        this.game.canvas.style.cursor = "auto"
+      case _ =>
+    }
+
+    val controlDownHandler : Handler1[Scene] = (scene, _ : Any) => state match {
+      case Idle => this.game.canvas.style.cursor = "grab"
+        state = MoveWorld
+        resetSelection()
+      case _ =>
+    }
+    controlKey.on("down", controlDownHandler)
+    controlKey.on("up", controlUpHandler)
+  }
+
+  private def altKeyEvents(scene : Phaser.Scene) : Unit = {
+    val dragFunction : Handler4[Transform] = (obj : Transform, pointer : Pointer, dragX : JSNumber, dragY : JSNumber, _ : Any) => state match {
+      case MoveSelection =>
+        selectionContainer.x += dragX - obj.x
+        selectionContainer.y += dragY - obj.y
+        obj.setPosition(dragX, dragY)
+      case _ =>
+    }
+
+    val altKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
+    val altUpHandler : Handler1[Scene] = (obj, _ : Any) => state match {
+      case MoveSelection => state = Idle
+        this.game.canvas.style.cursor = "auto"
+        val positionChangedMap = selectionContainer.list[GameObjects.Arc]
+          .map(node => (node.getData("id").toString, (node.x + selectionContainer.x, node.y + selectionContainer.y)))
+          .toMap
+        commandInterpreter.execute(Move(positionChangedMap))
+        resetSelection()
+        rectangleSelection.disableInteractive()
+      case _ =>
+    }
+
+    val altDownHandler : Handler1[Scene] = (obj, _ : Any) => state match {
+      case Idle => this.game.canvas.style.cursor = "all-scroll"
+        state = MoveSelection
+        if(rectangleSelection.width != 0 && rectangleSelection.height != 0) {
+          rectangleSelection.destroy(true)
+          val (x, y, width, height) = (rectangleSelection.x, rectangleSelection.y, rectangleSelection.width, rectangleSelection.height)
+          rectangleSelection = scene.add.rectangle(x, y, width, height, fillColor = 0xFFFFFF, fillAlpha = 0.5)
+            .setOrigin(0)
+          rectangleSelection.setInteractive()
+          scene.input.setDraggable(rectangleSelection)
+          rectangleSelection.on("drag", dragFunction)
+        }
+      case _ =>
+    }
+    altKey.on("down", altDownHandler)
+    altKey.on("up", altUpHandler)
+  }
+
+  private def resetSelection() : Unit = {
+    rectangleSelection.setSize[GameObjects.Rectangle](0, 0)
+    selectionContainer.removeAll()
+    selectionContainer.setPosition(0, 0)
+  }
+
 }

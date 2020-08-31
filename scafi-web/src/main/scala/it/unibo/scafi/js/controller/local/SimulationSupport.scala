@@ -12,7 +12,7 @@ import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.Future
 
-class SimulationSupport(private var systemConfig: SupportConfiguration)
+class SimulationSupport(protected var systemConfig: SupportConfiguration)
   extends AggregateSystemSupport[SpaceAwareSimulator, SupportConfiguration, SimulationSideEffect] {
 
   protected var backend: SpaceAwareSimulator = fromConfig(systemConfig)
@@ -78,8 +78,8 @@ class SimulationSupport(private var systemConfig: SupportConfiguration)
       .map { case (export, node) => node.copy(labels = node.labels + ("export" -> export))}
     graph.insertNodes(newExports)
   }
-  Point3D
-  private def updateGraphWithPosition(positionMap : Map[ID, P], graph : Graph) : Graph = {
+
+  private def updateGraphWithPosition(positionMap : Map[ID, Point3D], graph : Graph) : Graph = {
     val nodesUpdated = positionMap.map { case (id, pos) => pos -> graph(id) }
       .map { case (pos, node) => node.copy(position = pos) }
       .toSeq

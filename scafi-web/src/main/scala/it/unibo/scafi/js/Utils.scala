@@ -28,4 +28,9 @@ object Utils {
   @JSExportTopLevel("Point2D")
   @JSExportAll
   case class JSPoint2D(override val x : Double, override val y : Double, override val z : Double) extends Point3D(x, y, z)
+
+  def stringify[E](element : E) : String = {
+    val any : js.Any = element.asInstanceOf[js.Any]
+    js.Dynamic.global.JSON.stringify(any).toString
+  }
 }

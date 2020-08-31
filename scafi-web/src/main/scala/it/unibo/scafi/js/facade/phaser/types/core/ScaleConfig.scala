@@ -20,4 +20,6 @@ class ScaleConfig(val width : Int = 1024,
                   val autoCenter : CenterValue = Center.NO_CENTER,
                   val resizeInterval : Int = 500,
                   val fullscreenTarget : js.UndefOr[Nullable[HTMLElement]] = js.undefined
-                 ) extends CleanableObject
+                 ) extends CleanableObject {
+  clean(this)
+}

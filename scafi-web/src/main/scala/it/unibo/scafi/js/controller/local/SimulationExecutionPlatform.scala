@@ -12,7 +12,7 @@ import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 trait SimulationExecutionPlatform extends ExecutionPlatform[SpaceAwareSimulator, SimulationSideEffect, SimulationExecution]{
-  self : AggregateSystemSupport[SpaceAwareSimulator, _, SimulationSideEffect] =>
+  self : SimulationSupport =>
   import SimulationExecutionPlatform._
   override def loadScript(script: Script): Future[SimulationExecution] = script.lang match {
     case "javascript" => Try { rawToFunction(script.code) } match {

@@ -31,5 +31,6 @@ class GameConfig(val scene : SceneSetting,
                  val disableContextMenu : Boolean = false,
                  val fps : js.UndefOr[FPSConfig] = js.undefined,
                  val background : String | Int = 0x000000,
+                 val physics : js.UndefOr[PhysicsConfig] = js.undefined,
                  val scale : js.UndefOr[ScaleConfig] = js.undefined,
                  val plugins : js.UndefOr[PluginObject | js.Array[PluginObjectItem]] = {}) extends CleanableObject

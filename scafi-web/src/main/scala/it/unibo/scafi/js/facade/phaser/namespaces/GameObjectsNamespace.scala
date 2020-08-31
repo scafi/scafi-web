@@ -36,7 +36,7 @@ object GameObjectsNamespace extends js.Object {
     def setName(name : String) : Unit = js.native
     def setState(state : Int | String) : Unit = js.native
     def setDataEnabled() : Unit = js.native
-    def setData(key : String | js.Object, data : js.Any): Unit = js.native
+    def setData[Me <: GameObject](key : String | js.Object, data : js.Any): Me = js.native
     def getData(key : String) : js.Any = js.native
     def setInteractive(shape : types.input.InputConfiguration | js.Any = js.native,
                        callback : js.Function4[js.Any, JSNumber, JSNumber, GameObject, Unit] = js.native,
@@ -51,7 +51,7 @@ object GameObjectsNamespace extends js.Object {
   @js.native
   trait Container extends GameObject with AlphaSingle with BlendMode with ComputedSize with Depth with Mask with Transform with Visible {
     /* members */
-    def list : js.Array[GameObject] = js.native
+    def list[Child <: GameObject] : js.Array[Child] = js.native
     def exclusive : Boolean = js.native
     def maxSize : Int = js.native
     def position : Int = js.native
@@ -144,6 +144,11 @@ object GameObjectsNamespace extends js.Object {
   @js.native
   trait Shape extends GameObject with Transform with BlendMode with ComputedSize
     with Depth with Origin with Mask with Pipeline with ScrollFactor with Visible {
+    /* members */
+    var strokeAlpha : JSNumber = js.native
+    var strokeColor : JSNumber = js.native
+    /* methods */
+    def setStrokeStyle[Me <: Shape](lineWidth : JSNumber = js.native, color : Int = js.native, alpha : JSNumber = js.native) : Me
   }
 
   @js.native

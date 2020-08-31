@@ -58,7 +58,7 @@ object RootStyle extends StyleSheet.Standalone {
   )
 
   "canvas" -(
-    height(100 %%),
+    //height(100 %%),
     width(100 %%),
   )
 }

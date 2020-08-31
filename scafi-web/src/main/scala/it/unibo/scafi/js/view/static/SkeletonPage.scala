@@ -44,7 +44,7 @@ object SkeletonPage {
   )
 
   def simulationConfiguration : TypedTag[Div] = div(
-    cls := "col-2 bg-white",
+    cls := "col-1 bg-dark",
     id := "simulationConfiguration"
   )
 
@@ -55,7 +55,7 @@ object SkeletonPage {
   )
 
   def visualization : TypedTag[Div] = div(
-    cls := "col-6 bg-dark",
+    cls := "col-7 bg-dark",
     id := "visualization",
     controlsDiv,
     visualizationSection
