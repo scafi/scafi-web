@@ -9,10 +9,8 @@ import it.unibo.scafi.js.view.static.SkeletonPage
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 /**
-  * from the main body, scala js produce a javascript file.
-  * it is an example of a ScaFi simulation transcompilated in javascript.
+  * Root object, it initialize the simulation, the page and the backend.
   */
-@JSExportTopLevel("Index")
 object Index {
   import org.scalajs.dom._
   val configuration = SupportConfiguration(
@@ -22,7 +20,9 @@ object Index {
     seed = SimulationSeeds(),
   )
   val updateTime = 100 //todo think to put into a configuration
-  val support = new SimulationSupport(configuration) with SimulationExecutionPlatform with SimulationCommandInterpreter
+  val support = new SimulationSupport(configuration)
+    with SimulationExecutionPlatform
+    with SimulationCommandInterpreter
 
   @JSExport
   def main(args: Array[String]): Unit = configurePage()
@@ -30,8 +30,7 @@ object Index {
   val programs = Map(
     "round counter" -> "rep(() => 0, (k) => k+1)",
     "hello scafi" -> "\"hello scafi\"",
-    "gradient" ->
-      """rep(() => Infinity, (d) => {
+    "gradient" -> """rep(() => Infinity, (d) => {
         |  return mux(sense("source"), 0.0,
         |    foldhoodPlus(() => Infinity, Math.min, () => nbr(() => d) + nbrvar("nbrRange"))
         |  )
@@ -50,7 +49,6 @@ object Index {
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
     support.invalidate()
   }
-
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)
 }

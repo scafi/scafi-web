@@ -11,5 +11,5 @@ object Script {
   /**
     * return a script with javascript lang selected
     */
-  def javascript(code : String) : Script = Script("javascript", s)
+  def javascript(code : String) : Script = Script("javascript", code)
 }
