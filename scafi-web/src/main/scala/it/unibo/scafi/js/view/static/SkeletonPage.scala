@@ -13,6 +13,10 @@ object SkeletonPage {
   lazy val selectionProgram : Select = select(id := "selectProgram", cls := "form-control").render
   lazy val controlsDiv : Div = div(id := "controls").render
   lazy val visualizationSection : Div = div(id := "visualizationPane").render
+  lazy val simulationConfiguration : Div = div(
+    cls := "col-2 bg-dark",
+    id := "simulationConfiguration"
+  ).render
   //TODO find a good way to model bootstrap class (with a dedicated module?)
   val content : TypedTag[Div] = div(
     cls:= "container-fluid d-flex flex-column p-0",
@@ -43,11 +47,6 @@ object SkeletonPage {
     visualization
   )
 
-  def simulationConfiguration : TypedTag[Div] = div(
-    cls := "col-1 bg-dark",
-    id := "simulationConfiguration"
-  )
-
   def editor : TypedTag[Div] = div(
     cls := "col-4 bg-dark",
     selectionProgram,
@@ -55,7 +54,7 @@ object SkeletonPage {
   )
 
   def visualization : TypedTag[Div] = div(
-    cls := "col-7 bg-dark",
+    cls := "col-6 bg-dark",
     id := "visualization",
     controlsDiv,
     visualizationSection

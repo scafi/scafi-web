@@ -1,20 +1,22 @@
 package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.core.Core
-import it.unibo.scafi.js.controller.local.SimulationCommand.Move
-import it.unibo.scafi.js.controller.local.SimulationCommandInterpreter
-import it.unibo.scafi.js.{JSNumber, Utils}
+import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.controller.CommandInterpreter
+import it.unibo.scafi.js.controller.local.SimulationCommand
+import it.unibo.scafi.js.controller.local.SimulationCommand.{Move, ToggleSensor}
 import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.{Handler1, Handler4}
 import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.Pointer
 import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes
 import it.unibo.scafi.js.facade.phaser.types.core.{GameConfig, PhysicsConfig, ScaleConfig}
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
-import it.unibo.scafi.js.model.{Graph, Node}
+import it.unibo.scafi.js.model.Graph
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 //TODO manage resize
-class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : SimulationCommandInterpreter) extends (Graph => Unit) {
+class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result]) extends (Graph => Unit) {
+  import Phaser.GameObjects.Components._
   import Phaser._
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val size = 5 //TODO put in configuration
@@ -27,11 +29,8 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Simulat
     new GameConfig(
       parent = paneSection,
       scene = sceneHandler,
-      physics = new PhysicsConfig (
-        default = PhysicsConfig.ARCADE,
-        arcade = new ArcadeWorldConfig()
-      ),
-      scale = new ScaleConfig ( mode = ScaleModes.RESIZE )
+      physics = new PhysicsConfig(default = PhysicsConfig.ARCADE, arcade = new ArcadeWorldConfig()),
+      scale = new ScaleConfig(mode = ScaleModes.RESIZE)
     )
   )
 
@@ -70,12 +69,10 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Simulat
       }
     }
   )
-  import Phaser.GameObjects.Components._
-
 
   override def apply(v1: Graph): Unit = model = (Some(v1), true)
 
-  private def onSameGraph(graph : Graph, scene : Phaser.Scene) : Unit = {}
+  private def onSameGraph(graph : Graph, scene : Phaser.Scene) : Unit = ()
 
   private def onNewGraph(graph : Graph, scene : Phaser.Scene) : Unit = {
     //TODO improve performance (e.g. via caching)
@@ -113,7 +110,8 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Simulat
 
   private def onLabel(label : (String, Any)) : String = label match {
     case (_, e: Core#Export) => e.root[Any]() match {
-      case (other : Double) => ""  + other % 0.01
+      case (other : Double) => ""  + other.toInt
+      case other => other.toString
     }
     case (_, other: Double) => "" + other % 0.01
     case (_, e) => e.toString
@@ -136,6 +134,7 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Simulat
     onMainContainerDrag(scene)
     controlKeyEvents(scene)
     altKeyEvents(scene)
+    onToggle(scene)
   }
 
   private def onPointerDown(scene : Scene) : Unit = {
@@ -229,10 +228,22 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Simulat
     altKey.on("up", altUpHandler)
   }
 
+  private def onToggle(scene : Scene): Unit = {
+    def onClickDown(sensor : String) : Handler1[Scene] = (obj, _ : Any) => {
+      val ids = selectionContainer.list[GameObjects.Arc]
+        .map(node => (node.getData("id").toString))
+        .toSet
+      commandInterpreter.execute(ToggleSensor(sensor, ids))
+    }
+    val oneNumber = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ONE)
+    val twoNumber = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.TWO)
+    oneNumber.on("down", onClickDown("source"))
+    twoNumber.on("down", onClickDown("obstacle"))
+  }
+
   private def resetSelection() : Unit = {
     rectangleSelection.setSize[GameObjects.Rectangle](0, 0)
     selectionContainer.removeAll()
     selectionContainer.setPosition(0, 0)
   }
-
 }

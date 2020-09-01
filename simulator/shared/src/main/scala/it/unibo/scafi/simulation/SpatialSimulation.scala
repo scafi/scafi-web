@@ -116,6 +116,7 @@ trait SpatialSimulation extends Simulation with SpaceAwarePlatform  {
       })
     }
 
+
     class SpatialSimulatorContextImpl(id: ID) extends SimulatorContextImpl(id){
 
       import NetworkSimulator.Optionable

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.facade.phaser.Phaser.Geom
-import it.unibo.scafi.js.view.dynamic.{EditorSection, PhaserGraphSection, SimulationControlsSection}
+import it.unibo.scafi.js.view.dynamic.{ConfigurationSection, EditorSection, PhaserGraphSection, SimulationControlsSection}
 import it.unibo.scafi.js.view.static.SkeletonPage
 
 import scala.concurrent.duration.FiniteDuration
@@ -19,8 +19,8 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 object Index {
   import org.scalajs.dom._
   val configuration = SupportConfiguration(
-    RandomNetwork(min = 0, max = 1000, howMany = 200),
-    SpatialRadius(range = 100),
+    GridLikeNetwork(10, 10, 60, 60, 0),
+    SpatialRadius(range = 60),
     deviceShape = DeviceConfiguration.standard,
     seed = SimulationSeeds(),
   )
@@ -47,6 +47,7 @@ object Index {
 
   def configurePage(): Unit = {
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, support)
+    val configurationSection = new ConfigurationSection(SkeletonPage.simulationConfiguration, support)
     document.head.appendChild(SkeletonPage.renderedStyle.render)
     document.body.appendChild(SkeletonPage.content.render)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)

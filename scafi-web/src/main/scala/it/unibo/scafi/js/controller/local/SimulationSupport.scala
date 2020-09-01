@@ -14,6 +14,7 @@ import scala.concurrent.Future
 
 class SimulationSupport(protected var systemConfig: SupportConfiguration)
   extends AggregateSystemSupport[SpaceAwareSimulator, SupportConfiguration, SimulationSideEffect] {
+  import SimulationSupport._
 
   protected var backend: SpaceAwareSimulator = fromConfig(systemConfig)
 
@@ -25,7 +26,10 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)
   private val localSubscriber : Cancelable = graphStream.subscribe() // turn graph stream in an hot one
   sideEffectsStream.onNext(Invalidated)
 
-  override def evolve(config: SupportConfiguration): Future[Unit] = Task.eval[Unit]{ fromConfig(systemConfig) } runToFuture
+  override def evolve(config: SupportConfiguration): Future[Unit] = Future.successful{
+    fromConfig(config)
+    invalidate()
+  }
 
   def invalidate() : Unit = sideEffectsStream.onNext(Invalidated)
 
@@ -63,7 +67,7 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)
     val nodes : Set[Node] = backend.exports()
       .map { case (id, export) => (backend.devs(id), export )}
       .map {
-        case (dev, Some(export)) => (dev, dev.lsns + ("export" -> export))
+        case (dev, Some(export)) => (dev, dev.lsns + (EXPORT_LABEL -> export))
         case (dev, None) => (dev, dev.lsns)
       }
       .map { case (dev, labels) => Node(dev.id, dev.pos, labels)}
@@ -75,7 +79,7 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)
   import GraphOps.Implicits._
   private def updateGraphWithExports(exports: Seq[(ID, EXPORT)], graph: Graph) : Graph = {
     val newExports = exports.map { case (id, export) => export -> graph(id) }
-      .map { case (export, node) => node.copy(labels = node.labels + ("export" -> export))}
+      .map { case (export, node) => node.copy(labels = node.labels + (EXPORT_LABEL -> export))}
     graph.insertNodes(newExports)
   }
 
@@ -87,13 +91,16 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)
   }
 
   private def updateGraphWithSensor(sensorMap : Map[ID, Map[LSNS, Any]], graph : Graph) = {
-    val nodeUpdated = sensorMap.map { case (id, labels) => labels -> graph(id)}
+    val nodeUpdated = sensorMap.toSeq.map { case (id, labels) => labels -> graph(id) }
       .map { case (labels, node) => node.copy(labels = node.labels ++ labels) }
-      .toSeq
     graph.insertNodes(nodeUpdated)
   }
 
   private def computeVertices() : Set[Vertex] = backend.getAllNeighbours()
     .flatMap { case (id, elements) => elements.map(Vertex(id, _)) }
     .toSet
+}
+
+object SimulationSupport {
+  val EXPORT_LABEL = "export"
 }

@@ -9,6 +9,7 @@ import it.unibo.scafi.js.controller.local.SimulationSideEffect.{PositionChanged,
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportAll
+import scala.util.{Success, Try}
 trait SimulationCommandInterpreter
   extends CommandInterpreter[SpaceAwareSimulator, SimulationSideEffect, SimulationCommand, SimulationCommand.Result] {
   self : SimulationSupport =>
@@ -38,15 +39,14 @@ trait SimulationCommandInterpreter
   }
 
   private def onToggle(sensor : String, ids : Set[String]) : Result = {
-    val toggleSensors = ids.map(id => id -> backend.getSensor(sensor))
-        .collect { case (id, Some(value : Boolean)) => id -> value }
-        .groupBy { case (id, value) => value }
+    val toggleSensors = ids.map(id => id -> Try(backend.localSensor[Boolean](sensor)(id)))
+        .collect { case (id, Success(value)) => id -> value }
+        .groupBy { case (_, value) => value }
     val sensorMap = toggleSensors.values
-      .flatMap(set => set.map { case (id, value) => id -> Map(sensor -> ! value)} )
+      .flatMap(set => set.map { case (id, value) => id -> Map(sensor -> !value)} )
       .toMap
-
     sideEffectsStream.onNext(SensorChanged(sensorMap))
-    toggleSensors.foreach { case (value, idsSet) => { backend.chgSensorValue(sensor, idsSet.map(_._1), !value) } }
+    toggleSensors.foreach { case (sensorValue, set) => backend.chgSensorValue(sensor, set.map(_._1), ! sensorValue)}
     Executed
   }
 }

@@ -73,6 +73,9 @@ object InputNamespace extends js.Any {
     object KeyCodes extends js.Object {
       val CTRL : Int = js.native
       val ALT : Int = js.native
+      val ONE : Int = js.native
+      val TWO : Int = js.native
+      val THREE : Int = js.native
     }
     @js.native
     trait Key extends EventsNamespace.EventEmitter {
