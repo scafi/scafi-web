@@ -10,19 +10,13 @@ package object js {
 
     @inline private def forceGet: A = value.asInstanceOf[A]
 
-    @inline def get: A =
-      if (isDefined) forceGet
-      else throw new NoSuchElementException("null")
+    @inline def get: A = if (isDefined) forceGet else throw new NoSuchElementException("null")
 
-    @inline def fold[B](ifEmpty: => B)(f: A => B): B =
-      if (isDefined) f(forceGet)
-      else ifEmpty
+    @inline def fold[B](ifEmpty: => B)(f: A => B): B = if (isDefined) f(forceGet) else ifEmpty
 
-    @inline def map[B](f: A => B): B | Null =
-      fold[B | Null](null)(f(_))
+    @inline def map[B](f: A => B): B | Null = fold[B | Null](null)(f(_))
 
-    @inline def getOrElse[B >: A](ifEmpty: => B): B =
-      fold[B](ifEmpty)(identity)
+    @inline def getOrElse[B >: A](ifEmpty: => B): B = fold[B](ifEmpty)(identity)
 
     @inline def toOption : Option[A] = Option(forceGet)
 

@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.js.NetworkSupport
-import it.unibo.scafi.js.WebIncarnation._
+import WebIncarnation._
 import it.unibo.scafi.js.dsl.WebDslTest._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

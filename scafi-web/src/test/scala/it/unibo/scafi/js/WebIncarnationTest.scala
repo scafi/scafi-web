@@ -1,6 +1,7 @@
 package it.unibo.scafi.js
 
-import it.unibo.scafi.js.WebIncarnation._
+import it.unibo.scafi.js.dsl.WebIncarnation
+import it.unibo.scafi.js.dsl.WebIncarnation._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 //TODO add test for nbrvar, foldhoodPlus,...

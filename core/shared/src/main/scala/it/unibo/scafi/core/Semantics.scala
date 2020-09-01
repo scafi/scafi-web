@@ -101,7 +101,7 @@ trait Semantics extends Core with Language {
 
     override def mid(): ID = vm.self
 
-    override def rep[A](init: =>A)(fun: (A) => A): A = {
+    override def rep[A](init: => A)(fun: (A) => A): A = {
       vm.nest(Rep[A](vm.index))(write = vm.unlessFoldingOnOthers) {
         vm.locally {
           fun(vm.previousRoundVal.getOrElse(init))

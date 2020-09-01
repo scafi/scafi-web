@@ -4,13 +4,10 @@ import java.util.concurrent.TimeUnit
 
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.facade.phaser.Phaser.Geom
 import it.unibo.scafi.js.view.dynamic.{ConfigurationSection, EditorSection, PhaserGraphSection, SimulationControlsSection}
 import it.unibo.scafi.js.view.static.SkeletonPage
-
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
-
 /**
   * from the main body, scala js produce a javascript file.
   * it is an example of a ScaFi simulation transcompilated in javascript.
@@ -27,12 +24,9 @@ object Index {
   val updateTime = 100 //todo think to put into a configuration
   val support = new SimulationSupport(configuration) with SimulationExecutionPlatform with SimulationCommandInterpreter
 
-
   @JSExport
-  def main(args: Array[String]): Unit = {
-    println("Index.main !!!")
-    configurePage()
-  }
+  def main(args: Array[String]): Unit = configurePage()
+
   val programs = Map(
     "round counter" -> "rep(() => 0, (k) => k+1)",
     "hello scafi" -> "\"hello scafi\"",

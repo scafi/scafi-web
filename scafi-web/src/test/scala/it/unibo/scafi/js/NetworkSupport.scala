@@ -1,5 +1,6 @@
 package it.unibo.scafi.js
 
+import it.unibo.scafi.js.dsl.WebIncarnation
 import org.scalatest.{BeforeAndAfterEach, Suite}
 
 trait NetworkSupport extends BeforeAndAfterEach {

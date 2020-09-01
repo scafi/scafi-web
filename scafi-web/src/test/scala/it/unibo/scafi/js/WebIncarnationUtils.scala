@@ -1,6 +1,7 @@
 package it.unibo.scafi.js
 
 import it.unibo.scafi.config.GridSettings
+import it.unibo.scafi.js.dsl.WebIncarnation
 
 object WebIncarnationUtils {
   /**

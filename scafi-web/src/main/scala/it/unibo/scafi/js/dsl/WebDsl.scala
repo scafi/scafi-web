@@ -1,5 +1,5 @@
 package it.unibo.scafi.js.dsl
-import it.unibo.scafi.js.WebIncarnation._
+import WebIncarnation._
 import it.unibo.scafi.js.dsl.ScafiDslJs.LanguageConverter
 
 import scala.scalajs.js
