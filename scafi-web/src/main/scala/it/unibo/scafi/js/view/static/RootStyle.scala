@@ -47,14 +47,13 @@ object RootStyle extends StyleSheet.Standalone {
     height(contentHeight)
   )
 
-  "#visualization, #canvasContainer, #simulationConfiguration " - (
-    height(contentHeight)
+  "#visualization, #canvasContainer, #backendConfig" - (
+    height(contentHeight),
+    overflow.auto
   )
 
   "#controls" -(
     height(utilsVisualizationHeight),
-    /*overflowX.auto,
-    overflowY.hidden,*/
     whiteSpace.nowrap
   )
 

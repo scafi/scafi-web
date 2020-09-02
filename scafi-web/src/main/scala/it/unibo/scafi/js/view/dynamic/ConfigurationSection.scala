@@ -1,10 +1,10 @@
 package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.controller.AggregateSystemSupport
-import it.unibo.scafi.js.controller.local.{DeviceConfiguration, GridLikeNetwork, RandomNetwork, SimulationSeeds, SimulationSupport, SpatialRadius, SupportConfiguration}
-import it.unibo.scafi.js.facade.simplebar.SimpleBarConfig.{ForceX, IsVisible}
-import it.unibo.scafi.js.facade.simplebar.{SimpleBar, SimpleBarConfig}
-import org.scalajs.dom.html.{Div, Select}
+import it.unibo.scafi.js.controller.local._
+import it.unibo.scafi.js.facade.simplebar.SimpleBar
+import org.scalajs.dom.html.{Button, Div, Select}
+import org.scalajs.dom.raw.MouseEvent
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -15,7 +15,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
 
   val container : Div = div(cls:= "pt-1, pb-1").render
   configuration.appendChild(container)
-
+  new SimpleBar(configuration)
   val selectMode = select (cls := "form-control", option(Random.toString), option(Grid.toString)).render
   val loadButton = button( cls := "btn btn-primary btn-sm",`type` := "button", "load config").render
   val mainDiv = div(cls := "input-group input-group-sm", selectMode, loadButton).render
@@ -27,13 +27,19 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
 
   private val (min, max, howMany) = (InputText("min", 0), InputText("max", 1000), InputText("howMany", 100))
   private val randomValue = List(min, max, howMany)
-
-  private var sensors = List(SensorInputText("source", "false"), SensorInputText("obstacle", "false"))
   private val radius = InputText("radius", 100)
 
+  private var sensors = List(new SensorInputText("source", "false"), new SensorInputText("obstacle", "false"))
+  def onRemoveSensor(sensor : SensorInputText) : MouseEvent => Unit = ev => {
+    sensors = sensors.filterNot(_ == sensor)
+    init(getModeFromSelect(selectMode))
+  }
+  sensors.foreach(sensor => sensor.closeButton.onclick = onRemoveSensor(sensor))
   private val addSensorButton = button( cls := "btn btn-primary btn-sm",`type` := "button", "add sensor").render
+
   addSensorButton.onclick = ev => {
-    val newElement = SensorInputText()
+    val newElement = new SensorInputText()
+    newElement.closeButton.onclick = onRemoveSensor(newElement)
     sensors = sensors ::: List(newElement)
     container.appendChild(newElement.render)
   }
@@ -66,14 +72,16 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
 
 object ConfigurationSection {
   import scalatags.JsDom.all._
-  private case class SensorInputText(name : String = "", default : String = "") {
+  private class SensorInputText(name : String = "", default : String = "") {
     private val nameTag = input (`type` := "text", placeholder := "name", cls := "form-control", value := name).render
     private val valueTag = input (`type` := "text", placeholder := "value", cls := "form-control", value := default).render
+    val closeButton : Button = button(cls := "btn-sm btn-danger ml-1", span(cls := "text-light", "X")).render
     private def booleanFromString(value : String) : Try[Boolean] = value match {
       case "true" => Success(true)
       case "false" => Success(false)
       case _ => Failure(new IllegalArgumentException)
     }
+
     def nameAndValue : (String, Any) = (nameTag.value, parseValue)
 
     def parseValue : Any = Try(valueTag.value.toInt)
@@ -81,8 +89,8 @@ object ConfigurationSection {
       .recoverWith { case _ => (booleanFromString(valueTag.value)) }
       .getOrElse(valueTag.value)
     val render =  div (
-      cls := "input-group input-group-sm mb-2 mt-2",
-      div(cls := "input-group-prepend", span (cls := "input-group-text", "sensor"), nameTag, valueTag),
+      cls := "input-group-sm mb-2 mt-2",
+      div(cls := "input-group-prepend", nameTag, valueTag, closeButton),
     ).render
   }
 

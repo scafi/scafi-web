@@ -26,7 +26,7 @@ object SimulationControlsSection {
     (loadButton :: startButton :: stopButton :: tick :: Nil) foreach (el => controlDiv.appendChild(el))
     (labelBatch :: rangeBatch :: valueBatch :: labelDelta :: rangeDelta :: valueDelta :: Nil) foreach (el => controlDiv.appendChild(el))
     (tick :: stopButton :: startButton :: Nil) foreach {el => el.disabled = true }
-    new SimpleBar(controlDiv, new SimpleBarConfig(forceVisible = ForceX)).recalculate()
+    new SimpleBar(controlDiv).recalculate()
 
     loadButton.onclick = event => execution.loadScript(Script.javascript(editor.getValue())).onComplete {
       case Success(ticker : TickBased) =>
