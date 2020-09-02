@@ -4,13 +4,15 @@ import it.unibo.scafi.js.controller.local.SimulationExecution.{Continuously, Tic
 import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecutionPlatform}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.facade.codemirror.Editor
+import it.unibo.scafi.js.facade.simplebar.SimpleBarConfig.{ForceX, IsVisible}
+import it.unibo.scafi.js.facade.simplebar.{SimpleBar, SimpleBarConfig}
 import org.scalajs.dom.html.{Div, Input, Label}
 import org.scalajs.dom.raw.HTMLElement
 import scalatags.JsDom.all._
 
 import scala.util.{Failure, Success}
 object SimulationControlsSection {
-  private val buttonClass =  cls := "btn btn-primary mr-1"
+  private val buttonClass =  cls := "btn btn-primary mr-1 btn-sm"
   private val loadButton = button("load", buttonClass).render
   private val startButton = button("start", buttonClass).render
   private val stopButton = button("stop", buttonClass).render
@@ -21,10 +23,10 @@ object SimulationControlsSection {
   import scala.concurrent.ExecutionContext.Implicits.global
   def render(execution : SimulationExecutionPlatform, editor : Editor, controlDiv : Div) : Unit = {
     var simulation : Option[SimulationExecution] = None
-
     (loadButton :: startButton :: stopButton :: tick :: Nil) foreach (el => controlDiv.appendChild(el))
     (labelBatch :: rangeBatch :: valueBatch :: labelDelta :: rangeDelta :: valueDelta :: Nil) foreach (el => controlDiv.appendChild(el))
     (tick :: stopButton :: startButton :: Nil) foreach {el => el.disabled = true }
+    new SimpleBar(controlDiv, new SimpleBarConfig(forceVisible = ForceX)).recalculate()
 
     loadButton.onclick = event => execution.loadScript(Script.javascript(editor.getValue())).onComplete {
       case Success(ticker : TickBased) =>

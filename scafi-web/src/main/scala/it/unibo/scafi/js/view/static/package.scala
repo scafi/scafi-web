@@ -6,11 +6,6 @@ package object static {
   //TODO improve this setting
   val CssSettings = scalacss.DevDefaults
   /* all static import for scala.js */
-  //code mirror javascript style
-  @js.native
-  @JSImport("codemirror/mode/javascript/javascript.js", JSImport.Namespace)
-  object JavascriptStyle extends js.Any
-  JavascriptStyle
   /*CSS*/
   //code mirror css
   @js.native
@@ -22,6 +17,16 @@ package object static {
   @JSImport("bootstrap/dist/css/bootstrap.min.css", JSImport.Namespace)
   object BootstrapCSS extends js.Any
   BootstrapCSS
+  //simple bar style
+  @js.native
+  @JSImport("simplebar/dist/simplebar.css", JSImport.Namespace)
+  object SimpleBarCSS extends js.Any
+  SimpleBarCSS
+  //code mirror javascript style
+  @js.native
+  @JSImport("codemirror/mode/javascript/javascript.js", JSImport.Namespace)
+  object JavascriptStyle extends js.Any
+  JavascriptStyle
   //jquery
   import org.querki.jquery._
   @js.native

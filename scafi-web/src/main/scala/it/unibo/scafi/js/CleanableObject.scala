@@ -7,10 +7,10 @@ import scala.scalajs.js
   * todo make a macro that does this job
   */
 class CleanableObject extends js.Object {
-  clean(this)
-  def clean(obj : js.Object) : Unit = {
-    js.Object.entries(obj)
+  clean()
+  def clean() : Unit = {
+    js.Object.entries(this)
       .filter(element => js.isUndefined(element._2))
-      .foreach(element => js.special.delete(obj, element._1))
+      .foreach(element => js.special.delete(this, element._1))
   }
 }

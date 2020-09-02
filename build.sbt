@@ -277,8 +277,7 @@ lazy val `scafi-web` = project
         "css-loader" -> "4.2.1",
         "style-loader" -> "1.2.1",
          "phaser" -> "3.24.1",
-        //"fsevents" -> "1.2.12",
-        "d3" -> "3.5.5" // jsnetworkx leverages d3 v3 (i.e., do not upgrade to v4 or v5)
+         "simplebar" -> "6.0.0-beta.3"
       ),
       npmDevDependencies in Compile ++= Seq(
         "webpack-merge" -> "4.1.2",

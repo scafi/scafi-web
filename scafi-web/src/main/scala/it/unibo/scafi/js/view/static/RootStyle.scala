@@ -1,22 +1,33 @@
 package it.unibo.scafi.js.view.static
 import CssSettings._
+import scalacss.internal.Attr
+import scalacss.internal.ValueT.TypedAttrBase
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
+/**
+  * the css main file of the page, it contains the main tag and id that need to be styled
+  */
 object RootStyle extends StyleSheet.Standalone {
   import dsl._
 
   private val navHeight = 12 vh
   private val pageContentHeight = 88 vh
   private val contentHeight = 86 vh
-  private val visualizationHeight = 81 vh
+  private val visualizationHeight = 80 vh
   private val editorHeight = 82 vh
-  private val utilsVisualizationHeight = 5 vh
+  private val utilsVisualizationHeight = 6 vh
 
+  object scrollbarWidth extends TypedAttrBase {
+    override val attr: Attr = Attr.real("scrollbar-width")
+    def thin = av("thin")
+  }
   "html, body" - (
-    height(100 %%)
+    height(100 %%),
+    scrollbarWidth.thin
   )
+
   "nav" -(
     height(navHeight)
   )
@@ -41,7 +52,10 @@ object RootStyle extends StyleSheet.Standalone {
   )
 
   "#controls" -(
-    height(utilsVisualizationHeight)
+    height(utilsVisualizationHeight),
+    /*overflowX.auto,
+    overflowY.hidden,*/
+    whiteSpace.nowrap
   )
 
   "#console" -(
@@ -56,9 +70,7 @@ object RootStyle extends StyleSheet.Standalone {
   "#pageContainer" -(
     height(pageContentHeight)
   )
-
-  "canvas" -(
-    //height(100 %%),
-    width(100 %%),
+  ".simplebar-scrollbar::before" -(
+    backgroundColor(white)
   )
 }
