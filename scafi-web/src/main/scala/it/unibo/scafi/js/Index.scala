@@ -4,9 +4,11 @@ import java.util.concurrent.TimeUnit
 
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.view.dynamic.{ConfigurationSection, EditorSection, PhaserGraphSection, SimulationControlsSection}
+import it.unibo.scafi.js.facade.phaser.Implicits
+import it.unibo.scafi.js.view.dynamic.{ConfigurationSection, EditorSection, PhaserGraphSection, PhaserInteraction, SimulationControlsSection}
 import it.unibo.scafi.js.view.static.SkeletonPage
 import org.scalajs.dom
+import org.scalajs.dom.ext.Color
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
@@ -41,7 +43,7 @@ object Index {
   )
 
   def configurePage(): Unit = {
-    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, support)
+    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support))
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     document.head.appendChild(SkeletonPage.renderedStyle.render)
     document.body.appendChild(SkeletonPage.content.render)
@@ -50,6 +52,7 @@ object Index {
     SimulationControlsSection.render(support, editor.editor, SkeletonPage.controlsDiv)
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
     support.invalidate()
+    SkeletonPage.visualizationSection.focus()
   }
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)

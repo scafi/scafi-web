@@ -40,6 +40,7 @@ object Phaser extends js.Object {
   val Textures : TexturesNamespace.type = js.native
   val Events : EventsNamespace.type = js.native
   val Time : TimeNamespace.type = js.native
+  val Core : CoreNamespace.type  = js.native
   /* CLASSES */
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Game.html]] */
   @js.native
@@ -48,7 +49,7 @@ object Phaser extends js.Object {
     def anims : Animations.AnimationManager = js.native
     def cache : Cache.CacheManager = js.native
     def canvas : HTMLCanvasElement = js.native
-    val config : Core.Config = js.native
+    val config : CoreNamespace.Config = js.native
     def context : CanvasRenderingContext2D | WebGLRenderingContext = js.native
     def device : DeviceConf = js.native
     def domContainer :  HTMLDivElement = js.native
@@ -58,7 +59,7 @@ object Phaser extends js.Object {
     def input : Input.InputManager = js.native
     val isBooted : Boolean = js.native
     val isRunning : Boolean = js.native
-    def loop : Core.TimeStep = js.native
+    def loop : CoreNamespace.TimeStep = js.native
     def plugins : Plugins.PluginManager = js.native
     def registry : Data.DataManager = js.native
     def renderer : Renderer.Canvas.CanvasRender = js.native
@@ -105,16 +106,4 @@ object Phaser extends js.Object {
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser]] */
   @js.native
   trait DeviceConf extends js.Object { /*todo*/ }
-  /* NAMESPACES */
-  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Core.html]] */
-  @js.native
-  object Core extends js.Object {
-    /* CLASSES */
-    /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Core.Config.html]] */
-    @js.native
-    trait Config extends js.Object { /* todo */ }
-    /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Core.Config.html]] */
-    @js.native
-    trait TimeStep extends js.Object { /* todo */ }
-  }
 }

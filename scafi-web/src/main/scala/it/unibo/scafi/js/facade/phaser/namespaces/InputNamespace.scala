@@ -1,6 +1,7 @@
 package it.unibo.scafi.js.facade.phaser.namespaces
 
 import it.unibo.scafi.js.facade.phaser.Phaser
+import it.unibo.scafi.js.facade.phaser.namespaces.input.{InputEventsNamespace, KeyboardNamespace}
 import it.unibo.scafi.js.{JSNumber, Nullable}
 import org.scalajs.dom.raw.HTMLCanvasElement
 
@@ -11,7 +12,27 @@ import scala.scalajs.js.|
 @js.native
 @JSGlobal("Phaser.Input")
 object InputNamespace extends js.Any {
+  /* NAMESPACES */
+  val Events : InputEventsNamespace.type = js.native
+  val Keyboard : KeyboardNamespace.type = js.native
+
+  @js.native
+  object Mouse extends js.Object {
+    @js.native
+    trait MouseManager extends js.Object {
+      /* todo */
+      /* members */
+      var capture : Boolean = js.native
+    }
+  }
+
+  @js.native
+  object Touch extends js.Object {
+    @js.native
+    trait TouchManager extends js.Object { /* todo */ }
+  }
   import Phaser._
+  /* CLASSES */
   @js.native
   class InputManager(val game : Phaser.Game = js.native, conf : js.Object) extends js.Object {
     /* members */
@@ -20,7 +41,7 @@ object InputNamespace extends js.Any {
     def config : Phaser.Core.Config = js.native
     def defaultCursor : String = js.native
     def enabled : Boolean = js.native
-    def events : Events.EventEmitter = js.native
+    def events : Phaser.Events.EventEmitter = js.native
     def globalTopOnly : Boolean = js.native
     def isOver : Boolean = js.native
     def keyboard : Nullable[Keyboard.KeyboardManager] = js.native
@@ -56,53 +77,7 @@ object InputNamespace extends js.Any {
   }
 
   @js.native
-  object Keyboard extends js.Object {
-    /* todo static */
-    @js.native
-    trait KeyboardManager extends js.Object {
-      /* members todo */
-      var preventDefault : Boolean = js.native
-    }
-    @js.native
-    trait KeyboardPlugin extends js.Object {
-      def addKey(key : Key | String | Int, enableCapture : Boolean = js.native, emitOnRepeat : Boolean = js.native) : Key
-      def addKeys(key : js.Array[Key | String | Int], enableCapture : Boolean = js.native, emitOnRepeat : Boolean = js.native) : js.Dictionary[Key]
-      /* todo */
-    }
-
-    @js.native
-    object KeyCodes extends js.Object {
-      val CTRL : Int = js.native
-      val ALT : Int = js.native
-      val ONE : Int = js.native
-      val TWO : Int = js.native
-      val THREE : Int = js.native
-    }
-    @js.native
-    trait Key extends EventsNamespace.EventEmitter {
-      def isDown : Boolean = js.native
-      def isUp : Boolean = js.native
-      /* todo */
-    }
-  }
-
-  @js.native
-  object Mouse extends js.Object {
-    @js.native
-    trait MouseManager extends js.Object {
-      /* todo */
-      /* members */
-      var capture : Boolean = js.native
-    }
-  }
-
-  @js.native
-  object Touch extends js.Object {
-    @js.native
-    trait TouchManager extends js.Object { /* todo */ }
-  }
-  @js.native
-  trait InputPlugin extends js.Object with Events.EventEmitter {
+  trait InputPlugin extends js.Object with Phaser.Events.EventEmitter {
     /* fields */
     var keyboard : Nullable[Keyboard.KeyboardPlugin] = js.native
     /* methods */

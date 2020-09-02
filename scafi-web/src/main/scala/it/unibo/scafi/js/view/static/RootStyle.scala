@@ -19,47 +19,31 @@ object RootStyle extends StyleSheet.Standalone {
   private val editorHeight = 82 vh
   private val utilsVisualizationHeight = 6 vh
 
-  object scrollbarWidth extends TypedAttrBase {
-    override val attr: Attr = Attr.real("scrollbar-width")
-    def thin = av("thin")
-  }
-  "html, body" - (
-    height(100 %%),
-    scrollbarWidth.thin
-  )
-
-  "nav" -(
-    height(navHeight)
-  )
+  "html, body" - (height(100 %%))
+  "nav" -(height(navHeight))
 
   "#editor" - (
     height(100 %%),
     paddingBottom(10 px),
     flex := "1 1 auto",
-    position.relative
-  )
-
-  ".CodeMirror" - (
-    height(editorHeight).important,
-  )
-
-  "#canvasContainer" - (
-    height(contentHeight)
-  )
-
-  "#visualization, #canvasContainer, #backendConfig" - (
-    height(contentHeight),
+    position.relative,
     overflow.auto
   )
+
+  ".CodeMirror" - (height(editorHeight).important)
+
+  "#canvasContainer" - (height(contentHeight))
+
+  "#visualization, #canvasContainer, #backendConfig" - (height(contentHeight))
+
+  "backendConfig" -(overflow.auto)
 
   "#controls" -(
     height(utilsVisualizationHeight),
     whiteSpace.nowrap
   )
 
-  "#console" -(
-    height(utilsVisualizationHeight)
-  )
+  "#console" -(height(utilsVisualizationHeight))
 
   "#visualizationPane" - (
     margin(1 px),
@@ -67,11 +51,7 @@ object RootStyle extends StyleSheet.Standalone {
     outlineWidth(0 px)
   )
 
-  "#pageContainer" -(
-    height(pageContentHeight)
-  )
+  "#pageContainer" -(height(pageContentHeight))
 
-  ".simplebar-scrollbar::before" -(
-    backgroundColor(white)
-  )
+  ".simplebar-scrollbar::before" -(backgroundColor(white))
 }

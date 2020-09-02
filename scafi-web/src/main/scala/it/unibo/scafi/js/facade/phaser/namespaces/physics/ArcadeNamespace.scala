@@ -46,6 +46,8 @@ object ArcadeNamespace extends js.Object {
     var x : JSNumber = js.native
     var y : JSNumber = js.native
     var center : Math.Vector2 = js.native
+    val width : JSNumber = js.native
+    val halfWidth : JSNumber = js.native
   }
   @js.native
   trait StaticBody extends js.Object {
