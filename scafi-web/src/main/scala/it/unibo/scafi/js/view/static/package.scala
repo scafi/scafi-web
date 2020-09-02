@@ -32,10 +32,9 @@ package object static {
   @JSImport("bootstrap/dist/js/bootstrap.bundle.js", JSImport.Namespace)
   object Bootstrap extends js.Any
   Bootstrap
-
+  //phaser lib
   @js.native
   @JSImport("phaser", JSImport.Namespace)
   object PhaserGlobal extends js.Any //global import phaser
   PhaserGlobal
-
 }

@@ -40,7 +40,7 @@ object Index {
 
   def configurePage(): Unit = {
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, support)
-    val configurationSection = new ConfigurationSection(SkeletonPage.simulationConfiguration, support)
+    val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     document.head.appendChild(SkeletonPage.renderedStyle.render)
     document.body.appendChild(SkeletonPage.content.render)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
