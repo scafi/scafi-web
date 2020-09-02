@@ -32,7 +32,7 @@ object SkeletonPage {
   /**
    * section in which is rendered the graph that represent the aggregate system.
    */
-  lazy val visualizationSection : Div = div(id := "visualizationPane").render
+  lazy val visualizationSection : Div = div(id := "visualizationPane", tabindex := 0).render
   /**
    * section used to configure the backend (it is support specific)
    */

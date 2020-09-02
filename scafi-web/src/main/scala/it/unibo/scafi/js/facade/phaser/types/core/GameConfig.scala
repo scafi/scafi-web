@@ -2,7 +2,7 @@ package it.unibo.scafi.js.facade.phaser.types.core
 
 import it.unibo.scafi.js.facade.phaser.Phaser
 import it.unibo.scafi.js.facade.phaser.types.scenes.SceneSetting
-import it.unibo.scafi.js.{CleanableObject, Nullable}
+import it.unibo.scafi.js.{CleanableObject, Debug, Nullable}
 import org.scalajs.dom.raw.{CanvasRenderingContext2D, HTMLCanvasElement, HTMLElement}
 
 import scala.scalajs.js
@@ -33,4 +33,7 @@ class GameConfig(val scene : SceneSetting,
                  val background : String | Int = 0x000000,
                  val physics : js.UndefOr[PhysicsConfig] = js.undefined,
                  val scale : js.UndefOr[ScaleConfig] = js.undefined,
-                 val plugins : js.UndefOr[PluginObject | js.Array[PluginObjectItem]] = {}) extends CleanableObject
+                 val input : js.UndefOr[InputConfig] = js.undefined,
+                 val plugins : js.UndefOr[PluginObject | js.Array[PluginObjectItem]] = {}) extends CleanableObject {
+  clean()
+}

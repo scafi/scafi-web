@@ -64,12 +64,14 @@ object RootStyle extends StyleSheet.Standalone {
 
   "#visualizationPane" - (
     margin(1 px),
-    height(visualizationHeight)
+    height(visualizationHeight),
+    outlineWidth(0 px)
   )
 
   "#pageContainer" -(
     height(pageContentHeight)
   )
+
   ".simplebar-scrollbar::before" -(
     backgroundColor(white)
   )

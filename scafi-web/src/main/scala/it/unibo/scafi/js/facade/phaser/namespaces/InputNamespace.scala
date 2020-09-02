@@ -61,7 +61,8 @@ object InputNamespace extends js.Any {
     @js.native
     trait KeyboardManager extends js.Object {
       /* members todo */
-     }
+      var preventDefault : Boolean = js.native
+    }
     @js.native
     trait KeyboardPlugin extends js.Object {
       def addKey(key : Key | String | Int, enableCapture : Boolean = js.native, emitOnRepeat : Boolean = js.native) : Key
@@ -88,7 +89,11 @@ object InputNamespace extends js.Any {
   @js.native
   object Mouse extends js.Object {
     @js.native
-    trait MouseManager extends js.Object { /* todo */ }
+    trait MouseManager extends js.Object {
+      /* todo */
+      /* members */
+      var capture : Boolean = js.native
+    }
   }
 
   @js.native

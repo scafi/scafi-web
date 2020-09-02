@@ -2,6 +2,8 @@ package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.controller.AggregateSystemSupport
 import it.unibo.scafi.js.controller.local.{DeviceConfiguration, GridLikeNetwork, RandomNetwork, SimulationSeeds, SimulationSupport, SpatialRadius, SupportConfiguration}
+import it.unibo.scafi.js.facade.simplebar.SimpleBarConfig.{ForceX, IsVisible}
+import it.unibo.scafi.js.facade.simplebar.{SimpleBar, SimpleBarConfig}
 import org.scalajs.dom.html.{Div, Select}
 
 import scala.scalajs.js

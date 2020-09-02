@@ -1,16 +1,16 @@
 package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.core.Core
-import it.unibo.scafi.js.JSNumber
 import it.unibo.scafi.js.controller.CommandInterpreter
 import it.unibo.scafi.js.controller.local.SimulationCommand
 import it.unibo.scafi.js.controller.local.SimulationCommand.{Move, ToggleSensor}
 import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.{Handler1, Handler4}
 import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.Pointer
 import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes
-import it.unibo.scafi.js.facade.phaser.types.core.{GameConfig, PhysicsConfig, ScaleConfig}
+import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.Graph
+import it.unibo.scafi.js.{Debug, JSNumber}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
@@ -24,16 +24,18 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Command
   private val selectionColor : Int = 0xff0000 //TODO put in configuration
   private val lineColor : Int = 0x0000ff //TODO put in configuration
   private val fontSize : Int = 10 //TODO put in configuration
-
-  private val game = new Phaser.Game(
-    new GameConfig(
-      parent = paneSection,
-      scene = sceneHandler,
-      physics = new PhysicsConfig(default = PhysicsConfig.ARCADE, arcade = new ArcadeWorldConfig()),
-      scale = new ScaleConfig(mode = ScaleModes.RESIZE)
+  private val config = new GameConfig(
+    parent = paneSection,
+    scene = sceneHandler,
+    physics = new PhysicsConfig(default = PhysicsConfig.ARCADE, arcade = new ArcadeWorldConfig()),
+    scale = new ScaleConfig(mode = ScaleModes.RESIZE),
+    input = new InputConfig (
+      mouse = new MouseInputConfig(capture = false),
+      keyboard = new KeyboardInputConfig(target = paneSection)
     )
   )
-
+  private lazy val game = new Phaser.Game(config)
+  Debug("config", game)
   protected var mainContainer : GameObjects.Container = _
   protected var vertexContainer : GameObjects.Container = _
   protected var nodeContainer : GameObjects.Container = _
@@ -47,6 +49,8 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Command
       scene.load.bitmapFont("font", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml")
     },
     create = (scene, _) => {
+      //game.input.mouse.foreach(mouse => mouse.capture = false)
+      //game.input.keyboard.foreach(keyboard => keyboard.preventDefault = false)
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
       vertexContainer = scene.add.container(0, 0)
@@ -135,12 +139,17 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Command
     controlKeyEvents(scene)
     altKeyEvents(scene)
     onToggle(scene)
+    scene.input.on("gameout", (_ : Any) => {
+      state = Idle
+      this.game.canvas.style.cursor = "auto"
+    })
   }
 
   private def onPointerDown(scene : Scene) : Unit = {
     mainContainer.on("pointerdown", (_ : Any, pointer : Input.Pointer) => state match {
-      case Idle if ! pointer.primaryDown => resetSelection()
-      case Idle => rectangleSelection.setPosition(pointer.worldX, pointer.worldY)
+      case Idle =>
+        resetSelection()
+        rectangleSelection.setPosition(pointer.worldX, pointer.worldY)
         state = OnSelection
       case _ =>
     })
@@ -229,7 +238,7 @@ class PhaserGraphSection(paneSection : HTMLElement, commandInterpreter : Command
   }
 
   private def onToggle(scene : Scene): Unit = {
-    def onClickDown(sensor : String) : Handler1[Scene] = (obj, _ : Any) => {
+    def onClickDown(sensor : String) : Handler1[Scene] = (obj, event : js.Object) => {
       val ids = selectionContainer.list[GameObjects.Arc]
         .map(node => (node.getData("id").toString))
         .toSet

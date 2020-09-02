@@ -1,5 +1,12 @@
 package it.unibo.scafi.js.facade.phaser.types.core
 
-class InputConfig {
+import it.unibo.scafi.js.CleanableObject
 
+import scala.scalajs.js
+import scala.scalajs.js.|
+
+class InputConfig(val keyboard : js.UndefOr[Boolean | KeyboardInputConfig] = js.undefined,
+                  val mouse : js.UndefOr[Boolean | MouseInputConfig] = js.undefined
+                 ) extends CleanableObject {
+  clean()
 }
