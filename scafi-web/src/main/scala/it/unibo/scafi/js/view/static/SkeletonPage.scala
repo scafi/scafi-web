@@ -36,24 +36,21 @@ object SkeletonPage {
   /**
    * section used to configure the backend (it is support specific)
    */
-  lazy val backendConfig : Div = div(cls := "col-2 bg-dark", id := "backendConfig").render
+  lazy val backendConfig : Div = div(cls := "col-2 bg-dark", id := "backend-config-section").render
   /**
    * the entirely page content.
    */
   val content : TypedTag[Div] = div(
-    cls:= "container-fluid d-flex flex-column p-0",
+    cls:= "container-fluid d-flex flex-column p-0 bg-dark",
     navBar,
     pageContainer
   )
 
   private def navBar : Tag = tag("nav")(
-    cls := "navbar navbar-dark bg-dark flex-shrink-0",
+    cls := "navbar navbar-dark flex-shrink-0 mb-2 bg-secondary",
     span(
       cls := "navbar-brand",
-      h1(
-        cls := "text-light",
-        "Scafi"
-      )
+      h1(cls := "text-light", "Scafi")
     ),
     span(
       cls := "navbar-text",
@@ -71,13 +68,14 @@ object SkeletonPage {
 
   private def editor : TypedTag[Div] = div(
     cls := "col-4 bg-dark",
+    id := "editor-section",
     selectionProgram,
     editorSection
   )
 
   private def visualization : TypedTag[Div] = div(
     cls := "col-6 bg-dark",
-    id := "visualization",
+    id := "visualization-section",
     controlsDiv,
     visualizationSection
   )

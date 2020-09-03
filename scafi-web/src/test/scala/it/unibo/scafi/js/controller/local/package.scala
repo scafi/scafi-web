@@ -6,7 +6,7 @@ package object local {
     SupportConfiguration(
       GridLikeNetwork(cols, rows, stepX, stepY, tolerance),
       SpatialRadius(stepX),
-      DeviceConfiguration.none,
+      DeviceConfiguration.standard,
       SimulationSeeds()
     )
   }

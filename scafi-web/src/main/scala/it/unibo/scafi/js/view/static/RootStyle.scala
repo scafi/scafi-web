@@ -12,11 +12,11 @@ import scala.scalajs.js.annotation.JSImport
 object RootStyle extends StyleSheet.Standalone {
   import dsl._
 
-  private val navHeight = 12 vh
-  private val pageContentHeight = 88 vh
-  private val contentHeight = 86 vh
-  private val visualizationHeight = 80 vh
-  private val editorHeight = 82 vh
+  private val navHeight = 8 vh
+  private val pageContentHeight = 91 vh
+  private val contentHeight = 89 vh
+  private val visualizationHeight = 83 vh
+  private val editorHeight = 85 vh
   private val utilsVisualizationHeight = 6 vh
 
   "html, body" - (height(100 %%))
@@ -34,7 +34,7 @@ object RootStyle extends StyleSheet.Standalone {
 
   "#canvasContainer" - (height(contentHeight))
 
-  "#visualization, #canvasContainer, #backendConfig" - (height(contentHeight))
+  "#visualization-section, #editor-section, #backend-config-section" - (height(contentHeight))
 
   "backendConfig" -(overflow.auto)
 

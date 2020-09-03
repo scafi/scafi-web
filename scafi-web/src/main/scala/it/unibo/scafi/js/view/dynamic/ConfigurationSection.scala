@@ -73,7 +73,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
 object ConfigurationSection {
   import scalatags.JsDom.all._
   private class SensorInputText(name : String = "", default : String = "") {
-    private val nameTag = input (`type` := "text", placeholder := "name", cls := "form-control", value := name).render
+    private val nameTag = input (`type` := "text", placeholder := "name", cls := "form-control mr-1", value := name).render
     private val valueTag = input (`type` := "text", placeholder := "value", cls := "form-control", value := default).render
     val closeButton : Button = button(cls := "btn-sm btn-danger ml-1", span(cls := "text-light", "X")).render
     private def booleanFromString(value : String) : Try[Boolean] = value match {

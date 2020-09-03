@@ -20,15 +20,18 @@ trait AggregateSystemSupport[BACKEND, CONFIG, SE] {
     * it is used by component to perform operation/ read system state.
     */
   protected def backend : BACKEND
+
   /**
     * a stream of side effect done in the backend. This is useful for declare a changing in the backend and update the graph representation consequently
     */
   protected def sideEffectsStream : PublishSubject[SE]
+
   /**
     * alter current backend with a configuration object
     * @return Future.success if the backend is changed of Future.failure(exc) if there were problems in evolving.
     */
   def evolve(config: CONFIG) : Future[Unit]
+
   /**
     * a stream of snapshot (Graph) that describe the backend system. This stream can be used by view to render the
     * backend system. A way to take only a sample of graph could be:

@@ -54,6 +54,8 @@ object Index {
     support.invalidate()
     SkeletonPage.visualizationSection.focus()
   }
+  import org.querki.jquery.$
+  Debug("$", $)
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)
 }

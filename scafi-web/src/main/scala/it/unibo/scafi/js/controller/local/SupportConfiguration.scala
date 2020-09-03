@@ -28,6 +28,7 @@ case class SupportConfiguration(network: NetworkConfiguration,
   * top level trait to describe a network configuration that tells how node are placed in the world.
   */
 sealed trait NetworkConfiguration
+
 /**
   * randomly placed nodes restricted in a defined bounds.
   * @param min value of coordinate x/ y
@@ -37,6 +38,7 @@ sealed trait NetworkConfiguration
 @JSExportTopLevel("RandomNetwork")
 @JSExportAll
 case class RandomNetwork(min : JSNumber, max : JSNumber, howMany : Int) extends NetworkConfiguration
+
 /**
   * a grid link network configuration
   * @param rows of the grid
@@ -50,10 +52,12 @@ case class RandomNetwork(min : JSNumber, max : JSNumber, howMany : Int) extends 
 case class GridLikeNetwork(rows : Int, cols : Int, stepX : JSNumber, stepY : JSNumber, tolerance : JSNumber) extends NetworkConfiguration {
   def toGridSettings : GridSettings = GridSettings(cols, rows, stepX, stepY, tolerance)
 }
+
 /**
   * a top level trait that describe the policy of neighbour in a network.
   */
 trait NeighbourConfiguration
+
 /**
   * a euclidean strategy that link two nodes based on the distance between them.
   * @param range the threshold that link two node. If the distance between nodes are less than range, they are considered linked.
@@ -61,6 +65,7 @@ trait NeighbourConfiguration
 @JSExportTopLevel("SpatialRadius")
 @JSExportAll
 case class SpatialRadius(range : Double) extends NeighbourConfiguration
+
 /**
   * describe the set of sensor installed on each node.
   * @param sensors a map contains the name and the default value of sensor. e.g. js.Dictionary("source", false) install
@@ -71,6 +76,7 @@ case class SpatialRadius(range : Double) extends NeighbourConfiguration
 @JSExportTopLevel("DeviceConfiguration")
 @JSExportAll
 case class DeviceConfiguration(sensors : js.Dictionary[Any], initialValues : js.Dictionary[js.Dictionary[Any]] = js.Dictionary())
+
 @JSExportTopLevel("DeviceConfigurationObject")
 @JSExportAll
 object DeviceConfiguration {
@@ -84,6 +90,7 @@ object DeviceConfiguration {
     */
   def none: DeviceConfiguration = DeviceConfiguration(js.Dictionary())
 }
+
 /**
   * a set of seed used to initialize, configure and execute an aggregate simulation.
   * @param configSeed a seed used to configure an aggregate network (e.g. for random network).
@@ -96,6 +103,7 @@ case class SimulationSeeds(@JSExport configSeed: JSNumber = System.currentTimeMi
                            @JSExport randomSensorSeed: JSNumber = System.currentTimeMillis()) {
   def toSeeds : Seeds = Seeds(configSeed.toLong, simulationSeed.toLong, randomSensorSeed.toLong)
 }
+
 /**
   * a logic using to alter the coordinate between frotend space and backed space.
   * @param toWeb alter a backend position in the frontend space.
@@ -104,6 +112,7 @@ case class SimulationSeeds(@JSExport configSeed: JSNumber = System.currentTimeMi
 @JSExportTopLevel("CoordinateMapping")
 @JSExportAll
 case class CoordinateMapping(toWeb : js.Function1[Point3D, Point3D], toBackend : js.Function1[Point3D, Point3D])
+
 @JSExportTopLevel("CoordinateMappingObject")
 @JSExportAll
 object CoordinateMapping {

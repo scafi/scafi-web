@@ -107,7 +107,7 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Game, Scene,
       case (other : Double) => ""  + other.toInt
       case other => other.toString
     }
-    case (_, other: Double) => "" + other % 0.01
+    case (_, other: Double) => "" + other.toInt
     case (_, e) => e.toString
   }
 }

@@ -29,8 +29,8 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpaceAwareSimulator,
     backend.clearExports() //clear export for the new script
     TickBased(exec = execution)
   }
-
 }
+
 object SimulationExecutionPlatform {
   private def rawToFunction(code : String) : js.Function0[Any] = {
     val wrappedCode = s"""() => {

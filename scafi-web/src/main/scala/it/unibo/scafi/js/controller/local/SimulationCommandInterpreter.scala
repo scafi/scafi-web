@@ -3,7 +3,7 @@ package it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.dsl.WebIncarnation._
 import it.unibo.scafi.js.controller.CommandInterpreter
-import it.unibo.scafi.js.controller.local.SimulationCommand.{CantChange, ChangeSensor, Executed, Move, Result, ToggleSensor, Unkwon}
+import it.unibo.scafi.js.controller.local.SimulationCommand.{CantChange, ChangeSensor, Executed, Move, Result, ToggleSensor, Unkown}
 import it.unibo.scafi.js.controller.local.SimulationSideEffect.{PositionChanged, SensorChanged}
 
 import scala.concurrent.Future
@@ -24,7 +24,7 @@ trait SimulationCommandInterpreter
       case ChangeSensor(sensor, ids, value) => onChangeSensorValue(sensor, ids, value)
       case Move(positionMap) => onMove(positionMap)
       case ToggleSensor(sensor, nodes) => onToggle(sensor, nodes)
-      case _ => Unkwon
+      case _ => Unkown
     }
   }
 
@@ -44,7 +44,11 @@ trait SimulationCommandInterpreter
   }
 
   private def onToggle(sensor : String, ids : Set[String]) : Result = {
-    val sensors = ids.map(id => id -> Try(backend.localSensor[Boolean](sensor)(id)))
+    val sensors = ids.map(id => id -> Try { backend.localSensor[Any](sensor)(id) })
+      .map {
+        case (id, Success(value : Boolean)) => id -> Success(value)
+        case (id, _) => id -> Failure(new IllegalArgumentException("non boolean value"))
+      }
     val toggleSensors = sensors
         .collect { case (id, Success(value)) => id -> value }
         .groupBy { case (_, value) => value }
