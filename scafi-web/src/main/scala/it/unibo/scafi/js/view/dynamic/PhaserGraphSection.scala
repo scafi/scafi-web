@@ -19,7 +19,7 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Game, Scene,
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val size = 5 //TODO put in configuration
   private val nodeColor : Int = Color.Magenta //TODO put in configuration
-  private val lineColor : Int = Color.Cyan //TODO put in configuration
+  private val lineColor : Int = Color(125, 125, 125) //TODO put in configuration
   private val fontSize : Int = 10 //TODO put in configuration
   private val config = new GameConfig(
     parent = paneSection,
@@ -29,7 +29,8 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Game, Scene,
     input = new InputConfig (
       mouse = new MouseInputConfig(capture = false),
       keyboard = new KeyboardInputConfig(target = paneSection)
-    )
+    ),
+    transparent = true
   )
   private val game = new Phaser.Game(config)
   protected var mainContainer : GameObjects.Container = _

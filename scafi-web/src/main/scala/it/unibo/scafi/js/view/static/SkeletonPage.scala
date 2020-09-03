@@ -32,7 +32,7 @@ object SkeletonPage {
   /**
    * section in which is rendered the graph that represent the aggregate system.
    */
-  lazy val visualizationSection : Div = div(id := "visualizationPane", tabindex := 0).render
+  lazy val visualizationSection : Div = div(id := "visualizationPane", cls := "border border-secondary", tabindex := 0).render
   /**
    * section used to configure the backend (it is support specific)
    */
@@ -47,7 +47,7 @@ object SkeletonPage {
   )
 
   private def navBar : Tag = tag("nav")(
-    cls := "navbar navbar-dark flex-shrink-0 mb-2 bg-secondary",
+    cls := "navbar navbar-dark flex-shrink-0 mb-3 bg-secondary",
     span(
       cls := "navbar-brand",
       h1(cls := "text-light", "Scafi")
@@ -59,7 +59,7 @@ object SkeletonPage {
   )
 
   private def pageContainer : TypedTag[Div] = div(
-    cls := "row flex-grow-1 m-0 pl-4 pr-2 bg-dark",
+    cls := "row flex-grow-1 m-0 bg-dark",
     id := "pageContainer",
     backendConfig,
     editor,

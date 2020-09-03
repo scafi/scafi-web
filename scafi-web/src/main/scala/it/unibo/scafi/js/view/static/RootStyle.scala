@@ -13,10 +13,10 @@ object RootStyle extends StyleSheet.Standalone {
   import dsl._
 
   private val navHeight = 8 vh
-  private val pageContentHeight = 91 vh
-  private val contentHeight = 89 vh
-  private val visualizationHeight = 83 vh
-  private val editorHeight = 85 vh
+  private val pageContentHeight = 90 vh
+  private val contentHeight = 88 vh
+  private val visualizationHeight = 82 vh
+  private val editorHeight = 84 vh
   private val utilsVisualizationHeight = 6 vh
 
   "html, body" - (height(100 %%))
@@ -46,7 +46,6 @@ object RootStyle extends StyleSheet.Standalone {
   "#console" -(height(utilsVisualizationHeight))
 
   "#visualizationPane" - (
-    margin(1 px),
     height(visualizationHeight),
     outlineWidth(0 px)
   )
