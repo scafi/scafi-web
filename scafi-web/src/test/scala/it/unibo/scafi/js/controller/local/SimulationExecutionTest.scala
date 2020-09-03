@@ -2,7 +2,7 @@ package it.unibo.scafi.js.controller.local
 
 import java.util.NoSuchElementException
 
-import it.unibo.scafi.config.GridSettings
+import it.unibo.scafi.js.JSNumber
 import it.unibo.scafi.js.Utils
 import it.unibo.scafi.js.controller.local.SimulationExecution.{Continuously, TickBased}
 import it.unibo.scafi.js.controller.scripting.Script
@@ -18,10 +18,17 @@ import scala.concurrent.{Future, Promise}
 class SimulationExecutionTest extends AsyncFunSpec with Matchers with BeforeAndAfterEach {
   import SimulationExecutionTest._
   override implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
-  var localPlatform : SimulationSupport with SimulationExecutionPlatform= _
+  var localPlatform : SimulationSupport with SimulationExecutionPlatform = _
   val longWait = 100
   override def beforeEach(): Unit = {
-    localPlatform = new SimulationSupport(GridSettings()) with SimulationExecutionPlatform
+    val (cols, rows, stepX, stepY, tolerance) = (10, 10, 20, 20, 0)
+    val config = SupportConfiguration(
+      GridLikeNetwork(cols, rows, stepX, stepY, tolerance),
+      SpatialRadius(stepX),
+      DeviceConfiguration.none,
+      SimulationSeeds()
+    )
+    localPlatform = new SimulationSupport(config) with SimulationExecutionPlatform
   }
   import org.scalatest.concurrent.ScalaFutures._
   describe("Execution platform") {
