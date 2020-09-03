@@ -158,7 +158,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
       state = Idle
       game.canvas.style.cursor = Cursor.Auto
     })
-    scene.input.on(GAME_OVER, (_ : Any) => game.canvas.focus())
+    scene.input.on(GAME_OVER, (_ : Any) => game.canvas.parentElement.focus())
   }
   private def resetSelection() : Unit = {
     rectangleSelection.setSize(0, 0)

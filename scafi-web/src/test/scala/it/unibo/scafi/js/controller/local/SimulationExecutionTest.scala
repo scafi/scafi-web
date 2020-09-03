@@ -14,7 +14,7 @@ import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 class SimulationExecutionTest extends AsyncFunSpec with Matchers with BeforeAndAfterEach {
   import SimulationExecutionTest._
-  import org.scalatest.concurrent.ScalaFutures._
+  //a non global context bring to a problems
   override implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
   private val monixScheduler = Utils.timeoutBasedScheduler
   var localPlatform : SimulationSupport with SimulationExecutionPlatform = _
@@ -71,15 +71,14 @@ class SimulationExecutionTest extends AsyncFunSpec with Matchers with BeforeAndA
 
     it("continuously delta change frequency") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
-      val delta = 10
+      val delta = 50
       var unsafeTicks = 0L
       localPlatform.graphStream.foreach(_ => unsafeTicks += 1)(monixScheduler)
-
       var unsafeTimeWithoutDelta = 0L
       execution.map { case ticker : TickBased => ticker.toContinuously() }
         .flatMap { continuously => wakeUpAfter(longWait).flatMap{ _ =>
-          continuously.stop().toContinuously(delta)
           unsafeTimeWithoutDelta = unsafeTicks
+          continuously.stop().toContinuously(delta)
           unsafeTicks = 0
           wakeUpAfter(longWait).map(_ =>  unsafeTicks < unsafeTimeWithoutDelta shouldBe true)
         }
