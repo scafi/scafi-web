@@ -11,6 +11,10 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
+/**
+  * the execution platform of a local simulation in web browser.
+  * Currently it supports only javascript execution.
+  */
 trait SimulationExecutionPlatform extends ExecutionPlatform[SpaceAwareSimulator, SimulationSideEffect, SimulationExecution]{
   self : SimulationSupport =>
   import SimulationExecutionPlatform._
@@ -21,6 +25,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpaceAwareSimulator,
     }
     case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
+
   private def sideEffectExecution(program : js.Function0[Any]) : TickBased = {
     val execution : (Int => Unit) = batchSize => {
       val exports = (0 until batchSize).map(_ => backend.exec(WebDsl.adaptForScafi(program)))
