@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.facade.phaser.namespaces
 
-import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.utils.JSNumber
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal

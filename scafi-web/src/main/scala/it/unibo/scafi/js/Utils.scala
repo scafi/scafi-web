@@ -9,6 +9,7 @@ import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
 import scala.scalajs.js.timers.SetIntervalHandle
 
 object Utils {
+  type JSNumber = Double
   def immediate(fun : => Unit) : Unit = js.timers.setTimeout(0){fun}
   def continuously(fun : => Unit) : SetIntervalHandle = js.timers.setInterval(0){fun}
   def schedule(delta : Int)(fun : => Unit) : SetIntervalHandle = js.timers.setInterval(delta){fun}

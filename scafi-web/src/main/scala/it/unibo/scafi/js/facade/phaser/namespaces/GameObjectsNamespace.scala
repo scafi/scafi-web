@@ -2,7 +2,7 @@ package it.unibo.scafi.js.facade.phaser.namespaces
 
 import it.unibo.scafi.js.facade.phaser._
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace
-import it.unibo.scafi.js.{JSNumber, Nullable}
+import it.unibo.scafi.js.utils.{JSNumber, Nullable}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSGlobal, JSName}

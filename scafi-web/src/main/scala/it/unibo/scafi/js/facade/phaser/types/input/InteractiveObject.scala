@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.facade.phaser.types.input
 
-import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.facade.phaser.Phaser
 
 import scala.scalajs.js

@@ -57,14 +57,3 @@ object Index {
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)
 }
-
-trait Me[A <: Me[A]] {
-  type Self = A
-}
-trait Bibo {
-  this : Me[_] =>
-  val x : Self
-}
-class Shape extends Bibo with Me[Shape] {
-  override val x: Self = this
-}

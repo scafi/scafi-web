@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.core.Core
-import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.facade.phaser.Phaser._
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.Container
 import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes

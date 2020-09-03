@@ -2,7 +2,7 @@ package it.unibo.scafi.js.facade.phaser.namespaces
 
 import it.unibo.scafi.js.facade.phaser.Phaser
 import it.unibo.scafi.js.facade.phaser.namespaces.input.{InputEventsNamespace, KeyboardNamespace}
-import it.unibo.scafi.js.{JSNumber, Nullable}
+import it.unibo.scafi.js.utils.{JSNumber, Nullable}
 import org.scalajs.dom.raw.HTMLCanvasElement
 
 import scala.scalajs.js

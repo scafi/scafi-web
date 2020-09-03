@@ -2,8 +2,7 @@ package it.unibo.scafi.js.controller.local
 
 import java.util.NoSuchElementException
 
-import it.unibo.scafi.js.JSNumber
-import it.unibo.scafi.js.Utils
+import it.unibo.scafi.js.{Utils}
 import it.unibo.scafi.js.controller.local.SimulationExecution.{Continuously, TickBased}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.model.{Graph, NaiveGraph}

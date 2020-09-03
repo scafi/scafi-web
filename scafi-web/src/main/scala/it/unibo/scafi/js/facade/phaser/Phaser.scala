@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.facade.phaser
 
-import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.facade.phaser.Phaser.Loader
 import it.unibo.scafi.js.facade.phaser.namespaces._
 import org.scalajs.dom.raw.{CanvasRenderingContext2D, HTMLCanvasElement, HTMLDivElement, WebGLRenderingContext}

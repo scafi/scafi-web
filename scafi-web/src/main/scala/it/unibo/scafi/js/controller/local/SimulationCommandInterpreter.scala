@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.dsl.WebIncarnation._
 import it.unibo.scafi.js.controller.CommandInterpreter
 import it.unibo.scafi.js.controller.local.SimulationCommand.{ChangeSensor, Executed, Move, Result, ToggleSensor}

@@ -2,7 +2,8 @@ package it.unibo.scafi.js.facade.phaser.types.core
 
 import it.unibo.scafi.js.facade.phaser.Phaser
 import it.unibo.scafi.js.facade.phaser.types.scenes.SceneSetting
-import it.unibo.scafi.js.{CleanableObject, Debug, Nullable}
+import it.unibo.scafi.js.{CleanableObject, Debug}
+import it.unibo.scafi.js.utils.Nullable
 import org.scalajs.dom.raw.{CanvasRenderingContext2D, HTMLCanvasElement, HTMLElement}
 
 import scala.scalajs.js

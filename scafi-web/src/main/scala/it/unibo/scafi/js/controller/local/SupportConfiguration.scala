@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.config.GridSettings
-import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.dsl.WebIncarnation._
 import it.unibo.scafi.space.Point3D
 

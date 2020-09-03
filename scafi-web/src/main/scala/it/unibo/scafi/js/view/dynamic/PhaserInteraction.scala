@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.utils._
 import it.unibo.scafi.js.controller.CommandInterpreter
 import it.unibo.scafi.js.controller.local.SimulationCommand
 import it.unibo.scafi.js.controller.local.SimulationCommand.{Move, ToggleSensor}

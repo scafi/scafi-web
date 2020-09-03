@@ -2,7 +2,7 @@ package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.incarnations.Incarnation
-import it.unibo.scafi.js.JSNumber
+import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.simulation.{Simulation, SpatialSimulation}
 import it.unibo.scafi.space.{BasicSpatialAbstraction, Point2D}
 import it.unibo.utils.{Interop, Linearizable}

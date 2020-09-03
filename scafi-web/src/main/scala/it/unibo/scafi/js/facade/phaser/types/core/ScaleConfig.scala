@@ -1,6 +1,7 @@
 package it.unibo.scafi.js.facade.phaser.types.core
 
-import it.unibo.scafi.js.{CleanableObject, Nullable}
+import it.unibo.scafi.js.CleanableObject
+import it.unibo.scafi.js.utils.Nullable
 import it.unibo.scafi.js.facade.phaser.Phaser.Scale._
 import org.scalajs.dom.raw.HTMLElement
 
