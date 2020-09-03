@@ -9,7 +9,9 @@ import scala.scalajs.js
 class PhysicsConfig(val default : String,
                     val arcade : js.UndefOr[ArcadeWorldConfig] = js.undefined,
                     val matter : js.UndefOr[MatterWorldConfig] = js.undefined
-                   ) extends CleanableObject
+                   ) extends CleanableObject {
+  clean()
+}
 
 object PhysicsConfig {
   val ARCADE : String = "arcade"

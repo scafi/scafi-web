@@ -2,6 +2,7 @@ package it.unibo.scafi.js.view.static
 
 /**
   * an enumeration used to defined all type of html cursor
+  * @see See [[https://www.w3schools.com/cssref/pr_class_cursor.asp]]
   * @param html the cursor style value
   */
 sealed abstract class Cursor(val html : String)
@@ -41,6 +42,7 @@ object Cursor {
   case object Wait extends Cursor("wait")
   case object ZoomIn extends Cursor("zoom-in")
   case object ZoomOut extends Cursor("zoom-out")
+
   object Implicits {
     implicit def cursorToString(cursor: Cursor) : String = cursor.html
   }

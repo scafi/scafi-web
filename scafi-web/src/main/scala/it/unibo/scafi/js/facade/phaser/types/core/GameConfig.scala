@@ -1,5 +1,6 @@
 package it.unibo.scafi.js.facade.phaser.types.core
 
+import cats.effect.IO.Delay
 import it.unibo.scafi.js.facade.phaser.Phaser
 import it.unibo.scafi.js.facade.phaser.types.scenes.SceneSetting
 import it.unibo.scafi.js.{CleanableObject, Debug}
