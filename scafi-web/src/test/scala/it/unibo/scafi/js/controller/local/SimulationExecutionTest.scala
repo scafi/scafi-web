@@ -1,27 +1,17 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.Utils
-import it.unibo.scafi.js.controller.local.SimulationExecution.{Continuously, TickBased}
+import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.model.{Graph, NaiveGraph}
 import monix.eval.Task
 import monix.reactive.Observable
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.funspec.AsyncFunSpec
-import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
-class SimulationExecutionTest extends AsyncFunSpec with Matchers with BeforeAndAfterEach {
+class SimulationExecutionTest extends SupportTesterLike {
   import SimulationExecutionTest._
   //a non global context bring to a problems
-  override implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
-  private val monixScheduler = Utils.timeoutBasedScheduler
-  var localPlatform : SimulationSupport with SimulationExecutionPlatform = _
   val longWait = 100
-  override def beforeEach(): Unit = {
-    localPlatform = new SimulationSupport(standardConfig) with SimulationExecutionPlatform
-  }
   describe("Execution platform") {
     it("should support javascript script") {
       val result = localPlatform.loadScript(Script.javascript {"10"})

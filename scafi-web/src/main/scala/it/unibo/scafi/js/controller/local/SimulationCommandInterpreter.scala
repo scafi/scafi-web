@@ -3,13 +3,18 @@ package it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.dsl.WebIncarnation._
 import it.unibo.scafi.js.controller.CommandInterpreter
-import it.unibo.scafi.js.controller.local.SimulationCommand.{ChangeSensor, Executed, Move, Result, ToggleSensor}
+import it.unibo.scafi.js.controller.local.SimulationCommand.{CantChange, ChangeSensor, Executed, Move, Result, ToggleSensor, Unkwon}
 import it.unibo.scafi.js.controller.local.SimulationSideEffect.{PositionChanged, SensorChanged}
 
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportAll
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
+
+/**
+  * an interpreter used to eval and act command sent by a input side (e.g. GUI, console,..:).
+  * It change the local state of the simulator.
+  */
 trait SimulationCommandInterpreter
   extends CommandInterpreter[SpaceAwareSimulator, SimulationSideEffect, SimulationCommand, SimulationCommand.Result] {
   self : SimulationSupport =>
@@ -19,7 +24,7 @@ trait SimulationCommandInterpreter
       case ChangeSensor(sensor, ids, value) => onChangeSensorValue(sensor, ids, value)
       case Move(positionMap) => onMove(positionMap)
       case ToggleSensor(sensor, nodes) => onToggle(sensor, nodes)
-      case _ => Executed
+      case _ => Unkwon
     }
   }
 
@@ -39,19 +44,26 @@ trait SimulationCommandInterpreter
   }
 
   private def onToggle(sensor : String, ids : Set[String]) : Result = {
-    val toggleSensors = ids.map(id => id -> Try(backend.localSensor[Boolean](sensor)(id)))
+    val sensors = ids.map(id => id -> Try(backend.localSensor[Boolean](sensor)(id)))
+    val toggleSensors = sensors
         .collect { case (id, Success(value)) => id -> value }
         .groupBy { case (_, value) => value }
     val sensorMap = toggleSensors.values
       .flatMap(set => set.map { case (id, value) => id -> Map(sensor -> !value)} )
       .toMap
+    val cantChange = sensors.collect { case (id, Failure(_)) => id }
     sideEffectsStream.onNext(SensorChanged(sensorMap))
     toggleSensors.foreach { case (sensorValue, set) => backend.chgSensorValue(sensor, set.map(_._1), ! sensorValue)}
-    Executed
+    if(cantChange.isEmpty) Executed else CantChange(cantChange)
   }
 }
 
 object SimulationCommandInterpreter {
+
+  /**
+    * a facade used to send command via javascript console.
+    * @param interpreter the wrapped instance of the interpreter
+    */
   @JSExportAll
   class JsConsole(interpreter : SimulationCommandInterpreter) {
     def move(id : String, x : JSNumber, y : JSNumber) : Unit = interpreter.execute(Move(Map(id -> (x, y))))

@@ -78,9 +78,15 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
         rectangleSelection.setSize(pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)
       case _ =>
     }
-    mainContainer.on(DRAG_START, (_ : Any, pointer : Pointer) => scene.game.canvas.style.cursor = Cursor.Grabbing)
+    mainContainer.on(DRAG_START, (_ : Any, pointer : Pointer) => state match {
+      case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grabbing
+      case _ =>
+    })
     mainContainer.on(DRAG, dragFunction)
-    mainContainer.on(DRAG_END, (_ : Any, pointer : Pointer) =>scene.game.canvas.style.cursor = Cursor.Grab)
+    mainContainer.on(DRAG_END, (_ : Any, pointer : Pointer) => state match {
+      case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grab
+      case _ =>
+    })
   }
 
   private def controlKeyEvents(scene : Phaser.Scene, game : Game) : Unit = {

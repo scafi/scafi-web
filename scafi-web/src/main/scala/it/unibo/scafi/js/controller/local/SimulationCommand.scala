@@ -4,6 +4,7 @@ sealed trait SimulationCommand
 object SimulationCommand {
   sealed trait Result
   case object Executed extends Result
+  case object Unkwon extends Result
   case class CantMove(ids : Set[String]) extends Result
   case class CantChange(ids : Set[String]) extends Result
   case class Move(positionMap : Map[String, (Double, Double)]) extends SimulationCommand

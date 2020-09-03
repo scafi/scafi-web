@@ -1,26 +1,13 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.Utils
 import it.unibo.scafi.js.controller.local.SimulationSideEffect._
-import it.unibo.scafi.js.controller.local.SimulationSupportTest.SimulationSupportWrapper
 import it.unibo.scafi.js.dsl.WebIncarnation
 import it.unibo.scafi.js.model.Vertex
 import it.unibo.scafi.space.Point3D
-import org.scalatest.funspec.AsyncFunSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfterEach, PrivateMethodTester}
 
 import scala.util.{Failure, Success}
 
-class SimulationSupportTest extends AsyncFunSpec with Matchers with BeforeAndAfterEach with PrivateMethodTester
-{
-  //a non global context bring to a problems
-  override implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
-  private val monixScheduler = Utils.timeoutBasedScheduler
-
-  var support : SimulationSupportWrapper = _
-  override def beforeEach(): Unit = support = new SimulationSupportWrapper()
-
+class SimulationSupportTest extends SupportTesterLike {
   describe("simulation support") {
     it("should evolve with new configuration") {
       val range = 5
@@ -30,12 +17,12 @@ class SimulationSupportTest extends AsyncFunSpec with Matchers with BeforeAndAft
         DeviceConfiguration.standard,
         SimulationSeeds()
       )
-      val newGraph = support.graphStream.firstL.runToFuture(monixScheduler)
-      support.evolve(newConfiguration).transform {
+      val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
+      localPlatform.evolve(newConfiguration).transform {
         case Success(any) => Success(succeed)
         case Failure(exception) => Success(fail(exception))
       }
-      newGraph.map( graph => {
+      newGraph.map(graph => {
         graph.nodes.size shouldBe (range * range)
         assert(graph.vertices.contains(Vertex("1", "2")))
         val aNode = graph.nodes.head
@@ -57,12 +44,12 @@ class SimulationSupportTest extends AsyncFunSpec with Matchers with BeforeAndAft
         DeviceConfiguration.standard,
         SimulationSeeds()
       )
-      val newGraph = support.graphStream.firstL.runToFuture(monixScheduler)
-      support.evolve(newConfiguration).transform {
+      val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
+      localPlatform.evolve(newConfiguration).transform {
         case Success(any) => Success(succeed)
         case Failure(exception) => Success(fail(exception))
       }
-      newGraph.map( graph => {
+      newGraph.map(graph => {
         graph.nodes.size shouldBe (nodes)
       })
     }
@@ -72,9 +59,9 @@ class SimulationSupportTest extends AsyncFunSpec with Matchers with BeforeAndAft
       val newPositionY = 100
       val node = "1"
       val sideEffect = PositionChanged(Map(node -> Point3D(newPositionX, newPositionY, 0)))
-      val newGraph = support.graphStream.firstL.runToFuture(monixScheduler)
-      support.publish(sideEffect)
-      newGraph.map { graph => graph(node).position shouldBe Point3D(newPositionX, newPositionY, 0)}
+      val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
+      localPlatform.publish(sideEffect)
+      newGraph.map { graph => graph(node).position shouldBe Point3D(newPositionX, newPositionY, 0) }
     }
 
     it("should support sensor update side effect") {
@@ -83,37 +70,31 @@ class SimulationSupportTest extends AsyncFunSpec with Matchers with BeforeAndAft
       val node = "1"
       val sensor = "obstacle"
       val sideEffect = SensorChanged(Map(node -> Map(sensor -> true)))
-      val newGraph = support.graphStream.firstL.runToFuture(monixScheduler)
-      support.publish(sideEffect)
+      val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
+      localPlatform.publish(sideEffect)
       newGraph.map { graph => graph(node).labels(sensor) shouldBe true }
     }
 
     it("should support export produced side effect") {
       val node = "1"
       val exportName = "export"
-      val export : WebIncarnation.EXPORT = new WebIncarnation.ExportImpl()
+      val export: WebIncarnation.EXPORT = new WebIncarnation.ExportImpl()
       val sideEffect = ExportProduced(Seq(node -> export))
-      val newGraph = support.graphStream.firstL.runToFuture(monixScheduler)
-      support.publish(sideEffect)
+      val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
+      localPlatform.publish(sideEffect)
       newGraph.map { graph => graph(node).labels(exportName) shouldBe export }
     }
 
     it("should support new configuration side effect") {
-      val newGraph = support.graphStream.firstL.runToFuture(monixScheduler)
-      support.publish(NewConfiguration)
+      val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
+      localPlatform.publish(NewConfiguration)
       newGraph.map { graph => graph.nodes.size shouldBe cols * cols }
     }
 
     it("should support invalidated side effect") {
-      val newGraph = support.graphStream.firstL.runToFuture(monixScheduler)
-      support.publish(Invalidated)
+      val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
+      localPlatform.publish(Invalidated)
       newGraph.map { graph => graph.nodes.size shouldBe cols * cols }
     }
-  }
-}
-
-object SimulationSupportTest {
-  class SimulationSupportWrapper extends SimulationSupport(standardConfig) {
-    def publish(sideEffect : SimulationSideEffect) : Unit = this.sideEffectsStream.onNext(sideEffect)
   }
 }
