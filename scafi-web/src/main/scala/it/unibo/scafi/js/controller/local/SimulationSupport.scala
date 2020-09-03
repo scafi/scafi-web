@@ -12,6 +12,10 @@ import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.Future
 
+/**
+  * Support for manage a local aggregate simulation simulation
+  * @param systemConfig initializate the backend with this configuration object
+  */
 class SimulationSupport(protected var systemConfig: SupportConfiguration)
   extends AggregateSystemSupport[SpaceAwareSimulator, SupportConfiguration, SimulationSideEffect] {
   import SimulationSupport._
