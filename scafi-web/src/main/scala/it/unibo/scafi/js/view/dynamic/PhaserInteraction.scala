@@ -66,7 +66,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
         val elements = scene.physics.overlapRect(overlapX, overlapY, overlapWidth, overlapHeight, includeStatic = true)
         elements.map(body => {
           val selected = scene.add.circle(body.center.x, body.center.y, body.halfWidth, selectionColor)
-          selected.setData[GameObjects.Arc]("id", body.gameObject.getData("id"))
+          selected.setData("id", body.gameObject.getData("id"))
         }).foreach(selectionContainer.add(_))
       case _ =>
     })
@@ -76,7 +76,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     val dragFunction: Handler4[Transform] = (obj : Transform, pointer : Pointer, dragX : JSNumber, dragY : JSNumber, _ : Any) => state match {
       case MoveWorld => obj.setPosition(dragX, dragY)
       case OnSelection =>
-        rectangleSelection.setSize[GameObjects.Rectangle](pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)
+        rectangleSelection.setSize(pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)
       case _ =>
     }
     mainContainer.on(DRAG, dragFunction)
@@ -161,7 +161,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     scene.input.on(GAME_OVER, (_ : Any) => game.canvas.focus())
   }
   private def resetSelection() : Unit = {
-    rectangleSelection.setSize[GameObjects.Rectangle](0, 0)
+    rectangleSelection.setSize(0, 0)
     selectionContainer.removeAll()
     selectionContainer.setPosition(0, 0)
   }

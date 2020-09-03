@@ -2,7 +2,7 @@ package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.core.Core
 import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.facade.phaser.Phaser._
-import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.Container
+import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Arc, Container}
 import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes
 import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
@@ -75,12 +75,12 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Game, Scene,
 
     graph.vertices.map(vertex =>  (graph(vertex.from), graph(vertex.to)))
       .map { case (from, to) => scene.add.line(x1 = from.position.x, y1 = from.position.y, x2 = to.position.x, y2 = to.position.y, strokeColor = lineColor ) }
-      .map { _.setOrigin[GameObjects.Line](0)}
+      .map { _.setOrigin(0)}
       .foreach(vertexContainer.add(_))
 
     val nodes = graph.nodes.map(node => {
       val circle = scene.add.circle(node.position.x, node.position.y, size, nodeColor)
-      circle.setData[GameObjects.Arc]("id", node.id)
+      circle.setData("id", node.id)
     })
     nodes.foreach(nodeContainer.add(_))
     import js.JSConverters._

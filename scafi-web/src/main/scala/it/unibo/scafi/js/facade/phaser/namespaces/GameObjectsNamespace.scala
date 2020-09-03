@@ -18,7 +18,8 @@ object GameObjectsNamespace extends js.Object {
   import Phaser._
   /* classes */
   @js.native
-  trait GameObject extends Events.EventEmitter {
+  trait GameObject extends Events.EventEmitter with This {
+    override type This <: GameObject
     /* members */
     var active : Boolean = js.native
     def data : Data.DataManager = js.native
@@ -36,7 +37,7 @@ object GameObjectsNamespace extends js.Object {
     def setName(name : String) : Unit = js.native
     def setState(state : Int | String) : Unit = js.native
     def setDataEnabled() : Unit = js.native
-    def setData[Me <: GameObject](key : String | js.Object, data : js.Any): Me = js.native
+    def setData(key : String | js.Object, data : js.Any): This = js.native
     def getData(key : String) : js.Any = js.native
     def setInteractive(shape : types.input.InputConfiguration | js.Any = js.native,
                        callback : js.Function4[js.Any, JSNumber, JSNumber, GameObject, Unit] = js.native,
@@ -49,7 +50,8 @@ object GameObjectsNamespace extends js.Object {
   }
 
   @js.native
-  trait Container extends GameObject with AlphaSingle with BlendMode with ComputedSize with Depth with Mask with Transform with Visible {
+  trait Container extends GameObject with AlphaSingle with BlendMode
+    with ComputedSize with Depth with Mask with Transform with Visible with ThisGeneric[Container] {
     /* members */
     def list[Child <: GameObject] : js.Array[Child] = js.native
     def exclusive : Boolean = js.native
@@ -140,25 +142,25 @@ object GameObjectsNamespace extends js.Object {
   @js.native
   trait LightsManager extends js.Object { /* todo */ }
 
-
   @js.native
   trait Shape extends GameObject with Transform with BlendMode with ComputedSize
-    with Depth with Origin with Mask with Pipeline with ScrollFactor with Visible {
+    with Depth with Origin with Mask with Pipeline with ScrollFactor with Visible with This {
+    override type This <: Shape
     /* members */
     var strokeAlpha : JSNumber = js.native
     var strokeColor : JSNumber = js.native
     /* methods */
-    def setStrokeStyle[Me <: Shape](lineWidth : JSNumber = js.native, color : Int = js.native, alpha : JSNumber = js.native) : Me
+    def setStrokeStyle(lineWidth : JSNumber = js.native, color : Int = js.native, alpha : JSNumber = js.native) : This
   }
 
   @js.native
   trait Line extends Shape
 
   @js.native
-  trait Rectangle extends Shape
+  trait Rectangle extends Shape with ThisGeneric[Rectangle]
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Arc.html]] */
   @js.native
-  trait Arc extends Shape {
+  trait Arc extends Shape with ThisGeneric[Arc] {
     /* members */
     var startAngle : Int = js.native
     var endAngle : Int = js.native
@@ -176,7 +178,7 @@ object GameObjectsNamespace extends js.Object {
   @js.native
   trait BitmapText extends GameObject with Alpha with BlendMode with Depth
     with Mask with Origin with Pipeline with ScrollFactor with Tint with Transform
-    with Visible {
+    with Visible with ThisGeneric[BitmapText] {
     /* static */
     val ALIGN_CENTER : Int = js.native
     val ALIGN_LEFT : Int = js.native
@@ -205,10 +207,10 @@ object GameObjectsNamespace extends js.Object {
   @js.native
   trait Text extends GameObject with Alpha with BlendMode with Depth with ComputedSize
     with Mask with Origin with Pipeline with ScrollFactor with Tint with Transform
-    with Visible with Crop with Flip {
-
+    with Visible with Crop with Flip with ThisGeneric[Text] {
+    /* todo */
   }
 
   @js.native
-  trait Sprite extends js.Object { /* todo */ }
+  trait Sprite extends js.Object with ThisGeneric[Sprite] { /* todo */ }
 }
