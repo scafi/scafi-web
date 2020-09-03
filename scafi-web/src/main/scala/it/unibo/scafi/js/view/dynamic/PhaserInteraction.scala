@@ -4,19 +4,21 @@ import it.unibo.scafi.js.JSNumber
 import it.unibo.scafi.js.controller.CommandInterpreter
 import it.unibo.scafi.js.controller.local.SimulationCommand
 import it.unibo.scafi.js.controller.local.SimulationCommand.{Move, ToggleSensor}
+import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser
+import it.unibo.scafi.js.facade.phaser.Phaser.Input.Events._
+import it.unibo.scafi.js.facade.phaser.Phaser.Input.Keyboard.Events._
 import it.unibo.scafi.js.facade.phaser.Phaser.{Game, GameObjects, Input, Scene}
 import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.{Handler1, Handler4}
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, Rectangle}
 import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.Pointer
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace.Transform
+import it.unibo.scafi.js.view.dynamic.PhaserInteraction._
+import it.unibo.scafi.js.view.static.Cursor
+import it.unibo.scafi.js.view.static.Cursor.Implicits._
 import org.scalajs.dom.ext.Color
+
 import scala.scalajs.js
-import it.unibo.scafi.js.facade.phaser.Implicits._
-import PhaserInteraction._
-import it.unibo.scafi.js.facade.phaser.Phaser.Core.Events._
-import it.unibo.scafi.js.facade.phaser.Phaser.Input.Events._
-import it.unibo.scafi.js.facade.phaser.Phaser.Input.Keyboard.Events._
 
 class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result])
   extends ((Game, Scene, Container) => Unit) {
@@ -84,12 +86,12 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     val controlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
     val controlUpHandler : Handler1[Scene] = (scene, _ : Any) => state match {
       case MoveWorld => state = Idle
-        game.canvas.style.cursor = "auto"
+        game.canvas.style.cursor = Cursor.Auto
       case _ =>
     }
 
     val controlDownHandler : Handler1[Scene] = (scene, _ : Any) => state match {
-      case Idle => game.canvas.style.cursor = "grab"
+      case Idle => game.canvas.style.cursor = Cursor.Grab
         state = MoveWorld
         resetSelection()
       case _ =>
@@ -110,7 +112,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     val altKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
     val altUpHandler : Handler1[Scene] = (obj, _ : Any) => state match {
       case MoveSelection => state = Idle
-        game.canvas.style.cursor = "auto"
+        game.canvas.style.cursor = Cursor.Auto
         val positionChangedMap = selectionContainer.list[GameObjects.Arc]
           .map(node => (node.getData("id").toString, (node.x + selectionContainer.x, node.y + selectionContainer.y)))
           .toMap
@@ -121,7 +123,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     }
 
     val altDownHandler : Handler1[Scene] = (obj, _ : Any) => state match {
-      case Idle => game.canvas.style.cursor = "all-scroll"
+      case Idle => game.canvas.style.cursor = Cursor.AllScroll
         state = MoveSelection
         if(rectangleSelection.width != 0 && rectangleSelection.height != 0) {
           rectangleSelection.destroy(true)
@@ -154,7 +156,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
   private def onGameInOut(scene : Scene, game : Game) : Unit = {
     scene.input.on(GAME_OUT, (_ : Any) => {
       state = Idle
-      game.canvas.style.cursor = "auto"
+      game.canvas.style.cursor = Cursor.Auto
     })
     scene.input.on(GAME_OVER, (_ : Any) => game.canvas.focus())
   }

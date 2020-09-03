@@ -1,11 +1,8 @@
 package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.core.Core
 import it.unibo.scafi.js.JSNumber
-import it.unibo.scafi.js.controller.local.SimulationCommand.{Move, ToggleSensor}
 import it.unibo.scafi.js.facade.phaser.Phaser._
-import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.{Handler1, Handler4}
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.Container
-import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.Pointer
 import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes
 import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
@@ -41,7 +38,7 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Game, Scene,
 
   private lazy val sceneHandler : types.scenes.CreateSceneFromObjectConfig =  types.scenes.callbacks(
     preload = (scene) => {
-      //TODO put in configuration
+      //TODO put in configuration via webpack
       scene.load.bitmapFont("font", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml")
     },
     create = (scene, _) => {
@@ -53,7 +50,7 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Game, Scene,
       mainContainer = scene.add.container(0, 0, js.Array(vertexContainer, nodeContainer, labelContainer))
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
       interaction(game, scene, mainContainer)
-      scene.input.on("wheel", (self : js.Any, pointer : js.Any, _ : js.Any, dx : JSNumber, dy : JSNumber, dz : JSNumber) => {
+      scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (self : js.Any, pointer : js.Any, _ : js.Any, dx : JSNumber, dy : JSNumber, dz : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
     },
