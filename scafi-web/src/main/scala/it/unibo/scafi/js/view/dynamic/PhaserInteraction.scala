@@ -50,8 +50,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
 
   private def onPointerDown(scene : Scene, mainContainer : Container) : Unit = {
     mainContainer.on(POINTER_DOWN, (_ : Any, pointer : Input.Pointer) => state match {
-      case Idle =>
-        resetSelection()
+      case Idle => resetSelection()
         rectangleSelection.setPosition(pointer.worldX, pointer.worldY)
         state = OnSelection
       case _ =>
@@ -79,7 +78,9 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
         rectangleSelection.setSize(pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)
       case _ =>
     }
+    mainContainer.on(DRAG_START, (_ : Any, pointer : Pointer) => scene.game.canvas.style.cursor = Cursor.Grabbing)
     mainContainer.on(DRAG, dragFunction)
+    mainContainer.on(DRAG_END, (_ : Any, pointer : Pointer) =>scene.game.canvas.style.cursor = Cursor.Grab)
   }
 
   private def controlKeyEvents(scene : Phaser.Scene, game : Game) : Unit = {
@@ -102,8 +103,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
 
   private def altKeyEvents(scene : Phaser.Scene, game : Game) : Unit = {
     val dragFunction : Handler4[Transform] = (obj : Transform, pointer : Pointer, dragX : JSNumber, dragY : JSNumber, _ : Any) => state match {
-      case MoveSelection =>
-        selectionContainer.x += dragX - obj.x
+      case MoveSelection => selectionContainer.x += dragX - obj.x
         selectionContainer.y += dragY - obj.y
         obj.setPosition(dragX, dragY)
       case _ =>
@@ -128,8 +128,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
         if(rectangleSelection.width != 0 && rectangleSelection.height != 0) {
           rectangleSelection.destroy(true)
           val (x, y, width, height) = (rectangleSelection.x, rectangleSelection.y, rectangleSelection.width, rectangleSelection.height)
-          rectangleSelection = scene.add.rectangle(x, y, width, height, fillColor = Color.White, fillAlpha = rectangleAlpha)
-            .setOrigin(0)
+          rectangleSelection = scene.add.rectangle(x, y, width, height, fillColor = Color.White, fillAlpha = rectangleAlpha).setOrigin(0)
           rectangleSelection.setInteractive()
           scene.input.setDraggable(rectangleSelection)
           rectangleSelection.on(DRAG, dragFunction)
