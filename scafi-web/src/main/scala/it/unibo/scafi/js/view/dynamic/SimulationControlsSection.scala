@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.controller.local.SimulationExecution.{Continuously, TickBased}
+import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased}
 import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecutionPlatform}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.facade.codemirror.Editor
@@ -42,14 +42,14 @@ object SimulationControlsSection {
     }
 
     startButton.onclick = _ => simulation match {
-      case Some(ticker : TickBased) => simulation = Some(ticker.toContinuously(rangeDelta.intValue, rangeBatch.intValue))
+      case Some(ticker : TickBased) => simulation = Some(ticker.toDaemon(rangeDelta.intValue, rangeBatch.intValue))
         stopButton.disabled = false
         (tick :: startButton :: loadButton :: Nil) foreach { el => el.disabled = true }
         (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = true }
     }
 
     stopButton.onclick = _ => simulation match {
-      case Some(continuously: Continuously) => simulation = Some(continuously.stop().withBatchSize(rangeBatch.intValue))
+      case Some(daemon: Daemon) => simulation = Some(daemon.stop().withBatchSize(rangeBatch.intValue))
         stopButton.disabled = true
         (tick :: startButton :: loadButton :: Nil) foreach { el => el.disabled = false }
         (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = false }
@@ -58,7 +58,7 @@ object SimulationControlsSection {
   }
 
   private def clearSimulationExecution(execution : SimulationExecution) = execution match {
-    case ex : Continuously => ex.stop()
+    case ex : Daemon => ex.stop()
     case _ =>
   }
 

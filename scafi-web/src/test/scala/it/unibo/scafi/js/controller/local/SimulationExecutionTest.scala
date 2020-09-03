@@ -33,24 +33,24 @@ class SimulationExecutionTest extends SupportTesterLike {
       count map { case `ticksTimes` => succeed }
     }
 
-    it("continuously produce side effects") {
+    it("daemon produce side effects") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val someComputations = 100
       val count = completeAfterN(someComputations, localPlatform.graphStream).runToFuture(monixScheduler)
-      execution.map { case ticker : TickBased => ticker.toContinuously() }
-        .flatMap { continuously => count.map {
-          case `someComputations` => continuously.stop(); succeed
+      execution.map { case ticker : TickBased => ticker.toDaemon() }
+        .flatMap { daemon => count.map {
+          case `someComputations` => daemon.stop(); succeed
           case _ => fail()
         }
       }
     }
-    it("continuously can be stopped") {
+    it("daemon can be stopped") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val someComputations = 10
       val count = completeAfterN(someComputations, localPlatform.graphStream).runToFuture(monixScheduler)
-      execution.map { case ticker : TickBased =>  ticker.toContinuously() }
-        .flatMap { continuously => count.flatMap {
-          case `someComputations` => continuously.stop()
+      execution.map { case ticker : TickBased =>  ticker.toDaemon() }
+        .flatMap { daemon => count.flatMap {
+          case `someComputations` => daemon.stop()
             var unsafeCount = 0
             localPlatform.graphStream.foreach(_ => unsafeCount += 1)(monixScheduler)
             wakeUpAfter(longWait).map { _ => unsafeCount shouldBe 0 }
@@ -59,16 +59,16 @@ class SimulationExecutionTest extends SupportTesterLike {
       }
     }
 
-    it("continuously delta change frequency") {
+    it("daemon delta change frequency") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val delta = 50
       var unsafeTicks = 0L
       localPlatform.graphStream.foreach(_ => unsafeTicks += 1)(monixScheduler)
       var unsafeTimeWithoutDelta = 0L
-      execution.map { case ticker : TickBased => ticker.toContinuously() }
-        .flatMap { continuously => wakeUpAfter(longWait).flatMap{ _ =>
+      execution.map { case ticker : TickBased => ticker.toDaemon() }
+        .flatMap { daemon => wakeUpAfter(longWait).flatMap{ _ =>
           unsafeTimeWithoutDelta = unsafeTicks
-          continuously.stop().toContinuously(delta)
+          daemon.stop().toDaemon(delta)
           unsafeTicks = 0
           wakeUpAfter(longWait).map(_ =>  unsafeTicks < unsafeTimeWithoutDelta shouldBe true)
         }
