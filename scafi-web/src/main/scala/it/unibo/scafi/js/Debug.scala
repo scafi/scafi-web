@@ -9,7 +9,7 @@ import scala.scalajs.js.|
   */
 object Debug {
   @JSExportTopLevel("Debug")
-  val objects = js.Dictionary[js.Object | Any]()
+  val objects = js.Dictionary[Any]()
 
-  def apply(name : String, value : js.Object | Any) : Unit = objects.put(name, value)
+  def apply(name : String, value :  Any) : Unit = objects.put(name, value)
 }

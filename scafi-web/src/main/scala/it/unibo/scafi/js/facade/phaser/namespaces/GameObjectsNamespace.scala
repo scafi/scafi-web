@@ -3,6 +3,7 @@ package it.unibo.scafi.js.facade.phaser.namespaces
 import it.unibo.scafi.js.facade.phaser._
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace
 import it.unibo.scafi.js.utils.{JSNumber, Nullable}
+import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSGlobal, JSName}
@@ -125,7 +126,11 @@ object GameObjectsNamespace extends js.Object {
                   height : JSNumber,
                   fillColor : Int = js.native,
                   fillAlpha : JSNumber = js.native) : Rectangle = js.native
-
+    def dom(x : JSNumber,
+            y : JSNumber,
+            element : HTMLElement | String,
+            style : String = js.native,
+            innerText : String = js.native) : DOMElement = js.native
     def bitmapText(x : JSNumber, y : JSNumber, font : String, text : String, size  : JSNumber = js.native) : BitmapText = js.native
     def text(x : JSNumber, y : JSNumber, text : String, style : types.gameobjects.text.TextStyle = js.native) : Text = js.native
     def container(x : JSNumber = js.native, y : JSNumber = js.native, children : js.Array[GameObject] = js.native) : Container
@@ -213,4 +218,10 @@ object GameObjectsNamespace extends js.Object {
 
   @js.native
   trait Sprite extends js.Object with ThisGeneric[Sprite] { /* todo */ }
+
+  @js.native
+  trait DOMElement extends GameObject with AlphaSingle with BlendMode with Depth with Origin with ScrollFactor
+    with Transform with Visible with ThisGeneric[DOMElement] {
+    def createElement()
+  }
 }

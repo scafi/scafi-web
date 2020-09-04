@@ -10,7 +10,7 @@ import it.unibo.scafi.js.facade.phaser.Phaser.Input.Events._
 import it.unibo.scafi.js.facade.phaser.Phaser.Input.Keyboard.Events._
 import it.unibo.scafi.js.facade.phaser.Phaser.{Game, GameObjects, Input, Scene}
 import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.{Handler1, Handler4}
-import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, Rectangle}
+import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, GameObject, Rectangle}
 import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.{InputPlugin, Pointer}
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace.Transform
 import it.unibo.scafi.js.facade.phaser.namespaces.input.KeyboardNamespace.{Key, KeyCodes}
@@ -19,11 +19,12 @@ import it.unibo.scafi.js.view.dynamic.PhaserInteraction._
 import it.unibo.scafi.js.view.static.Cursor
 import it.unibo.scafi.js.view.static.Cursor.Implicits._
 import org.scalajs.dom.ext.Color
+import scalacss.internal.Media.Height
 
 import scala.scalajs.js
 
 class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result])
-  extends ((Scene, Container) => Unit) {
+  extends ((Scene, NodePopup, Container) => Unit) {
   import KeyCodes._
   private var state : State = Idle
   private var rectangleSelection : Rectangle = _
@@ -34,6 +35,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
   private val keys = List(ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE)
   private var scene : Nullable[Scene] = _
   private var mainContainer : Nullable[Container] = _
+  private var popup : Nullable[NodePopup] = _
   EventBus.listen {
     case SupportConfiguration(_, _, deviceShape, _, _) => sensors = deviceShape.sensors
       .filter {
@@ -44,9 +46,10 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
       onToggle()
   }
 
-  override def apply(scene: Scene, mainContainer : Container): Unit = {
+  override def apply(scene: Scene, popup: NodePopup, mainContainer : Container): Unit = {
     this.scene = scene
     this.mainContainer = mainContainer
+    this.popup = popup
     initInteractionObjects()
     //fsm actions
     onPointerDown()
@@ -91,11 +94,14 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
           val selected = scene.add.circle(body.center.x, body.center.y, body.halfWidth, selectionColor)
           selected.setData("id", body.gameObject.getData("id"))
         }).foreach(selectionContainer.add(_))
+
+        if(overlapWidth == 0 && overlapHeight == 0 && elements.nonEmpty) {
+          popup.foreach(_.focusOn(selectionContainer.list[Transform with GameObject].head))
+        }
       case _ =>
     })
     case _ =>
   }
-
 
   private def onMainContainerDrag() : Unit = (mainContainer.toOption, scene.toOption) match {
     case (Some(mainContainer), Some(scene)) =>

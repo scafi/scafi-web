@@ -15,11 +15,10 @@ import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 class PhaserGraphSection(paneSection : HTMLElement,
-                         interaction : ((Scene, Container) => Unit),
+                         interaction : ((Scene, NodePopup, Container) => Unit),
                          settings: VisualizationSettingsSection) extends (Graph => Unit) {
   import Phaser._
   import it.unibo.scafi.js.facade.phaser.Implicits._
-  import scalatags.JsDom.all._
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val size = 5 //TODO put in configuration
   private val nodeColor : Int = Color(187, 134, 252) //TODO put in configuration
@@ -35,9 +34,11 @@ class PhaserGraphSection(paneSection : HTMLElement,
       mouse = new MouseInputConfig(capture = false),
       keyboard = new KeyboardInputConfig(target = paneSection)
     ),
+    dom = new DOMContainerConfig(createContainer = true),
     transparent = true
   )
   private val game = new Phaser.Game(config)
+  private var popup : NodePopup = _
   protected var mainContainer : GameObjects.Container = _
   protected var vertexContainer : GameObjects.Container = _
   protected var nodeContainer : GameObjects.Container = _
@@ -59,9 +60,10 @@ class PhaserGraphSection(paneSection : HTMLElement,
       labelContainer = scene.add.container(0, 0)
       nodeContainer = scene.add.container(0, 0)
       mainContainer = scene.add.container(0, 0, js.Array(vertexContainer, nodeContainer, labelContainer))
+      popup = new NodePopup(mainContainer, scene)
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
-      interaction(scene, mainContainer)
-      scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (self : js.Any, pointer : js.Any, _ : js.Any, dx : JSNumber, dy : JSNumber, dz : JSNumber) => {
+      interaction(scene, popup, mainContainer)
+      scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (self : js.Any, pointer : js.Any, _ : js.Any, _ : JSNumber, dy : JSNumber, _ : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
     },
@@ -87,6 +89,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
     if(settings.neighbourhoodEnabled) {
       renderVertex(graph, scene)
     }
+    popup.selectedId.foreach(id => popup.refresh(graph(id)))
     val nodes = graph.nodes.map(node => {
       val circle = scene.add.circle(node.position.x, node.position.y, size, nodeColor)
       circle.setData("id", node.id)

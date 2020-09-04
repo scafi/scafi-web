@@ -50,5 +50,7 @@ object RootStyle extends StyleSheet.Standalone {
 
   "#page-container" -(height(pageContentHeight))
 
-  ".simplebar-scrollbar::before" -(backgroundColor(white))
+  ".simplebar-scrollbar::before" -(backgroundColor(gray))
+
+  ".carousel-control" -(filter := "invert(1);")
 }

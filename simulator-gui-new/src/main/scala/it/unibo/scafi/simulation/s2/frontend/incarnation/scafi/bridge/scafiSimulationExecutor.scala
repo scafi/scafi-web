@@ -24,6 +24,7 @@ object scafiSimulationExecutor extends SimulationExecutor {
             (Some(x._1.pull()),x._1,x._2)
           }
         }}.sortWith((x,y) => x._2.level < y._2.level)
+
         LogManager.notify(TreeLog[Path](Channel.Export,result._1.toString,mapped))
       }
       //an the meta actions associated to this simulation
