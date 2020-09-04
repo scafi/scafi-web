@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.core.Core
-import it.unibo.scafi.js.Debug
+import it.unibo.scafi.js.{Debug, Utils}
 import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.facade.phaser.Phaser._
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Arc, Container}
@@ -13,14 +13,16 @@ import org.scalajs.dom.ext.Color
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
-class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Game, Scene, Container) => Unit)) extends (Graph => Unit) {
+class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Scene, Container) => Unit)) extends (Graph => Unit) {
   import Phaser._
   import it.unibo.scafi.js.facade.phaser.Implicits._
+  import scalatags.JsDom.all._
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val size = 5 //TODO put in configuration
-  private val nodeColor : Int = Color.Magenta //TODO put in configuration
+  private val nodeColor : Int = Color(187, 134, 252) //TODO put in configuration
   private val lineColor : Int = Color(125, 125, 125) //TODO put in configuration
   private val fontSize : Int = 10 //TODO put in configuration
+
   private val config = new GameConfig(
     parent = paneSection,
     scene = sceneHandler,
@@ -51,7 +53,7 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Game, Scene,
       nodeContainer = scene.add.container(0, 0)
       mainContainer = scene.add.container(0, 0, js.Array(vertexContainer, nodeContainer, labelContainer))
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
-      interaction(game, scene, mainContainer)
+      interaction(scene, mainContainer)
       scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (self : js.Any, pointer : js.Any, _ : js.Any, dx : JSNumber, dy : JSNumber, dz : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })

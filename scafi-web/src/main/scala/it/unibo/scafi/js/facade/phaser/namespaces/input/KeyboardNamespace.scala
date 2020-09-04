@@ -1,5 +1,6 @@
 package it.unibo.scafi.js.facade.phaser.namespaces.input
 
+import it.unibo.scafi.js.facade.phaser.Phaser.{Game, Scene}
 import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace
 
 import scala.scalajs.js
@@ -19,6 +20,9 @@ object KeyboardNamespace extends js.Object {
   trait KeyboardPlugin extends js.Object {
     def addKey(key : Key | String | Int, enableCapture : Boolean = js.native, emitOnRepeat : Boolean = js.native) : Key
     def addKeys(key : js.Array[Key | String | Int], enableCapture : Boolean = js.native, emitOnRepeat : Boolean = js.native) : js.Dictionary[Key]
+    def removeKey(key : Key | String | Int, destroy : Boolean = js.native) : KeyboardPlugin = js.native
+    def game : Game = js.native
+    def scene : Scene = js.native
     /* todo */
   }
 
@@ -29,11 +33,18 @@ object KeyboardNamespace extends js.Object {
     val ONE : Int = js.native
     val TWO : Int = js.native
     val THREE : Int = js.native
+    val FOUR : Int = js.native
+    val FIVE : Int = js.native
+    val SIX : Int = js.native
+    val SEVEN : Int = js.native
+    val EIGHT : Int = js.native
+    val NINE : Int = js.native
   }
   @js.native
   trait Key extends EventsNamespace.EventEmitter {
     def isDown : Boolean = js.native
     def isUp : Boolean = js.native
+    def plugin : KeyboardPlugin = js.native
     /* todo */
   }
 

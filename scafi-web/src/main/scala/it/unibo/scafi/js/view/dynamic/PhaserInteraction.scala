@@ -1,9 +1,9 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.utils._
+import it.unibo.scafi.js.Debug
 import it.unibo.scafi.js.controller.CommandInterpreter
-import it.unibo.scafi.js.controller.local.SimulationCommand
 import it.unibo.scafi.js.controller.local.SimulationCommand.{Move, ToggleSensor}
+import it.unibo.scafi.js.controller.local.{SimulationCommand, SupportConfiguration}
 import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser
 import it.unibo.scafi.js.facade.phaser.Phaser.Input.Events._
@@ -11,8 +11,10 @@ import it.unibo.scafi.js.facade.phaser.Phaser.Input.Keyboard.Events._
 import it.unibo.scafi.js.facade.phaser.Phaser.{Game, GameObjects, Input, Scene}
 import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.{Handler1, Handler4}
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, Rectangle}
-import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.Pointer
+import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.{InputPlugin, Pointer}
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace.Transform
+import it.unibo.scafi.js.facade.phaser.namespaces.input.KeyboardNamespace.{Key, KeyCodes}
+import it.unibo.scafi.js.utils._
 import it.unibo.scafi.js.view.dynamic.PhaserInteraction._
 import it.unibo.scafi.js.view.static.Cursor
 import it.unibo.scafi.js.view.static.Cursor.Implicits._
@@ -21,44 +23,66 @@ import org.scalajs.dom.ext.Color
 import scala.scalajs.js
 
 class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result])
-  extends ((Game, Scene, Container) => Unit) {
+  extends ((Scene, Container) => Unit) {
+  import KeyCodes._
   private var state : State = Idle
   private var rectangleSelection : Rectangle = _
   private var selectionContainer : Container = _
   private val rectangleAlpha = 0.5
   private val selectionColor = Color.Red
-  override def apply(game: Game, scene: Scene, mainContainer : Container): Unit = {
-    initInteractionObjects(scene, mainContainer)
+  private var sensors : Seq[String] = Seq()
+  private val keys = List(ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE)
+  private var scene : Nullable[Scene] = _
+  private var mainContainer : Nullable[Container] = _
+  EventBus.listen {
+    case SupportConfiguration(_, _, deviceShape, _, _) => sensors = deviceShape.sensors
+      .filter {
+        case (_, _ : Boolean) => true
+        case _ => false
+      }
+      .map { case (name, _) => name }.toSeq
+      onToggle()
+  }
+
+  override def apply(scene: Scene, mainContainer : Container): Unit = {
+    this.scene = scene
+    this.mainContainer = mainContainer
+    initInteractionObjects()
     //fsm actions
-    onPointerDown(scene, mainContainer)
-    onPointerUp(scene, mainContainer)
-    onMainContainerDrag(scene, mainContainer)
-    onMainContainerDrag(scene, mainContainer)
-    controlKeyEvents(scene, game)
-    altKeyEvents(scene, game)
-    onToggle(scene)
-    onGameInOut(scene, game)
+    onPointerDown()
+    onPointerUp()
+    onMainContainerDrag()
+    onMainContainerDrag()
+    controlKeyEvents()
+    altKeyEvents()
+    onToggle()
+    onGameInOut()
   }
 
-  private def initInteractionObjects(scene : Scene, mainContainer : Container) {
-    rectangleSelection = scene.add.rectangle(0, 0, 0, 0, fillColor = Color.White, fillAlpha = rectangleAlpha).setOrigin(0)
-    selectionContainer = scene.add.container(0, 0)
-    mainContainer.add(selectionContainer)
-    mainContainer.setInteractive()
-    scene.input.setDraggable(mainContainer)
+  private def initInteractionObjects() = (scene.toOption, mainContainer.toOption) match {
+    case (Some(scene), Some(mainContainer)) =>
+      rectangleSelection = scene.add.rectangle(0, 0, 0, 0, fillColor = Color.White, fillAlpha = rectangleAlpha).setOrigin(0)
+      selectionContainer = scene.add.container(0, 0)
+      mainContainer.add(selectionContainer)
+      mainContainer.setInteractive()
+      scene.input.setDraggable(mainContainer)
+    case _ =>
   }
 
-  private def onPointerDown(scene : Scene, mainContainer : Container) : Unit = {
-    mainContainer.on(POINTER_DOWN, (_ : Any, pointer : Input.Pointer) => state match {
-      case Idle => resetSelection()
-        rectangleSelection.setPosition(pointer.worldX, pointer.worldY)
-        state = OnSelection
-      case _ =>
-    })
+  private def onPointerDown() : Unit = {
+    mainContainer.foreach {
+      _.on(POINTER_DOWN, (_ : Any, pointer : Input.Pointer) => state match {
+        case Idle => resetSelection()
+          rectangleSelection.setPosition(pointer.worldX, pointer.worldY)
+          state = OnSelection
+        case _ =>
+      })
+    }
   }
 
-  private def onPointerUp(scene  : Scene, mainContainer : Container) : Unit = {
-    scene.input.on(POINTER_UP, (self : Any, pointer : Input.Pointer) => state match {
+  private def onPointerUp() : Unit = (scene.toOption, mainContainer.toOption) match {
+    case (Some(scene), Some(mainContainer)) =>
+      scene.input.on(POINTER_UP, (self : Any, pointer : Input.Pointer) => state match {
       case OnSelection => state = Idle
         val (overlapX, overlapY) = (rectangleSelection.x - mainContainer.x, rectangleSelection.y - mainContainer.y)
         val (overlapWidth, overlapHeight) = (rectangleSelection.width, rectangleSelection.height)
@@ -69,101 +93,119 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
         }).foreach(selectionContainer.add(_))
       case _ =>
     })
+    case _ =>
   }
 
-  private def onMainContainerDrag(scene: Phaser.Scene, mainContainer : Container) : Unit = {
-    val dragFunction: Handler4[Transform] = (obj : Transform, pointer : Pointer, dragX : JSNumber, dragY : JSNumber, _ : Any) => state match {
-      case MoveWorld => obj.setPosition(dragX, dragY)
-      case OnSelection =>
-        rectangleSelection.setSize(pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)
-      case _ =>
-    }
-    mainContainer.on(DRAG_START, (_ : Any, pointer : Pointer) => state match {
-      case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grabbing
-      case _ =>
+
+  private def onMainContainerDrag() : Unit = (mainContainer.toOption, scene.toOption) match {
+    case (Some(mainContainer), Some(scene)) =>
+      mainContainer.on(DRAG_START, (_ : Any, pointer : Pointer) => state match {
+        case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grabbing
+        case _ =>
+      })
+      mainContainer.on(DRAG, dragMoveworldFunction)
+      mainContainer.on(DRAG_END, (_ : Any, pointer : Pointer) => state match {
+        case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grab
+        case _ =>
+      })
+    case _ =>
+  }
+
+  private val dragMoveworldFunction: Handler4[Transform] = (obj : Transform, pointer : Pointer, dragX : JSNumber, dragY : JSNumber, _ : Any) => state match {
+    case MoveWorld => obj.setPosition(dragX, dragY)
+    case OnSelection =>
+      rectangleSelection.setSize(pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)
+    case _ =>
+  }
+
+  private def controlKeyEvents() : Unit = scene.toOption match {
+    case Some(scene) =>
+      val controlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
+      controlKey.on(DOWN, controlDownHandler)
+      controlKey.on(UP, controlUpHandler)
+    case _ =>
+  }
+
+  private val controlUpHandler : Handler1[Key] = (key, _ : Any) => state match {
+    case MoveWorld => state = Idle
+      key.plugin.game.canvas.style.cursor = Cursor.Auto
+    case _ =>
+  }
+
+  private val controlDownHandler : Handler1[Key] = (key, _ : Any) => state match {
+    case Idle => key.plugin.game.canvas.style.cursor = Cursor.Grab
+      state = MoveWorld
+      resetSelection()
+    case _ =>
+  }
+
+  private def altKeyEvents() : Unit = {
+    val altKey = scene.map(_.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT))
+    altKey.foreach(key => {
+      key.on(DOWN, altDownHandler)
+      key.on(UP, altUpHandler)
     })
-    mainContainer.on(DRAG, dragFunction)
-    mainContainer.on(DRAG_END, (_ : Any, pointer : Pointer) => state match {
-      case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grab
-      case _ =>
-    })
   }
 
-  private def controlKeyEvents(scene : Phaser.Scene, game : Game) : Unit = {
-    val controlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
-    val controlUpHandler : Handler1[Scene] = (scene, _ : Any) => state match {
-      case MoveWorld => state = Idle
-        game.canvas.style.cursor = Cursor.Auto
-      case _ =>
-    }
-
-    val controlDownHandler : Handler1[Scene] = (scene, _ : Any) => state match {
-      case Idle => game.canvas.style.cursor = Cursor.Grab
-        state = MoveWorld
-        resetSelection()
-      case _ =>
-    }
-    controlKey.on(DOWN, controlDownHandler)
-    controlKey.on(UP, controlUpHandler)
+  private val altUpHandler : Handler1[Key] = (key, _ : Any) => state match {
+    case MoveSelection => state = Idle
+      key.plugin.game.canvas.style.cursor = Cursor.Auto
+      val positionChangedMap = selectionContainer.list[GameObjects.Arc]
+        .map(node => (node.getData("id").toString, (node.x + selectionContainer.x, node.y + selectionContainer.y)))
+        .toMap
+      commandInterpreter.execute(Move(positionChangedMap))
+      resetSelection()
+      rectangleSelection.disableInteractive()
+    case _ =>
   }
 
-  private def altKeyEvents(scene : Phaser.Scene, game : Game) : Unit = {
-    val dragFunction : Handler4[Transform] = (obj : Transform, pointer : Pointer, dragX : JSNumber, dragY : JSNumber, _ : Any) => state match {
-      case MoveSelection => selectionContainer.x += dragX - obj.x
-        selectionContainer.y += dragY - obj.y
-        obj.setPosition(dragX, dragY)
-      case _ =>
-    }
-
-    val altKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
-    val altUpHandler : Handler1[Scene] = (obj, _ : Any) => state match {
-      case MoveSelection => state = Idle
-        game.canvas.style.cursor = Cursor.Auto
-        val positionChangedMap = selectionContainer.list[GameObjects.Arc]
-          .map(node => (node.getData("id").toString, (node.x + selectionContainer.x, node.y + selectionContainer.y)))
-          .toMap
-        commandInterpreter.execute(Move(positionChangedMap))
-        resetSelection()
-        rectangleSelection.disableInteractive()
-      case _ =>
-    }
-
-    val altDownHandler : Handler1[Scene] = (obj, _ : Any) => state match {
-      case Idle => game.canvas.style.cursor = Cursor.AllScroll
-        state = MoveSelection
-        if(rectangleSelection.width != 0 && rectangleSelection.height != 0) {
-          rectangleSelection.destroy(true)
-          val (x, y, width, height) = (rectangleSelection.x, rectangleSelection.y, rectangleSelection.width, rectangleSelection.height)
-          rectangleSelection = scene.add.rectangle(x, y, width, height, fillColor = Color.White, fillAlpha = rectangleAlpha).setOrigin(0)
-          rectangleSelection.setInteractive()
-          scene.input.setDraggable(rectangleSelection)
-          rectangleSelection.on(DRAG, dragFunction)
-        }
-      case _ =>
-    }
-    altKey.on(DOWN, altDownHandler)
-    altKey.on(UP, altUpHandler)
+  private val altDownHandler : Handler1[Key] = (key, _ : Any) => state match {
+    case Idle =>
+      val scene = key.plugin.scene
+      key.plugin.game.canvas.style.cursor = Cursor.AllScroll
+      state = MoveSelection
+      if(rectangleSelection.width != 0 && rectangleSelection.height != 0) {
+        rectangleSelection.destroy(true)
+        val (x, y, width, height) = (rectangleSelection.x, rectangleSelection.y, rectangleSelection.width, rectangleSelection.height)
+        rectangleSelection = scene.add.rectangle(x, y, width, height, fillColor = Color.White, fillAlpha = rectangleAlpha).setOrigin(0)
+        rectangleSelection.setInteractive()
+        scene.input.setDraggable(rectangleSelection)
+        rectangleSelection.on(DRAG, dragAltFunction)
+      }
+    case _ =>
   }
 
-  private def onToggle(scene : Scene): Unit = {
-    def onClickDown(sensor : String) : Handler1[Scene] = (obj, event : js.Object) => {
-      val ids = selectionContainer.list[GameObjects.Arc]
-        .map(node => (node.getData("id").toString))
-        .toSet
-      commandInterpreter.execute(ToggleSensor(sensor, ids))
-    }
-    val oneNumber = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ONE)
-    val twoNumber = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.TWO)
-    oneNumber.on(DOWN, onClickDown("source"))
-    twoNumber.on(DOWN, onClickDown("obstacle"))
+  private val dragAltFunction : Handler4[Transform] = (obj : Transform, _ : Pointer, dragX : JSNumber, dragY : JSNumber, _ : Any) => state match {
+    case MoveSelection => selectionContainer.x += dragX - obj.x
+      selectionContainer.y += dragY - obj.y
+      obj.setPosition(dragX, dragY)
+    case _ =>
   }
 
-  private def onGameInOut(scene : Scene, game : Game) : Unit = {
-    scene.input.on(GAME_OUT, (_ : Any) => {
-      state = Idle
-      game.canvas.style.cursor = Cursor.Auto
-    })
-    scene.input.on(GAME_OVER, (_ : Any) => game.canvas.parentElement.focus())
+  private def onToggle(): Unit = scene.toOption match {
+    case Some(scene) =>
+      keys.foreach(scene.input.keyboard.get.removeKey(_, destroy = true))
+      keys.zip(sensors).
+        map { case (key, name) => name -> scene.input.keyboard.get.addKey(key) }
+        .foreach { case (sensor, key) => key.on(DOWN, onClickDown(sensor)) }
+    case _ =>
+  }
+
+  private def onClickDown(sensor : String) : Handler1[Scene] = (obj, event : js.Object) => {
+    val ids = selectionContainer.list[GameObjects.Arc]
+      .map(node => (node.getData("id").toString))
+      .toSet
+    commandInterpreter.execute(ToggleSensor(sensor, ids))
+  }
+
+  private def onGameInOut() : Unit = scene.toOption match {
+    case Some(scene) =>
+      scene.input.on(GAME_OUT, (plugin : InputPlugin) => {
+        state = Idle
+        plugin.scene.game.canvas.style.cursor = Cursor.Auto
+      })
+      scene.input.on(GAME_OVER, (plugin : InputPlugin) =>  plugin.scene.game.canvas.parentElement.focus())
+    case _ =>
   }
   private def resetSelection() : Unit = {
     rectangleSelection.setSize(0, 0)

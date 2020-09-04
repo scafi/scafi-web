@@ -64,7 +64,9 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
       case Random => RandomNetwork(min.intValue, max.intValue, howMany.intValue)
     }
     val sensorMap = js.Dictionary[Any](sensors.map(_.nameAndValue):_*)
-    support.evolve(SupportConfiguration(netSettings, SpatialRadius(radius.intValue), DeviceConfiguration(sensorMap), SimulationSeeds()))
+    val configuration = SupportConfiguration(netSettings, SpatialRadius(radius.intValue), DeviceConfiguration(sensorMap), SimulationSeeds())
+    support.evolve(configuration)
+    EventBus.publish(configuration)
   }
 
   init(Random)

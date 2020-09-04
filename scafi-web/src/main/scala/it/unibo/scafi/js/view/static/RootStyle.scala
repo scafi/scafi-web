@@ -15,9 +15,9 @@ object RootStyle extends StyleSheet.Standalone {
   private val navHeight = 8 vh
   private val pageContentHeight = 90 vh
   private val contentHeight = 88 vh
-  private val visualizationHeight = 82 vh
+  private val visualizationHeight = 78 vh
   private val editorHeight = 84 vh
-  private val utilsVisualizationHeight = 6 vh
+  val utilsVisualizationHeight = 5 vh
 
   "html, body" - (height(100 %%))
   "nav" -(height(navHeight))
@@ -32,25 +32,23 @@ object RootStyle extends StyleSheet.Standalone {
 
   ".CodeMirror" - (height(editorHeight).important)
 
-  "#canvasContainer" - (height(contentHeight))
-
   "#visualization-section, #editor-section, #backend-config-section" - (height(contentHeight))
 
   "backendConfig" -(overflow.auto)
 
-  "#controls" -(
+  "#controls, #visualization-option" -(
     height(utilsVisualizationHeight),
     whiteSpace.nowrap
   )
 
   "#console" -(height(utilsVisualizationHeight))
 
-  "#visualizationPane" - (
+  "#visualization-pane" - (
     height(visualizationHeight),
     outlineWidth(0 px)
   )
 
-  "#pageContainer" -(height(pageContentHeight))
+  "#page-container" -(height(pageContentHeight))
 
   ".simplebar-scrollbar::before" -(backgroundColor(white))
 }

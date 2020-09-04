@@ -80,6 +80,7 @@ object InputNamespace extends js.Any {
   trait InputPlugin extends js.Object with Phaser.Events.EventEmitter {
     /* fields */
     var keyboard : Nullable[Keyboard.KeyboardPlugin] = js.native
+    val scene : Scene = js.native
     /* methods */
     def setDraggable(gameobject : GameObjects.GameObject, value : Boolean = js.native) : Unit = js.native
   }

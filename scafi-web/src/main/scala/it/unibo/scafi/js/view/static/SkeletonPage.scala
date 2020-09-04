@@ -24,15 +24,19 @@ object SkeletonPage {
   /**
    * select part to choose an aggregate program.
    */
-  lazy val selectionProgram : Select = select(id := "selectProgram", cls := "form-control").render
+  lazy val selectionProgram : Select = select(id := "select-program", cls := "form-control").render
   /**
    * section that contains the controls to manage the backend, it is support specific.
    */
   lazy val controlsDiv : Div = div(id := "controls").render
   /**
+    * section that contains the controls to manage the visualization, it is support specific.
+    */
+  lazy val visualizationOptionDiv : Div = div(id := "visualization-option").render
+  /**
    * section in which is rendered the graph that represent the aggregate system.
    */
-  lazy val visualizationSection : Div = div(id := "visualizationPane", cls := "border border-secondary", tabindex := 0).render
+  lazy val visualizationSection : Div = div(id := "visualization-pane", cls := "border border-secondary", tabindex := 0).render
   /**
    * section used to configure the backend (it is support specific)
    */
@@ -60,7 +64,7 @@ object SkeletonPage {
 
   private def pageContainer : TypedTag[Div] = div(
     cls := "row flex-grow-1 m-0 bg-dark",
-    id := "pageContainer",
+    id := "page-container",
     backendConfig,
     editor,
     visualization
@@ -77,6 +81,7 @@ object SkeletonPage {
     cls := "col-6 bg-dark",
     id := "visualization-section",
     controlsDiv,
+    visualizationOptionDiv,
     visualizationSection
   )
 }

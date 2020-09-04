@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.facade.phaser.Implicits
-import it.unibo.scafi.js.view.dynamic.{ConfigurationSection, EditorSection, PhaserGraphSection, PhaserInteraction, SimulationControlsSection}
+import it.unibo.scafi.js.view.dynamic.{ConfigurationSection, EditorSection, EventBus, PhaserGraphSection, PhaserInteraction, SimulationControlsSection, VisualizationSettingsSection}
 import it.unibo.scafi.js.view.static.SkeletonPage
 import org.scalajs.dom
 import org.scalajs.dom.ext.Color
@@ -43,16 +43,25 @@ object Index {
   )
 
   def configurePage(): Unit = {
-    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support))
-    val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
+    implicit val context = Utils.timeoutBasedScheduler
     document.head.appendChild(SkeletonPage.renderedStyle.render)
     document.body.appendChild(SkeletonPage.content.render)
+    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support))
+    val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
+    val visualizationSettingsSection = new VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv, configuration)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
-    implicit val context = Utils.timeoutBasedScheduler
+
     SimulationControlsSection.render(support, editor.editor, SkeletonPage.controlsDiv)
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
     support.invalidate()
     SkeletonPage.visualizationSection.focus()
+    EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
+    EventBus.listen {
+      case _ => println("here")
+    }
+    EventBus.listen {
+      case _ => println("here")
+    }
   }
   import org.querki.jquery.$
   Debug("$", $)
