@@ -9,11 +9,14 @@ import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.Graph
+import it.unibo.scafi.js.view.dynamic.PhaserGraphSection.ForceRepaint
 import org.scalajs.dom.ext.Color
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
-class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Scene, Container) => Unit)) extends (Graph => Unit) {
+class PhaserGraphSection(paneSection : HTMLElement,
+                         interaction : ((Scene, Container) => Unit),
+                         settings: VisualizationSettingsSection) extends (Graph => Unit) {
   import Phaser._
   import it.unibo.scafi.js.facade.phaser.Implicits._
   import scalatags.JsDom.all._
@@ -39,6 +42,10 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Scene, Conta
   protected var vertexContainer : GameObjects.Container = _
   protected var nodeContainer : GameObjects.Container = _
   protected var labelContainer : GameObjects.Container = _
+
+  EventBus.listen {
+    case ForceRepaint => model = model.copy(_2 = true)
+  }
 
   private lazy val sceneHandler : types.scenes.CreateSceneFromObjectConfig =  types.scenes.callbacks(
     preload = (scene) => {
@@ -73,15 +80,13 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Scene, Conta
 
   private def onNewGraph(graph : Graph, scene : Phaser.Scene) : Unit = {
     //TODO improve performance (e.g. via caching)
+
     vertexContainer.removeAll(true)
     nodeContainer.removeAll(true)
     labelContainer.removeAll(true)
-
-    graph.vertices.map(vertex =>  (graph(vertex.from), graph(vertex.to)))
-      .map { case (from, to) => scene.add.line(x1 = from.position.x, y1 = from.position.y, x2 = to.position.x, y2 = to.position.y, strokeColor = lineColor ) }
-      .map { _.setOrigin(0)}
-      .foreach(vertexContainer.add(_))
-
+    if(settings.neighbourhoodEnabled) {
+      renderVertex(graph, scene)
+    }
     val nodes = graph.nodes.map(node => {
       val circle = scene.add.circle(node.position.x, node.position.y, size, nodeColor)
       circle.setData("id", node.id)
@@ -90,21 +95,24 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Scene, Conta
     import js.JSConverters._
     scene.physics.add.staticGroup(nodes.toJSArray)
 
-    graph.nodes.map(node => node -> node.labels.map(onLabel).toList)
-        .map { case (node, labelList) => node -> (s"${node.id}" :: labelList).mkString("\n")}
-        .map { case (node, labelList) => scene.add.bitmapText(node.position.x , node.position.y, "font", labelList, fontSize)}
-        .map(_.setLeftAlign())
-        .foreach(labelContainer.add(_))
-
-    graph.nodes.map(node => node -> node.labels.map(onLabel).toList)
-      .map { case (node, labelList) => node -> (s"${node.id}" :: Nil).mkString("\n")}
+    graph.nodes.map(node => node -> node.labels)
+      .map { case (node, labels) => node -> labels.filter(label => settings.sensorEnabled(label._1)) }
+      .map { case (node, labels) => node -> labels.map(onLabel).toList }
+      .map { case (node, labels) => node -> (if (settings.idEnabled) (s"${node.id}" :: labels) else labels) }
+      .map { case (node, labelList) => node -> labelList.mkString("\n")}
+      .filterNot { case (_, string) => string.isEmpty }
       .map { case (node, labelList) => scene.add.bitmapText(node.position.x , node.position.y, "font", labelList, fontSize)}
       .map(_.setLeftAlign())
       .foreach(labelContainer.add(_))
-
     model = model.copy(_2 = false)
   }
 
+  private def renderVertex(graph : Graph, scene : Scene) : Unit = {
+    graph.vertices.map(vertex =>  (graph(vertex.from), graph(vertex.to)))
+      .map { case (from, to) => scene.add.line(x1 = from.position.x, y1 = from.position.y, x2 = to.position.x, y2 = to.position.y, strokeColor = lineColor ) }
+      .map { _.setOrigin(0)}
+      .foreach(vertexContainer.add(_))
+  }
   private def onLabel(label : (String, Any)) : String = label match {
     case (_, e: Core#Export) => e.root[Any]() match {
       case (other : Double) => ""  + other.toInt
@@ -113,4 +121,17 @@ class PhaserGraphSection(paneSection : HTMLElement, interaction : ((Scene, Conta
     case (_, other: Double) => "" + other.toInt
     case (_, e) => e.toString
   }
+}
+
+object PhaserGraphSection {
+
+  /**
+    * a set of event that could be received by this sectio
+    */
+  sealed trait VisualizationEvent
+
+  /**
+    * repaint the graph even if it is not changed.
+    */
+  object ForceRepaint
 }

@@ -46,22 +46,15 @@ object Index {
     implicit val context = Utils.timeoutBasedScheduler
     document.head.appendChild(SkeletonPage.renderedStyle.render)
     document.body.appendChild(SkeletonPage.content.render)
-    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support))
+    val visualizationSettingsSection = new VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
+    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
-    val visualizationSettingsSection = new VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv, configuration)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
-
     SimulationControlsSection.render(support, editor.editor, SkeletonPage.controlsDiv)
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
     support.invalidate()
     SkeletonPage.visualizationSection.focus()
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
-    EventBus.listen {
-      case _ => println("here")
-    }
-    EventBus.listen {
-      case _ => println("here")
-    }
   }
   import org.querki.jquery.$
   Debug("$", $)
