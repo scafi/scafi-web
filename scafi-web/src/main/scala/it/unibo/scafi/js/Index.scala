@@ -5,7 +5,8 @@ import java.util.concurrent.TimeUnit
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.facade.phaser.Implicits
-import it.unibo.scafi.js.view.dynamic.{ConfigurationSection, EditorSection, EventBus, PhaserGraphSection, PhaserInteraction, SimulationControlsSection, VisualizationSettingsSection}
+import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
+import it.unibo.scafi.js.view.dynamic.{ConfigurationSection, EditorSection, EventBus, SimulationControlsSection, VisualizationSettingsSection}
 import it.unibo.scafi.js.view.static.SkeletonPage
 import org.scalajs.dom
 import org.scalajs.dom.ext.Color
@@ -46,8 +47,9 @@ object Index {
     implicit val context = Utils.timeoutBasedScheduler
     document.head.appendChild(SkeletonPage.renderedStyle.render)
     document.body.appendChild(SkeletonPage.content.render)
-    val visualizationSettingsSection = new VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection)
+    val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
+    val renders = Seq(LabelRender.booleanRender, LabelRender.textify)
+    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
     SimulationControlsSection.render(support, editor.editor, SkeletonPage.controlsDiv)
@@ -58,6 +60,8 @@ object Index {
   }
   import org.querki.jquery.$
   Debug("$", $)
+  val x : PartialFunction[Any, Int] = { case a : Int => 10}
+  Debug("x", x)
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)
 }

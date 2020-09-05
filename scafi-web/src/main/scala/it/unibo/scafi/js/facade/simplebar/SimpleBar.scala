@@ -43,3 +43,7 @@ class BarClassName(content : String = "simplebar-content",
                   scrollbar : String =  "simplebar-scrollbar",
                   track : String =  "simplebar-track"
                   ) extends CleanableObject
+
+object SimpleBar {
+  def wrap(content : dom.Element) : Unit = new SimpleBar(content)
+}

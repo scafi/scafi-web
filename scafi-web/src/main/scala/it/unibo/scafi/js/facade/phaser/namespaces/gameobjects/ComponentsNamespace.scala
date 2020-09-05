@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.facade.phaser.namespaces.gameobjects
 
-import it.unibo.scafi.js.facade.phaser.This
+import it.unibo.scafi.js.facade.phaser.{Phaser, This}
 import it.unibo.scafi.js.utils.JSNumber
 
 import scala.scalajs.js
@@ -171,4 +171,11 @@ object ComponentsNamespace extends js.Object {
     override type This <: Flip
     /*todo*/
   }
+  @js.native
+  trait GetBounds extends js.Object with This {
+    override type This <: GetBounds
+    def getBounds(output : Phaser.Geom.Rectangle = js.native) : Phaser.Geom.Rectangle = js.native
+    /*todo*/
+  }
+
 }

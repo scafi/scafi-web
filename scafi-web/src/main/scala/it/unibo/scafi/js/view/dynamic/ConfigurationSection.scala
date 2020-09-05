@@ -15,7 +15,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
 
   val container : Div = div(cls:= "pt-1, pb-1").render
   configuration.appendChild(container)
-  new SimpleBar(configuration)
+  SimpleBar.wrap(configuration)
   val selectMode = select (cls := "form-control", option(Random.toString), option(Grid.toString)).render
   val loadButton = button( cls := "btn btn-primary btn-sm",`type` := "button", "load config").render
   val mainDiv = div(cls := "input-group input-group-sm", selectMode, loadButton).render
@@ -44,7 +44,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
     container.appendChild(newElement.render)
   }
 
-  def init(mode : Mode) : Unit = {
+  private def init(mode : Mode) : Unit = {
     container.textContent = ""
     container.appendChild(mainDiv)
     val elements = mode match {
@@ -58,7 +58,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
     sensors foreach { input => container.appendChild(input.render) }
   }
 
-  def load(mode : Mode) : Unit = {
+  private def load(mode : Mode) : Unit = {
     val netSettings = mode match {
       case Grid => GridLikeNetwork(rows.intValue, cols.intValue, stepX.intValue, stepY.intValue, tolerance.intValue)
       case Random => RandomNetwork(min.intValue, max.intValue, howMany.intValue)
@@ -109,6 +109,7 @@ object ConfigurationSection {
   private trait Mode
   private case object Random extends Mode { override def toString: String = "random" }
   private case object Grid extends Mode { override def toString: String = "grid" }
+
   private def modeFromString(mode : String) : Mode = mode match {
     case "random" => Random
     case "grid" => Grid

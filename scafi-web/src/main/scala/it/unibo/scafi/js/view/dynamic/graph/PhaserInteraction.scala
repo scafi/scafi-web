@@ -1,6 +1,5 @@
-package it.unibo.scafi.js.view.dynamic
+package it.unibo.scafi.js.view.dynamic.graph
 
-import it.unibo.scafi.js.Debug
 import it.unibo.scafi.js.controller.CommandInterpreter
 import it.unibo.scafi.js.controller.local.SimulationCommand.{Move, ToggleSensor}
 import it.unibo.scafi.js.controller.local.{SimulationCommand, SupportConfiguration}
@@ -8,25 +7,25 @@ import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser
 import it.unibo.scafi.js.facade.phaser.Phaser.Input.Events._
 import it.unibo.scafi.js.facade.phaser.Phaser.Input.Keyboard.Events._
-import it.unibo.scafi.js.facade.phaser.Phaser.{Game, GameObjects, Input, Scene}
+import it.unibo.scafi.js.facade.phaser.Phaser.{GameObjects, Input, Scene}
 import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.{Handler1, Handler4}
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, GameObject, Rectangle}
 import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.{InputPlugin, Pointer}
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace.Transform
 import it.unibo.scafi.js.facade.phaser.namespaces.input.KeyboardNamespace.{Key, KeyCodes}
 import it.unibo.scafi.js.utils._
-import it.unibo.scafi.js.view.dynamic.PhaserInteraction._
+import it.unibo.scafi.js.view.dynamic.EventBus
 import it.unibo.scafi.js.view.static.Cursor
 import it.unibo.scafi.js.view.static.Cursor.Implicits._
 import org.scalajs.dom.ext.Color
-import scalacss.internal.Media.Height
 
 import scala.scalajs.js
 
 class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result])
-  extends ((Scene, NodePopup, Container) => Unit) {
+  extends ((Scene, NodeDescriptionPopup, Container) => Unit) {
   import KeyCodes._
-  private var state : State = Idle
+  import InteractionState._
+  private var state : InteractionState = Idle
   private var rectangleSelection : Rectangle = _
   private var selectionContainer : Container = _
   private val rectangleAlpha = 0.5
@@ -35,7 +34,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
   private val keys = List(ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE)
   private var scene : Nullable[Scene] = _
   private var mainContainer : Nullable[Container] = _
-  private var popup : Nullable[NodePopup] = _
+  private var popup : Nullable[NodeDescriptionPopup] = _
   EventBus.listen {
     case SupportConfiguration(_, _, deviceShape, _, _) => sensors = deviceShape.sensors
       .filter {
@@ -46,7 +45,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
       onToggle()
   }
 
-  override def apply(scene: Scene, popup: NodePopup, mainContainer : Container): Unit = {
+  override def apply(scene: Scene, popup: NodeDescriptionPopup, mainContainer : Container): Unit = {
     this.scene = scene
     this.mainContainer = mainContainer
     this.popup = popup
@@ -87,8 +86,9 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     case (Some(scene), Some(mainContainer)) =>
       scene.input.on(POINTER_UP, (self : Any, pointer : Input.Pointer) => state match {
       case OnSelection => state = Idle
-        val (overlapX, overlapY) = (rectangleSelection.x - mainContainer.x, rectangleSelection.y - mainContainer.y)
-        val (overlapWidth, overlapHeight) = (rectangleSelection.width, rectangleSelection.height)
+        val bounds = rectangleSelection.getBounds()
+        val (overlapX, overlapY) = (bounds.x - mainContainer.x, bounds.y - mainContainer.y)
+        val (overlapWidth, overlapHeight) = (bounds.width, bounds.height)
         val elements = scene.physics.overlapRect(overlapX, overlapY, overlapWidth, overlapHeight, includeStatic = true)
         elements.map(body => {
           val selected = scene.add.circle(body.center.x, body.center.y, body.halfWidth, selectionColor)
@@ -218,12 +218,4 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     selectionContainer.removeAll()
     selectionContainer.setPosition(0, 0)
   }
-}
-
-object PhaserInteraction {
-  private trait State
-  private case object MoveWorld extends State
-  private case object MoveSelection extends State
-  private case object OnSelection extends State
-  private case object Idle extends State
 }

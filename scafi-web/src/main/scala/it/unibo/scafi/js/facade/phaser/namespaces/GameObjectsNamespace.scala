@@ -148,7 +148,7 @@ object GameObjectsNamespace extends js.Object {
   trait LightsManager extends js.Object { /* todo */ }
 
   @js.native
-  trait Shape extends GameObject with Transform with BlendMode with ComputedSize
+  trait Shape extends GameObject with Transform with BlendMode with ComputedSize with GetBounds with AlphaSingle
     with Depth with Origin with Mask with Pipeline with ScrollFactor with Visible with This {
     override type This <: Shape
     /* members */
