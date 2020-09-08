@@ -1,6 +1,7 @@
 package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.js.Utils._
+import it.unibo.scafi.js.utils.Execution
 
 /**
   * the root trait of a simulator run. It can be "Tick" (i.e. the simulation go on by user click) or
@@ -51,14 +52,14 @@ object SimulationExecution {
     * @param delta the execution period
     */
   case class Daemon(batchSize : Int = 1, delta : Int = 0, protected val exec : (Int) => Unit) extends SimulationExecution {
-    private val timer = schedule(delta){exec(batchSize)}
+    private val timer = Execution.schedule(delta){exec(batchSize)}
 
     /**
       * stop current Daemon and turn to "Tick" based execution
       * @return the execution instance
       */
     def stop() : TickBased = {
-      cancel(timer)
+      timer.cancel
       TickBased(batchSize, exec)
     }
   }

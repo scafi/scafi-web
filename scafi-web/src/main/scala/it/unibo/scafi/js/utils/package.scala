@@ -1,8 +1,19 @@
 package it.unibo.scafi.js
 
+import scala.scalajs.js
 import scala.scalajs.js.|
 
 package object utils {
+  /**
+    * use internally json.stringify
+    * @param element the element to parse in JSON
+    * @tparam E object type
+    * @return the string representation of the object
+    */
+  def stringify[E](element : E) : String = {
+    val any : js.Any = element.asInstanceOf[js.Any]
+    js.Dynamic.global.JSON.stringify(any).toString
+  }
   /** a declarative way to define the interface of facade.*/
   type JSNumber = Double
   /** each type can be nullable, it is a way to define the interface of javascript library*/

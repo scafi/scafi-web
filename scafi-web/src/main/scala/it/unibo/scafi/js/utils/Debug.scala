@@ -1,8 +1,7 @@
-package it.unibo.scafi.js
+package it.unibo.scafi.js.utils
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
-import scala.scalajs.js.|
+import scala.scalajs.js.annotation.JSExportTopLevel
 
 /**
   * a top level object used to inspect the value of javascript object at runtime
