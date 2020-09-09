@@ -9,7 +9,7 @@ import it.unibo.scafi.js.view.dynamic.CarouselModal.{CarouselContent, CarouselIt
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
 import it.unibo.scafi.js.view.dynamic.{CarouselModal, EventBus}
 import org.scalajs.dom.raw.MouseEvent
-
+import NodeRepresentation._
 import scala.scalajs.js
 
 
@@ -43,7 +43,7 @@ object NodeDescriptionPopup {
       gameElement.x = node.x
       gameElement.y = node.y
       gameElement.visible = true
-      selectedId = Some(node.getData("id").toString)
+      selectedId = Some(node.id)
       EventBus.publish(ForceRepaint)
     }
 

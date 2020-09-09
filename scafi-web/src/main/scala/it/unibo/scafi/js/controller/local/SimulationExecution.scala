@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.Utils._
 import it.unibo.scafi.js.utils.Execution
 
 /**

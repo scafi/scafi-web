@@ -17,7 +17,10 @@ object GameObjectsNamespace extends js.Object {
   val Components : ComponentsNamespace.type = js.native
   import Components._
   import Phaser._
-  /* classes */
+  /* CLASSES */
+  /**
+    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.GameObject.html]]
+    */
   @js.native
   trait GameObject extends Events.EventEmitter with This {
     override type This <: GameObject

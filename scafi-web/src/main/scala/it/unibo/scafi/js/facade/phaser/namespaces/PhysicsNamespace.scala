@@ -15,6 +15,10 @@ object PhysicsNamespace extends js.Object {
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Matter.html]] */
   @js.native
   object Matter extends js.Object {
+
+    /**
+      * @ see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Matter.MatterPhysics.html]]
+      */
     @js.native
     trait MatterPhysics extends js.Object { /* todo */ }
   }

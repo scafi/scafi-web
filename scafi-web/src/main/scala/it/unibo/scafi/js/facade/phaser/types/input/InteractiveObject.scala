@@ -6,6 +6,9 @@ import it.unibo.scafi.js.facade.phaser.Phaser
 import scala.scalajs.js
 import scala.scalajs.js.|
 
+/**
+  * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Types.Input.html#.InteractiveObject]]
+  */
 trait InteractiveObject extends js.Object {
   var gameObject : Phaser.GameObjects.GameObject
   var enabled : Boolean

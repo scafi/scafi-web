@@ -4,6 +4,7 @@ import it.unibo.scafi.space.Point3D
 
 import scala.scalajs.js
 //TODO add enviroment concept? What is it? It is Any? has some constraint?
+//TODO modify to became fully javascript complaint (using js.Array and js.Dictionary)
 /**
  * A graph model used to represent an aggregate system.
  * Conceptually this data structure should be immutable.

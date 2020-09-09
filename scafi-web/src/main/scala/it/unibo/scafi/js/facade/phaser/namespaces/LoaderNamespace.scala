@@ -10,6 +10,10 @@ import scala.scalajs.js.|
 @js.native
 @JSGlobal("Phaser.Loader")
 object LoaderNamespace extends js.Object {
+
+  /**
+    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Loader.LoaderPlugin.html]]
+    */
   @js.native
   class LoaderPlugin(val scene : Phaser.Scene) extends js.Object {
     /* todo */

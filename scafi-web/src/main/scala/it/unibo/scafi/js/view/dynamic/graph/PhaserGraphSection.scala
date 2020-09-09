@@ -9,6 +9,7 @@ import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.{Graph, Node}
 import it.unibo.scafi.js.utils.JSNumber
+import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
 import it.unibo.scafi.js.view.dynamic.{EventBus, VisualizationSettingsSection}
 import org.scalajs.dom.ext.Color
@@ -21,6 +22,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
                          labelRenders : Seq[LabelRender]) extends (Graph => Unit) {
   import Phaser._
   import it.unibo.scafi.js.facade.phaser.Implicits._
+  import NodeRepresentation._
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val size = 5 //TODO put in configuration
   private val nodeColor : Int = Color(187, 134, 252) //TODO put in configuration
@@ -39,13 +41,13 @@ class PhaserGraphSection(paneSection : HTMLElement,
     dom = new DOMContainerConfig(createContainer = true),
     transparent = true
   )
+
   private val game = new Phaser.Game(config)
   private var popup : NodeDescriptionPopup = _
-  protected var mainContainer : GameObjects.Container = _
-  protected var vertexContainer : GameObjects.Container = _
-  protected var nodeContainer : GameObjects.Container = _
-  protected var labelContainer : GameObjects.Container = _
-
+  private var mainContainer : GameObjects.Container = _
+  private var vertexContainer : GameObjects.Container = _
+  private var nodeContainer : GameObjects.Container = _
+  private var labelContainer : GameObjects.Container = _
   private lazy val sceneHandler : types.scenes.CreateSceneFromObjectConfig =  types.scenes.callbacks(
     preload = (scene) => {
       //TODO put in configuration via webpack
@@ -61,7 +63,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
       popup = NodeDescriptionPopup(mainContainer, scene)
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
       interaction(scene, popup, mainContainer)
-      scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (self : js.Any, pointer : js.Any, _ : js.Any, _ : JSNumber, dy : JSNumber, _ : JSNumber) => {
+      scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (_ : js.Any, _ : js.Any, _ : js.Any, _ : JSNumber, dy : JSNumber, _ : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
     },
@@ -92,13 +94,15 @@ class PhaserGraphSection(paneSection : HTMLElement,
 
     val nodes = graph.nodes.map(node => {
       val circle = scene.add.circle(node.position.x, node.position.y, size, nodeColor)
-      circle.setData("id", node.id)
+      circle.id = node.id
+      node -> circle
     })
-    nodes.foreach(nodeContainer.add(_))
+    val gameobjectNodes = nodes.map { case (_, circle) => circle }
+    gameobjectNodes.foreach(nodeContainer.add(_))
     import js.JSConverters._
-    scene.physics.add.staticGroup(nodes.toJSArray)
+    scene.physics.add.staticGroup(gameobjectNodes.toJSArray)
 
-    if(settings.anyLabelEnabled) { renderLabel(graph, scene) }
+    if(settings.anyLabelEnabled) { renderLabel(nodes, scene) }
 
     model = model.copy(_2 = false)
   }
@@ -110,11 +114,12 @@ class PhaserGraphSection(paneSection : HTMLElement,
       .foreach(vertexContainer.add(_))
   }
 
-  private def renderLabel(graph : Graph, scene : Scene) : Unit = {
-    def renderNodeLabels(node : Node, labels : List[(String, Any)]) : Seq[GameObject] = {
+  private def renderLabel[E <: GameobjectNode](nodes : Set[(Node, E)], scene : Scene) : Unit = {
+    def renderNodeLabels(node : E, labels : List[(String, Any)]) : Seq[GameObject] = {
       type FoldType = (Seq[(String, Any)], Seq[GameObject])
+
       labelRenders.foldLeft[FoldType](labels, Seq.empty){
-        case ((labelsRemains, gameObjects), render) => val rendered = render(node, labelsRemains, scene)
+        case ((labelsRemains, gameObjects), render) => val rendered = render.apply(node, labelsRemains, scene)
           val renderedLabel = rendered.flatMap { case (_, labels) => labels }
           val renderedGameobject = rendered.map { case (gameobj,_) => gameobj }
           val labelsRemainsUpdated = labelsRemains.filterNot { case (name, value) => renderedLabel.contains(name) }
@@ -122,7 +127,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
       }._2
     }
 
-    graph.nodes.map(node => node -> node.labels)
+    nodes.map { case (node, gameobject) => gameobject -> node.labels }
       .map { case (node, labels) => node -> labels.filter(label => settings.sensorEnabled(label._1)) }
       .map { case (node, labels) => node -> labels.toList }
       .map { case (node, labels) => node -> (if (settings.idEnabled) (("id" -> node.id) :: labels) else labels) }

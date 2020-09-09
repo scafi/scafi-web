@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.utils.Execution
-import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.dynamic._
+import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.static.SkeletonPage
 
 import scala.concurrent.duration.FiniteDuration
@@ -48,7 +48,7 @@ object Index {
     document.body.appendChild(SkeletonPage.content.render)
     //dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders = Seq(LabelRender.booleanRender, LabelRender.textify)
+    val renders : Seq[LabelRender.LabelRender] = Seq(LabelRender.booleanRender, LabelRender.textify)
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)

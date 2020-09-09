@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.Utils
 import it.unibo.scafi.js.controller.local.SupportTesterLike.SimulationSupportWrapper
 import it.unibo.scafi.js.utils.Execution
 import org.scalatest.BeforeAndAfterEach

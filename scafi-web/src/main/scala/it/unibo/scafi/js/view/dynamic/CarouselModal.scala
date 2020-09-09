@@ -6,6 +6,7 @@ import org.scalajs.dom.html.{Div, Element, LI, UList}
 import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
 import CarouselModal._
+
 case class CarouselModal(carousel: CarouselContent) extends HtmlRenderable[Element] {
   private val closeButton = button(`type` := "button", cls := "close", span("×")).render
   private val title = h6(cls := "modal-tile").render

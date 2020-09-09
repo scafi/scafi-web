@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.view.static
 
 /**
-  * an enumeration used to defined all type of html cursor
+  * An enumeration used to defined all type of html cursor
   * @see See [[https://www.w3schools.com/cssref/pr_class_cursor.asp]]
   * @param html the cursor style value
   */

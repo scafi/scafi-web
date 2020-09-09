@@ -18,7 +18,8 @@ import it.unibo.scafi.js.view.dynamic.EventBus
 import it.unibo.scafi.js.view.static.Cursor
 import it.unibo.scafi.js.view.static.Cursor.Implicits._
 import org.scalajs.dom.ext.Color
-
+import NodeRepresentation._
+import NodeRepresentation._
 import scala.scalajs.js
 
 class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result])
@@ -92,7 +93,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
         val elements = scene.physics.overlapRect(overlapX, overlapY, overlapWidth, overlapHeight, includeStatic = true)
         elements.map(body => {
           val selected = scene.add.circle(body.center.x, body.center.y, body.halfWidth, selectionColor)
-          selected.setData("id", body.gameObject.getData("id"))
+          selected.id = body.gameObject.id
         }).foreach(selectionContainer.add(_))
 
         if(overlapWidth == 0 && overlapHeight == 0 && elements.nonEmpty) {
@@ -157,7 +158,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     case MoveSelection => state = Idle
       key.plugin.game.canvas.style.cursor = Cursor.Auto
       val positionChangedMap = selectionContainer.list[GameObjects.Arc]
-        .map(node => (node.getData("id").toString, (node.x + selectionContainer.x, node.y + selectionContainer.y)))
+        .map(node => (node.id, (node.x + selectionContainer.x, node.y + selectionContainer.y)))
         .toMap
       commandInterpreter.execute(Move(positionChangedMap))
       resetSelection()
@@ -199,7 +200,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
 
   private def onClickDown(sensor : String) : Handler1[Scene] = (obj, event : js.Object) => {
     val ids = selectionContainer.list[GameObjects.Arc]
-      .map(node => (node.getData("id").toString))
+      .map(node => (node.id))
       .toSet
     commandInterpreter.execute(ToggleSensor(sensor, ids))
   }

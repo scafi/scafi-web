@@ -9,6 +9,9 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSGlobal, JSName}
 import scala.scalajs.js.|
 
+/**
+  * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.html]]
+  */
 @js.native
 @JSGlobal("Phaser.Input")
 object InputNamespace extends js.Any {
@@ -16,8 +19,15 @@ object InputNamespace extends js.Any {
   val Events : InputEventsNamespace.type = js.native
   val Keyboard : KeyboardNamespace.type = js.native
 
+  /**
+    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Mouse.html]]
+    */
   @js.native
   object Mouse extends js.Object {
+
+    /**
+      * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Mouse.MouseManager.html]]
+      */
     @js.native
     trait MouseManager extends js.Object {
       /* todo */
@@ -26,13 +36,23 @@ object InputNamespace extends js.Any {
     }
   }
 
+  /**
+    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Touch.html]]
+    */
   @js.native
   object Touch extends js.Object {
+
+    /**
+      * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Touch.TouchManager.html]]
+      */
     @js.native
     trait TouchManager extends js.Object { /* todo */ }
   }
   import Phaser._
   /* CLASSES */
+  /**
+    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.InputManager.html]]
+    */
   @js.native
   class InputManager(val game : Phaser.Game = js.native, conf : js.Object) extends js.Object {
     /* members */
@@ -62,6 +82,10 @@ object InputNamespace extends js.Any {
     def transformPointer(pointer : Pointer, pageX : JSNumber, pageY : JSNumber, wasMove : Boolean) : Unit = js.native
     def updateInputPlugins(tpe : Int, pointers : js.Array[Pointer]) : Unit = js.native
   }
+
+  /**
+    * #see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Pointer.html]]
+    */
   @js.native
   trait Pointer extends js.Object {
     /* members */
@@ -76,6 +100,9 @@ object InputNamespace extends js.Any {
     var isDown : Boolean = js.native
   }
 
+  /**
+    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.InputPlugin.html]]
+    */
   @js.native
   trait InputPlugin extends js.Object with Phaser.Events.EventEmitter {
     /* fields */

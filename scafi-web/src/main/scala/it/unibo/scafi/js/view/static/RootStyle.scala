@@ -7,7 +7,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 /**
-  * the css main file of the page, it contains the main tag and id that need to be styled
+  * The css main file of the page, it contains the main tag and id that need to be styled
   */
 object RootStyle extends StyleSheet.Standalone {
   import dsl._

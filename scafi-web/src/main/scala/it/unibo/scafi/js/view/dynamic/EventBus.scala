@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.Utils
 import it.unibo.scafi.js.utils.Execution
 import monix.execution.{Ack, CancelableFuture}
 import monix.reactive.Observable
@@ -19,7 +18,7 @@ object EventBus {
   private[EventBus] val busObservable : Observable[Any] = bus.share(Execution.timeoutBasedScheduler)
 
   /**
-    * a functional way to manage events emits by some source
+    * A functional way to manage events emits by some source
     * @param handler the handler called for each event
     * @return the cancellable future that can be used to stop listen aciton
     */
@@ -28,7 +27,7 @@ object EventBus {
   }
 
   /**
-    * publish an event on the event bus
+    * Publish an event on the event bus
     * @param event the event published
     * @return a Future that is completed when the publish is done
     */
