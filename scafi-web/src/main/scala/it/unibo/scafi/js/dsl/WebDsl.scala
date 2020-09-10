@@ -3,7 +3,7 @@ import WebIncarnation._
 import it.unibo.scafi.js.dsl.ScafiDslJs.LanguageConverter
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSExportTopLevel
+import scala.scalajs.js.annotation.{JSExportTopLevel, JSGlobal}
 
 /**
  * a standard way to define a js program in the browser. this code is executed in a simulator.

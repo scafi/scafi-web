@@ -4,6 +4,9 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.{ThisFunction, ThisFunction0, ThisFunction1, ThisFunction2, ThisFunction3, ThisFunction4, ThisFunction5, ThisFunction6, |}
 
+/**
+ * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Events.html]]
+ */
 @js.native
 @JSGlobal("Phaser.Events")
 object EventsNamespace extends js.Object {
@@ -13,6 +16,10 @@ object EventsNamespace extends js.Object {
   type Handler3[Me] = ThisFunction3[Me, _, _, _, Unit]
   type Handler4[Me] = ThisFunction4[Me, _, _, _, _, Unit]
   type Handler5[Me] = ThisFunction5[Me, _, _, _, _, _, Unit]
+
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Events.EventEmitter.html]]
+   */
   @js.native
   trait EventEmitter extends js.Object {
     /* methods */

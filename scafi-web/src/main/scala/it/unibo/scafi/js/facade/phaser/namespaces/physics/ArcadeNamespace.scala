@@ -15,6 +15,7 @@ object ArcadeNamespace extends js.Object {
   /* NAMESPACES */
 
   /* CLASSES */
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Arcade.ArcadePhysics.html]] */
   @js.native
   trait ArcadePhysics extends js.Object {
     /* members */
@@ -28,17 +29,22 @@ object ArcadeNamespace extends js.Object {
                     includeStatic : Boolean = js.native) : js.Array[Body]
   }
 
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Arcade.Factory.html]] */
   @js.native
   trait Factory extends js.Object {
     /* methods */
     def staticGroup[G <: GameObjects.GameObject](children : js.Array[G] = js.native, config : js.Any = js.native) : StaticGroup
 
   }
+
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Arcade.StaticGroup.html]] */
   @js.native
   trait StaticGroup extends js.Object {
     /* todo */
     def add(child : GameObjects.GameObject, addToScene : Boolean = js.native) : StaticGroup
   }
+
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Arcade.Body.html]] */
   @js.native
   trait Body extends js.Object {
     /* members */
@@ -49,8 +55,8 @@ object ArcadeNamespace extends js.Object {
     val width : JSNumber = js.native
     val halfWidth : JSNumber = js.native
   }
-  @js.native
-  trait StaticBody extends js.Object {
 
-  }
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Arcade.StaticBody.html]] */
+  @js.native
+  trait StaticBody extends js.Object { }
 }

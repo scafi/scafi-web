@@ -15,11 +15,14 @@ class SimulationExecutionTest extends SupportTesterLike {
   describe("Execution platform") {
     it("should support javascript script") {
       val result = localPlatform.loadScript(Script.javascript {"10"})
-      result.transform { case Success(any) => Try { succeed } }
+      result.transform {
+        case Success(any) => Try { succeed }
+        case _ => Try { fail() }
+      }
     }
 
     it("should check javascript error before creating execution") {
-      val result = localPlatform.loadScript(Script.javascript("var u"))
+      val result = localPlatform.loadScript(Script.javascript("val u"))
       result.transform {
         case Success(value) => Try{ fail() }
         case Failure(exception) => Try{ succeed }
@@ -29,7 +32,10 @@ class SimulationExecutionTest extends SupportTesterLike {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val ticksTimes = 10
       val count = completeAfterN(ticksTimes, localPlatform.graphStream).runToFuture(monixScheduler)
-      execution.foreach { case ticker : TickBased => execTickMultipleTimes(ticker, ticksTimes).runToFuture(monixScheduler) }
+      execution.foreach {
+        case ticker : TickBased => execTickMultipleTimes(ticker, ticksTimes).runToFuture(monixScheduler)
+        case _ =>
+      }
       count map { case `ticksTimes` => succeed }
     }
 
@@ -37,8 +43,10 @@ class SimulationExecutionTest extends SupportTesterLike {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val someComputations = 100
       val count = completeAfterN(someComputations, localPlatform.graphStream).runToFuture(monixScheduler)
-      execution.map { case ticker : TickBased => ticker.toDaemon() }
-        .flatMap { daemon => count.map {
+      execution.map {
+        case ticker : TickBased => ticker.toDaemon()
+        case _ => throw new IllegalArgumentException
+      }.flatMap { daemon => count.map {
           case `someComputations` => daemon.stop(); succeed
           case _ => fail()
         }
@@ -48,8 +56,10 @@ class SimulationExecutionTest extends SupportTesterLike {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val someComputations = 10
       val count = completeAfterN(someComputations, localPlatform.graphStream).runToFuture(monixScheduler)
-      execution.map { case ticker : TickBased =>  ticker.toDaemon() }
-        .flatMap { daemon => count.flatMap {
+      execution.map {
+        case ticker : TickBased => ticker.toDaemon()
+        case _ => throw new IllegalArgumentException
+      }.flatMap { daemon => count.flatMap {
           case `someComputations` => daemon.stop()
             var unsafeCount = 0
             localPlatform.graphStream.foreach(_ => unsafeCount += 1)(monixScheduler)
@@ -65,8 +75,10 @@ class SimulationExecutionTest extends SupportTesterLike {
       var unsafeTicks = 0L
       localPlatform.graphStream.foreach(_ => unsafeTicks += 1)(monixScheduler)
       var unsafeTimeWithoutDelta = 0L
-      execution.map { case ticker : TickBased => ticker.toDaemon() }
-        .flatMap { daemon => wakeUpAfter(longWait).flatMap{ _ =>
+      execution.map {
+        case ticker : TickBased => ticker.toDaemon()
+        case _ => throw new IllegalArgumentException
+      }.flatMap { daemon => wakeUpAfter(longWait).flatMap{ _ =>
           unsafeTimeWithoutDelta = unsafeTicks
           daemon.stop().toDaemon(delta)
           unsafeTicks = 0
@@ -81,11 +93,17 @@ class SimulationExecutionTest extends SupportTesterLike {
       val batchTickSize = 10
       val countNonBatched = completeAfterN(tickTimes, localPlatform.graphStream).runToFuture(monixScheduler)
       localPlatform.graphStream.foreach(graph => unsafeList = graph :: unsafeList)(monixScheduler)
-      execution.foreach { case ticker : TickBased => execTickMultipleTimes(ticker, tickTimes).runToFuture(monixScheduler) }
+      execution.foreach {
+        case ticker : TickBased => execTickMultipleTimes(ticker, tickTimes).runToFuture(monixScheduler)
+        case _ =>
+      }
       val countFuture = countNonBatched.map(_ => countDifferences(unsafeList.head, unsafeList.tail.head) shouldBe 1)
       countFuture.flatMap { _ =>
         unsafeList = List.empty
-        execution.foreach { case ticker : TickBased => execTickMultipleTimes(ticker.withBatchSize(batchTickSize), tickTimes).runToFuture(monixScheduler) }
+        execution.foreach {
+          case ticker : TickBased => execTickMultipleTimes(ticker.withBatchSize(batchTickSize), tickTimes).runToFuture(monixScheduler)
+          case _ =>
+        }
         completeAfterN(tickTimes, localPlatform.graphStream).runToFuture(monixScheduler)
       }.map {_ => countDifferences(unsafeList.head, unsafeList.tail.head) shouldNot be (1)}
     }

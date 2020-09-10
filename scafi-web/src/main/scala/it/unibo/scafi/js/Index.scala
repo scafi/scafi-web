@@ -31,9 +31,9 @@ object Index {
   def main(args: Array[String]): Unit = configurePage()
 
   val programs = Map(
-    "round counter" -> "rep(() => 0, (k) => k+1)",
-    "hello scafi" -> "\"hello scafi\"",
-    "gradient" -> """rep(() => Infinity, (d) => {
+    "round counter" -> "return rep(() => 0, (k) => k+1)",
+    "hello scafi" -> "\"return hello scafi\"",
+    "gradient" -> """return rep(() => Infinity, (d) => {
         |  return mux(sense("source"), 0.0,
         |    foldhoodPlus(() => Infinity, Math.min, () => nbr(() => d) + nbrvar("nbrRange"))
         |  )
@@ -59,7 +59,6 @@ object Index {
     support.invalidate()
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
   }
-
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)
 }

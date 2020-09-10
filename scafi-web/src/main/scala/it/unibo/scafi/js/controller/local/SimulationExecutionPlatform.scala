@@ -3,7 +3,7 @@ package it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.dsl.WebIncarnation._
 import it.unibo.scafi.js.controller.{AggregateSystemSupport, ExecutionPlatform}
 import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
-import it.unibo.scafi.js.controller.local.SimulationSideEffect.ExportProduced
+import it.unibo.scafi.js.controller.local.SimulationSideEffect.{ExportProduced, Invalidated}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.dsl.WebDsl
 
@@ -32,6 +32,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpaceAwareSimulator,
       sideEffectsStream.onNext(ExportProduced(exports))
     }
     backend.clearExports() //clear export for the new script
+    sideEffectsStream.onNext(Invalidated) //invalid old graph value
     TickBased(exec = execution)
   }
 }
@@ -40,8 +41,7 @@ object SimulationExecutionPlatform {
   private def rawToFunction(code : String) : js.Function0[Any] = {
     val wrappedCode = s"""() => {
                          | with(scafiDsl) {
-                         |   var result = ${code};
-                         |   return result
+                         |   ${code};
                          | }
                          |}""".stripMargin
     js.eval(wrappedCode).asInstanceOf[js.Function0[Any]]

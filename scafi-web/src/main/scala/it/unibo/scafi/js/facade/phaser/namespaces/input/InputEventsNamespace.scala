@@ -2,6 +2,10 @@ package it.unibo.scafi.js.facade.phaser.namespaces.input
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
+
+/**
+ * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Events.html]]
+ */
 @js.native
 @JSGlobal("Phaser.Input.Events")
 object InputEventsNamespace extends js.Object {

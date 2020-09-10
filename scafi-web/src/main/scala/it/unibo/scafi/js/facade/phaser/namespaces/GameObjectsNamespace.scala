@@ -53,6 +53,9 @@ object GameObjectsNamespace extends js.Object {
     def getIndexList() : js.Array[Int] = js.native
   }
 
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Container.html]]
+   */
   @js.native
   trait Container extends GameObject with AlphaSingle with BlendMode
     with ComputedSize with Depth with Mask with Transform with Visible with ThisGeneric[Container] {
@@ -110,6 +113,9 @@ object GameObjectsNamespace extends js.Object {
     /*todo model next, previous...*/
   }
 
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.GameObjectFactory.html]]
+   */
   @js.native
   trait GameObjectFactory extends js.Object {
     def displayList : DisplayList = js.native
@@ -139,17 +145,29 @@ object GameObjectsNamespace extends js.Object {
     def container(x : JSNumber = js.native, y : JSNumber = js.native, children : js.Array[GameObject] = js.native) : Container
   }
 
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.GameObjectCreator.html]]
+   */
   @js.native
   class GameObjectCreator(val scene : Phaser.Scene) extends js.Object { /* todo */}
 
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.GameObjectCreator.html]]
+   */
   @js.native
   trait DisplayList extends js.Object {
     def getChildren() : js.Array[GameObject] = js.native
   }
 
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.LightsManager.html]]
+   */
   @js.native
   trait LightsManager extends js.Object { /* todo */ }
 
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Shape.html]]
+   */
   @js.native
   trait Shape extends GameObject with Transform with BlendMode with ComputedSize with GetBounds with AlphaSingle
     with Depth with Origin with Mask with Pipeline with ScrollFactor with Visible with This {
@@ -161,9 +179,15 @@ object GameObjectsNamespace extends js.Object {
     def setStrokeStyle(lineWidth : JSNumber = js.native, color : Int = js.native, alpha : JSNumber = js.native) : This
   }
 
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Line.html]]
+   */
   @js.native
   trait Line extends Shape
 
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Rectangle.html]]
+   */
   @js.native
   trait Rectangle extends Shape with ThisGeneric[Rectangle]
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Arc.html]] */
@@ -211,17 +235,23 @@ object GameObjectsNamespace extends js.Object {
     def setFont(key : String, size : JSNumber, align : Int = js.native) : BitmapText = js.native
     def setMaxWidth(value : JSNumber, wordWrapCharCode : JSNumber) : BitmapText = js.native
   }
-
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Text.html]]
+   */
   @js.native
   trait Text extends GameObject with Alpha with BlendMode with Depth with ComputedSize
     with Mask with Origin with Pipeline with ScrollFactor with Tint with Transform
     with Visible with Crop with Flip with ThisGeneric[Text] {
     /* todo */
   }
-
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Sprite.html]]
+   */
   @js.native
   trait Sprite extends js.Object with ThisGeneric[Sprite] { /* todo */ }
-
+  /**
+   * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.DOMElement.html]]
+   */
   @js.native
   trait DOMElement extends GameObject with AlphaSingle with BlendMode with Depth with Origin with ScrollFactor
     with Transform with Visible with ThisGeneric[DOMElement] {
