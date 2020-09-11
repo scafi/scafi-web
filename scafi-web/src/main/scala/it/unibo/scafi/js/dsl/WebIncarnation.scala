@@ -1,17 +1,24 @@
 package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.config.GridSettings
+import it.unibo.scafi.incarnations.BasicSimulationIncarnation.ID
 import it.unibo.scafi.incarnations.Incarnation
+import it.unibo.scafi.js.dsl.WebIncarnation.ID
 import it.unibo.scafi.js.utils.JSNumber
+import it.unibo.scafi.lib.StandardLibrary
 import it.unibo.scafi.simulation.{Simulation, SpatialSimulation}
 import it.unibo.scafi.space.{BasicSpatialAbstraction, Point2D}
+import it.unibo.scafi.time.BasicTimeAbstraction
 import it.unibo.utils.{Interop, Linearizable}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
-trait BasicWebIncarnation extends Incarnation with Simulation {
+trait BasicWebIncarnation extends Incarnation
+  with Simulation with BasicTimeAbstraction with StandardLibrary {
+  import Builtins.Bounded
+  override implicit val idBounded: Bounded[ID] = Builtins.Bounded.of_s
   override type LSNS = String
   override type NSNS = String
   override type ID = String
@@ -46,7 +53,8 @@ trait BasicWebIncarnation extends Incarnation with Simulation {
 
 object WebIncarnation extends BasicWebIncarnation
   with SpatialSimulation
-  with BasicSpatialAbstraction {
+  with BasicSpatialAbstraction
+  with StandardLibrary {
   override type P = Point2D
 
   override def buildNewSpace[E](elems: Iterable[(E,P)]): SPACE[E] =

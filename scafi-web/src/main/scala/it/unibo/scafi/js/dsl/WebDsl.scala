@@ -11,7 +11,7 @@ import scala.scalajs.js.annotation.{JSExportTopLevel, JSGlobal}
 @JSExportTopLevel("scafiDsl")
 object WebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]{
   //hide internally, it is used to has an aggregate interpreter
-  private val program = new AggregateProgram {
+  private val program = new AggregateProgram with BlockG with StandardSensors {
     override def main(): Any = {
       throw new IllegalStateException("This method should not be called as the aggregate program only works as API provider.")
     }
@@ -44,6 +44,12 @@ object WebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]{
   override def sense[A](name: String): A = program.sense(name)
 
   override def nbrvar[A](name: String): A = program.nbrvar(name)
+
+  //only for test, it needs a more deeply evaluation for the support
+  def distanceTo(source : Boolean) : Double = program.distanceTo(source)
+
+  //only for test, it needs a more deeply evaluation for the support
+  def distanceBetween(source : Boolean, target : Boolean) : Double = program.distanceBetween(source, target)
 
   override def adaptForScafi(fun: js.Function0[Any]): js.Function1[CONTEXT, EXPORT] = (context : CONTEXT) => {
     program.round(context, fun())
