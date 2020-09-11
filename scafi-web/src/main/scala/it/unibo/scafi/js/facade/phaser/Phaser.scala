@@ -40,7 +40,8 @@ object Phaser extends js.Object {
   val Textures : TexturesNamespace.type = js.native
   val Events : EventsNamespace.type = js.native
   val Time : TimeNamespace.type = js.native
-  val Core : CoreNamespace.type  = js.native
+  val Core : CoreNamespace.type = js.native
+  val Display : DisplayNamespace.type = js.native
   /* CLASSES */
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Game.html]] */
   @js.native

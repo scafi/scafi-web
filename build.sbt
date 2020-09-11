@@ -253,8 +253,6 @@ lazy val `scafi-web` = project
     .dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
     .settings(
       name := "scafi-web" ,
-      //mainClass in Compile := Some("it.unibo.scafi.js.Index"),
-      //scalaJSMainModuleInitializer in Compile := Some(org.scalajs.linker.interface.ModuleInitializer.mainMethod("it.unibo.scafi.js.Index","main")),
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % "1.0.0",
@@ -268,23 +266,24 @@ lazy val `scafi-web` = project
       version in installJsdom := "12.0.0",
       requireJsDomEnv in Test := true,
       webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
-       npmDependencies in Compile ++= Seq(
+      npmDependencies in Compile ++= Seq(
         "sigma" -> "2.0.0-alpha32",
         "jsnetworkx" -> "0.3.4",
         "codemirror" -> "5.32.0",
-         "jquery" -> "3.5.1",
+        "jquery" -> "3.5.1",
         "bootstrap" -> "4.5.2",
-        "css-loader" -> "4.2.1",
-        "style-loader" -> "1.2.1",
-         "phaser" -> "3.24.1",
-         "simplebar" -> "6.0.0-beta.3"
+        "phaser" -> "3.24.1",
+        "simplebar" -> "6.0.0-beta.3"
       ),
+      //webpack dependencies
       npmDevDependencies in Compile ++= Seq(
         "webpack-merge" -> "4.1.2",
         "imports-loader" -> "0.8.0",
-        "expose-loader" -> "0.7.5"
+        "expose-loader" -> "0.7.5",
+        "css-loader" -> "4.2.1",
+        "style-loader" -> "1.2.1",
+        "file-loader" -> "6.1.0"
       ),
       webpackConfigFile := Some(baseDirectory.value / "src" /"main" / "resources" / "dev.webpack.config.js"),
       webpackConfigFile in Test := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),
-
     )

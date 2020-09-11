@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
+import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
 import it.unibo.scafi.js.utils.Execution
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
@@ -57,6 +58,7 @@ object Index {
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
     //force repaint
     support.invalidate()
+    SkeletonPage.visualizationSection.focus()
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
   }
   @JSExportTopLevel("ScafiBackend")

@@ -2,6 +2,7 @@ package it.unibo.scafi.js.facade.phaser.namespaces
 
 import it.unibo.scafi.js.facade.phaser._
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace
+import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.TextMetrics
 import it.unibo.scafi.js.utils.{JSNumber, Nullable}
 import org.scalajs.dom.raw.HTMLElement
 
@@ -243,6 +244,10 @@ object GameObjectsNamespace extends js.Object {
     with Mask with Origin with Pipeline with ScrollFactor with Tint with Transform
     with Visible with Crop with Flip with ThisGeneric[Text] {
     /* todo */
+    /* methods */
+    def getTextMetrics() : TextMetrics
+    def setText(text : String) : Text = js.native
+
   }
   /**
    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.GameObjects.Sprite.html]]

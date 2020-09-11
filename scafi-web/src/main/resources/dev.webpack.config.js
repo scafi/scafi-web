@@ -8,3 +8,12 @@ module.exports.module.rules.push(
         use: ['style-loader', 'css-loader'],
     }
 )
+module.exports.module.rules.push(
+    {
+        test: /\.(png|xml|gif)$/i,
+        loader: 'file-loader',
+        options: {
+            outputPath: 'assets',
+        }
+    }
+)

@@ -1,5 +1,7 @@
 package it.unibo.scafi.js.view
 
+import it.unibo.scafi.js.utils.Debug
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel, JSImport}
 package object static {
@@ -27,11 +29,7 @@ package object static {
   @JSImport("codemirror/mode/javascript/javascript.js", JSImport.Namespace)
   object JavascriptStyle extends js.Any
   JavascriptStyle
-  //jquery
-  import org.querki.jquery._
-  @js.native
-  @JSImport("jquery", JSImport.Namespace)
-  object jQuery extends js.Any
+  /*  JAVASCRIPT LIB */
   //bootstrap and popper
   @js.native
   @JSImport("bootstrap/dist/js/bootstrap.bundle.js", JSImport.Namespace)
@@ -42,7 +40,6 @@ package object static {
   @JSImport("bootstrap/js/dist/util.js", JSImport.Namespace)
   object UtilBootstrap extends js.Any
   UtilBootstrap
-
   //phaser lib
   @js.native
   @JSImport("phaser", JSImport.Namespace)

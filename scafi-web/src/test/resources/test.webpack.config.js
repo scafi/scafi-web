@@ -9,7 +9,7 @@ const Test = {
     })
   ],
   externals: {
-      phaser: 'window' // a workaround to avoid to include phaser lib in test. FIX
+      phaser: 'window' // a workaround to avoid to include phaser lib in test. todo FIX
   },
   module: {
       rules: [{

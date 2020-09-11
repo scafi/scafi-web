@@ -8,7 +8,7 @@ import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.{Graph, Node}
-import it.unibo.scafi.js.utils.JSNumber
+import it.unibo.scafi.js.utils.{Debug, JSNumber}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
 import it.unibo.scafi.js.view.dynamic.{EventBus, VisualizationSettingsSection}
@@ -27,7 +27,6 @@ class PhaserGraphSection(paneSection : HTMLElement,
   private val size = 5 //TODO put in configuration
   private val nodeColor : Int = Color(187, 134, 252) //TODO put in configuration
   private val lineColor : Int = Color(125, 125, 125) //TODO put in configuration
-  private val fontSize : Int = 10 //TODO put in configuration
 
   private val config = new GameConfig(
     parent = paneSection,
@@ -49,10 +48,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
   private var nodeContainer : GameObjects.Container = _
   private var labelContainer : GameObjects.Container = _
   private lazy val sceneHandler : types.scenes.CreateSceneFromObjectConfig =  types.scenes.callbacks(
-    preload = (scene) => {
-      //TODO put in configuration via webpack
-      scene.load.bitmapFont("font", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png", "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml")
-    },
+    preload = (scene) => labelRenders.foreach(_.init(scene)),
     create = (scene, _) => {
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
@@ -101,9 +97,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
     gameobjectNodes.foreach(nodeContainer.add(_))
     import js.JSConverters._
     scene.physics.add.staticGroup(gameobjectNodes.toJSArray)
-
     if(settings.anyLabelEnabled) { renderLabel(nodes, scene) }
-
     model = model.copy(_2 = false)
   }
 
