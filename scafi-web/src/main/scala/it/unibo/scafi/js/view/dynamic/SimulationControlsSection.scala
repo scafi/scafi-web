@@ -12,7 +12,7 @@ import scalatags.JsDom.all._
 
 import scala.util.{Failure, Success}
 object SimulationControlsSection {
-  private val buttonClass =  cls := "btn btn-primary mr-1 btn-sm"
+  private val buttonClass =  cls := "btn btn-primary ml-1 btn-sm"
   private val loadButton = button("load", buttonClass).render
   private val startButton = button("start", buttonClass).render
   private val stopButton = button("stop", buttonClass).render

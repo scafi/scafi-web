@@ -21,7 +21,7 @@ object VisualizationSettingsSection {
 
   private class VisualizationSettingsSectionImpl (settingDiv : Div) extends VisualizationSettingsSection {
     private val sensorSpan = span(cls:="collapse", id := "sensorsSpan").render
-    private val sensorButton = a(cls := "btn btn-primary btn-sm mr-2", attr("data-toggle") := "collapse", href := "#sensorsSpan", "sensors")
+    private val sensorButton = a(cls := "btn btn-primary btn-sm mr-2 mt-1", attr("data-toggle") := "collapse", href := "#sensorsSpan", "sensors")
     private var sensors : js.Dictionary[CheckBox] = js.Dictionary()
     private val idEnabledSection = CheckBox("id")
     private val neighbourhoodSection = CheckBox("neighbourhood")
