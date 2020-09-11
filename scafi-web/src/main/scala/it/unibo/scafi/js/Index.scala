@@ -19,7 +19,7 @@ object Index {
   import org.scalajs.dom._
   val configuration = SupportConfiguration(
     GridLikeNetwork(10, 10, 60, 60, 0),
-    SpatialRadius(range = 60),
+    SpatialRadius(range = 70),
     deviceShape = DeviceConfiguration.standard,
     seed = SimulationSeeds(),
   )

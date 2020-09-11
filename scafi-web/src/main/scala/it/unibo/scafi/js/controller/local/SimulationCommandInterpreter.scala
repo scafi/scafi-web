@@ -31,7 +31,7 @@ trait SimulationCommandInterpreter
   private def onMove(positionMap : Map[String, (Double, Double)]) : Result = {
     val toScafiBackend = positionMap.mapValues { case (x, y) => new P(x, y) }
       .mapValues(self.systemConfig.coordinateMapping.toBackend)
-    toScafiBackend.foreach { case (id, position : P) => backend.space.setLocation(id, position)}
+    toScafiBackend.foreach { case (id, position : P) => backend.setPosition(id, position)}
     sideEffectsStream.onNext(PositionChanged(toScafiBackend))
     Executed
   }
