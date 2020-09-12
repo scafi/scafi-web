@@ -1,5 +1,7 @@
 package it.unibo.scafi.js.dsl
 
+import it.unibo.scafi.js.dsl.WebDsl.program
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportAll
 

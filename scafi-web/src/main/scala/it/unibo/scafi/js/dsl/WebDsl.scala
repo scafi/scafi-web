@@ -3,12 +3,13 @@ import WebIncarnation._
 import it.unibo.scafi.js.dsl.ScafiDslJs.LanguageConverter
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSExportTopLevel, JSGlobal}
+import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel, JSGlobal}
 
 /**
  * a standard way to define a js program in the browser. this code is executed in a simulator.
  */
 @JSExportTopLevel("scafiDsl")
+@JSExportAll
 object WebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]{
   //hide internally, it is used to has an aggregate interpreter
   private val program = new AggregateProgram with BlockG with StandardSensors {
@@ -44,7 +45,6 @@ object WebDsl extends ScafiDslJs with LanguageConverter[CONTEXT, EXPORT]{
   override def sense[A](name: String): A = program.sense(name)
 
   override def nbrvar[A](name: String): A = program.nbrvar(name)
-
   //only for test, it needs a more deeply evaluation for the support
   def distanceTo(source : Boolean) : Double = program.distanceTo(source)
 

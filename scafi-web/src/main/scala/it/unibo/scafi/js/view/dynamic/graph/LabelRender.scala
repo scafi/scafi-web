@@ -3,11 +3,8 @@ package it.unibo.scafi.js.view.dynamic.graph
 import it.unibo.scafi.js.dsl.BasicWebIncarnation
 import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser.Scene
-import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{GameObject, Text}
+import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{GameObject, Shape, Text}
 import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
-import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.{TextMetrics, TextStyle}
-import it.unibo.scafi.js.facade.phaser.types.loader.XHRSettingsObject
-import it.unibo.scafi.js.view.dynamic.graph.LabelRender.Output
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import org.scalajs.dom.ext.Color
 
@@ -60,6 +57,7 @@ object LabelRender {
       scene => scene.load.bitmapFont("font", textureUrl, fontUrl)
     }
   }
+
   def booleanRender : LabelRender = {
     val falseAlpha = 0.2
     val colorMultiplier = 1000
@@ -68,9 +66,9 @@ object LabelRender {
     val lineWidth = 1
     LabelRender {
       case (node, elements, scene) =>
-        val circleSize = (node.width / 3).toInt
-        val deltaY = circleSize * 2 + 1
-        val deltaX = node.width / 2
+        val circleSize = (node.width / 2).toInt
+        val deltaY = circleSize * 2
+        val deltaX = node.width
         val result = elements.collect { case (name, value : Boolean) => name -> value }
         type FoldType = (Int, Seq[(GameObject, Seq[String])])
         result.foldLeft[FoldType](0, Seq.empty){
@@ -82,6 +80,25 @@ object LabelRender {
             (delta + deltaY, result :+ (gameObject -> Seq(name)))
         }._2
     }
+  }
+
+  def booleanExport : LabelRender = LabelRender {
+    case (node, elements, _) =>
+      val falseExport = 0.3
+      val trueExport = 1.0
+      val strokeSize = 2
+      val exp = elements.collect { case ("export", e: BasicWebIncarnation#EXPORT) => e }
+        .map { _.root[Any]() }
+        .collectFirst { case e: Boolean => e }
+      exp match {
+        case None => Seq.empty
+        case Some(value) => val exportValue = if(value) trueExport else falseExport
+          val computedStrokeSize = if(value) strokeSize else 0
+          val unsafeNode : Shape = node.asInstanceOf[Shape]
+          unsafeNode.setFillStyle(unsafeNode.fillColor, alpha = exportValue)
+          unsafeNode.setStrokeStyle(computedStrokeSize, Color.Cyan, 1)
+          Seq((node : GameObject) -> Seq("export"))
+      }
   }
 
   def gradientLike : LabelRender = {

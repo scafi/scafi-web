@@ -175,9 +175,11 @@ object GameObjectsNamespace extends js.Object {
     override type This <: Shape
     /* members */
     var strokeAlpha : JSNumber = js.native
-    var strokeColor : JSNumber = js.native
+    var strokeColor : Int = js.native
+    var fillColor : Int = js.native
     /* methods */
     def setStrokeStyle(lineWidth : JSNumber = js.native, color : Int = js.native, alpha : JSNumber = js.native) : This
+    def setFillStyle(color : Int = js.native, alpha : JSNumber = js.native) : This
   }
 
   /**

@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.view.dynamic.graph
 
-import it.unibo.scafi.core.Core
 import it.unibo.scafi.js.facade.phaser.Phaser._
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, GameObject}
 import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes
@@ -8,7 +7,7 @@ import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.{Graph, Node}
-import it.unibo.scafi.js.utils.{Debug, JSNumber}
+import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
 import it.unibo.scafi.js.view.dynamic.{EventBus, VisualizationSettingsSection}
@@ -20,9 +19,9 @@ class PhaserGraphSection(paneSection : HTMLElement,
                          interaction : ((Scene, NodeDescriptionPopup, Container) => Unit),
                          settings: VisualizationSettingsSection,
                          labelRenders : Seq[LabelRender]) extends (Graph => Unit) {
+  import NodeRepresentation._
   import Phaser._
   import it.unibo.scafi.js.facade.phaser.Implicits._
-  import NodeRepresentation._
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val size = 5 //TODO put in configuration
   private val nodeColor : Int = Color(187, 134, 252) //TODO put in configuration

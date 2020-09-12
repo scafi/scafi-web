@@ -39,7 +39,12 @@ object Index {
         |    foldhoodPlus(() => Infinity, Math.min, () => nbr(() => d) + nbrvar("nbrRange"))
         |  )
         | })
-        |""".stripMargin
+        |""".stripMargin,
+    "channel" -> """function channel(source, target, width) {
+                   |  	var threshold = distanceBetween(source, target) + width
+                   | 	return distanceTo(source) + distanceTo(target) < threshold
+                   |}
+                   |return channel(sense("source"), sense("obstacle"), 1)""".stripMargin
   )
 
   def configurePage(): Unit = {
@@ -49,7 +54,7 @@ object Index {
     document.body.appendChild(SkeletonPage.content.render)
     //dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders : Seq[LabelRender.LabelRender] = Seq(LabelRender.booleanRender, LabelRender.textify)
+    val renders : Seq[LabelRender.LabelRender] = Seq(LabelRender.booleanRender, LabelRender.booleanExport, /*LabelRender.gradientLike, test only*/ LabelRender.textifyBitmap)
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
