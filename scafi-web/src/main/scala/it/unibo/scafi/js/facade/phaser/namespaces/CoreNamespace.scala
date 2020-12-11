@@ -17,5 +17,7 @@ object CoreNamespace extends js.Object {
   trait Config extends js.Object { /* todo */ }
   /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Core.Config.html]] */
   @js.native
-  trait TimeStep extends js.Object { /* todo */ }
+  trait TimeStep extends js.Object {
+    def actualFps : js.Any = js.native
+    /* todo */ }
 }

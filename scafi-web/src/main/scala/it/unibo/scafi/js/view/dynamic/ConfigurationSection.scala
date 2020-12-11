@@ -25,11 +25,15 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
   private val (cols, rows, stepX, stepY, tolerance) = (InputText("cols", 10), InputText("rows", 10), InputText("stepX", 60), InputText("stepY", 60), InputText("tolerance", 0))
   private val gridValue = List(cols, rows, stepX, stepY, tolerance)
 
-  private val (min, max, howMany) = (InputText("min", 0), InputText("max", 1000), InputText("howMany", 100))
+  private val (min, max, howMany) = (InputText("min", 0), InputText("max", 500), InputText("howMany", 100))
   private val randomValue = List(min, max, howMany)
-  private val radius = InputText("radius", 100)
+  private val radius = InputText("radius", 70)
 
-  private var sensors = List(new SensorInputText("source", "false"), new SensorInputText("obstacle", "false"))
+  private var sensors = List(
+    new SensorInputText("source", "false"),
+    new SensorInputText("obstacle", "false"),
+    new SensorInputText("target", "false")
+  )
   def onRemoveSensor(sensor : SensorInputText) : MouseEvent => Unit = ev => {
     sensors = sensors.filterNot(_ == sensor)
     init(getModeFromSelect(selectMode))
@@ -56,6 +60,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
     container.appendChild(radius.render)
     container.appendChild(addSensorButton)
     sensors foreach { input => container.appendChild(input.render) }
+    println(sensors)
   }
 
   private def load(mode : Mode) : Unit = {

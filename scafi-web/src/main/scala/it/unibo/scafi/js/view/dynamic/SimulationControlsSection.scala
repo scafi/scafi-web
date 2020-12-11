@@ -17,7 +17,7 @@ object SimulationControlsSection {
   private val startButton = button("start", buttonClass).render
   private val stopButton = button("stop", buttonClass).render
   private val (rangeBatch, labelBatch, valueBatch) = rangeWithLabel("batch", 1, 1000, 1)
-  private val (rangeDelta, labelDelta, valueDelta) = rangeWithLabel("delta", 0, 1000, 0)
+  private val (rangeDelta, labelDelta, valueDelta) = rangeWithLabel("period", 0, 1000, 0)
   private val tick = button("tick", buttonClass).render
 
   import scala.concurrent.ExecutionContext.Implicits.global

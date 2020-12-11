@@ -142,6 +142,7 @@ lazy val simulatorCross = crossProject(JSPlatform, JVMPlatform).in(file("simulat
   .settings(commonSettings: _*)
   .settings(
     name := "scafi-simulator",
+    scalaJSUseMainModuleInitializer := true
   )
   .jsSettings(
     libraryDependencies += "org.scala-js" %%% "scalajs-java-time" % "1.0.0"

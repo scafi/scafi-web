@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
 import it.unibo.scafi.js.utils.Execution
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
@@ -23,7 +22,7 @@ object Index {
     deviceShape = DeviceConfiguration.standard,
     seed = SimulationSeeds(),
   )
-  val updateTime = 100 //todo think to put into a configuration
+  val updateTime = 50 //todo think to put into a configuration
   val support = new SimulationSupport(configuration)
     with SimulationExecutionPlatform
     with SimulationCommandInterpreter

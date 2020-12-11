@@ -7,7 +7,7 @@ import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.{Graph, Node}
-import it.unibo.scafi.js.utils.JSNumber
+import it.unibo.scafi.js.utils.{Debug, JSNumber}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
 import it.unibo.scafi.js.view.dynamic.{EventBus, VisualizationSettingsSection}
@@ -15,6 +15,18 @@ import org.scalajs.dom.ext.Color
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSExportTopLevel
+object X {
+  var listen = false
+  var counter = 0
+  var array = js.Array[String]()
+    @JSExportTopLevel("startcount")
+  def start(): Unit = {
+    listen = true
+    counter = 0
+    array = js.Array[String]()
+  }
+}
 class PhaserGraphSection(paneSection : HTMLElement,
                          interaction : ((Scene, NodeDescriptionPopup, Container) => Unit),
                          settings: VisualizationSettingsSection,
@@ -39,7 +51,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
     dom = new DOMContainerConfig(createContainer = true),
     transparent = true
   )
-
+  Debug("game", game)
   private val game = new Phaser.Game(config)
   private var popup : NodeDescriptionPopup = _
   private var mainContainer : GameObjects.Container = _
@@ -51,6 +63,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
     create = (scene, _) => {
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
+
       vertexContainer = scene.add.container(0, 0)
       labelContainer = scene.add.container(0, 0)
       nodeContainer = scene.add.container(0, 0)
@@ -61,6 +74,9 @@ class PhaserGraphSection(paneSection : HTMLElement,
       scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (_ : js.Any, _ : js.Any, _ : js.Any, _ : JSNumber, dy : JSNumber, _ : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
+      import it.unibo.scafi.js.utils._
+      val key = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.SEVEN)
+
     },
     update = scene => {
       model match {
@@ -98,6 +114,8 @@ class PhaserGraphSection(paneSection : HTMLElement,
     scene.physics.add.staticGroup(gameobjectNodes.toJSArray)
     if(settings.anyLabelEnabled) { renderLabel(nodes, scene) }
     model = model.copy(_2 = false)
+    println(vertexContainer.list.size,  nodeContainer.list.size,
+      labelContainer.list.size)
   }
 
   private def renderVertex(graph : Graph, scene : Scene) : Unit = {

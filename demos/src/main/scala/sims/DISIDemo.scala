@@ -26,7 +26,7 @@ abstract class DISIDemoAggregateProgram extends AggregateProgram {
 
 class Main extends DISIDemoAggregateProgram {
   def inc(x:Int):Int = x+1
-  override def main() = rep(init = 0)(fun = inc)
+  override def main() = rep(mid())(fun = inc)
 }
 
 class Main1 extends DISIDemoAggregateProgram {

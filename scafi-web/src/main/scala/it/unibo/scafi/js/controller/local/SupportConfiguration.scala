@@ -83,7 +83,7 @@ object DeviceConfiguration {
   /**
     * @return a configuration in which exist the sensor "source" and "obstacle".
     */
-  def standard: DeviceConfiguration = DeviceConfiguration(js.Dictionary("source" -> false, "obstacle" -> false))
+  def standard: DeviceConfiguration = DeviceConfiguration(js.Dictionary("source" -> false, "obstacle" -> false, "target" -> false))
 
   /**
     * @return a configuration without any sensor.
