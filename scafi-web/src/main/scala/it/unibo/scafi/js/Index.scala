@@ -2,12 +2,16 @@ package it.unibo.scafi.js
 
 import java.util.concurrent.TimeUnit
 
+import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
+import it.unibo.scafi.js.dsl.semantics.{BlockGJs, BlockTJs, BuiltinsJs, LanguageJs, StandardSensorJs}
+import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.Execution
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.static.SkeletonPage
+import it.unibo.scafi.simulation.SpatialSimulation
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
@@ -16,6 +20,10 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
   */
 object Index {
   import org.scalajs.dom._
+  implicit val incarnation = WebIncarnation //incarnation choosed
+  @JSExportTopLevel("Lang")
+  implicit val languageJsInterpreter = new ScafiInterpreterJs() with BlockGJs
+    with LanguageJs with BlockTJs with StandardSensorJs with BuiltinsJs// interpreter choosen
   val configuration = SupportConfiguration(
     GridLikeNetwork(10, 10, 60, 60, 0),
     SpatialRadius(range = 70),
@@ -23,6 +31,7 @@ object Index {
     seed = SimulationSeeds(),
   )
   val updateTime = 50 //todo think to put into a configuration
+  @JSExportTopLevel("Platform")
   val support = new SimulationSupport(configuration)
     with SimulationExecutionPlatform
     with SimulationCommandInterpreter
@@ -32,16 +41,18 @@ object Index {
 
   val programs = Map(
     "round counter" -> "return rep(() => 0, (k) => k+1)",
-    "hello scafi" -> "\"return hello scafi\"",
+    "hello scafi" -> "return \"hello scafi\"",
     "gradient" -> """return rep(() => Infinity, (d) => {
         |  return mux(sense("source"), 0.0,
         |    foldhoodPlus(() => Infinity, Math.min, () => nbr(() => d) + nbrvar("nbrRange"))
         |  )
         | })
         |""".stripMargin,
-    "channel" -> """function channel(source, target, width) {
-                   |  	var threshold = distanceBetween(source, target) + width
-                   | 	return distanceTo(source) + distanceTo(target) < threshold
+    "channel" -> """var metric = () => nbrRange()
+                   |
+                   |function channel(source, target, width) {
+                   |  	var threshold = distanceBetween(source, target, metric) + width
+                   | 	return distanceTo(source, metric) + distanceTo(target, metric) < threshold
                    |}
                    |return channel(sense("source"), sense("obstacle"), 1)""".stripMargin
   )

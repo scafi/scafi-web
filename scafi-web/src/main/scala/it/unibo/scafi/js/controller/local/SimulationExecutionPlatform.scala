@@ -1,11 +1,11 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.dsl.WebIncarnation._
-import it.unibo.scafi.js.controller.{AggregateSystemSupport, ExecutionPlatform}
+import it.unibo.scafi.js.controller.ExecutionPlatform
 import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
-import it.unibo.scafi.js.controller.local.SimulationSideEffect.{ExportProduced, Invalidated}
+import it.unibo.scafi.js.controller.local.SimulationSideEffect.SideEffects
 import it.unibo.scafi.js.controller.scripting.Script
-import it.unibo.scafi.js.dsl.WebDsl
+import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs}
+import it.unibo.scafi.simulation.SpatialSimulation
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -15,9 +15,10 @@ import scala.util.{Failure, Success, Try}
   * the execution platform of a local simulation in web browser.
   * Currently it supports only javascript execution.
   */
-trait SimulationExecutionPlatform extends ExecutionPlatform[SpaceAwareSimulator, SimulationSideEffect, SimulationExecution]{
-  self : SimulationSupport =>
+trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#SpaceAwareSimulator, SimulationSideEffect, SimulationExecution]{
+  self : SimulationSupport with SideEffects =>
   import SimulationExecutionPlatform._
+  import incarnation._
   override def loadScript(script: Script): Future[SimulationExecution] = script.lang match {
     case "javascript" => Try { rawToFunction(script.code) } match {
       case Failure(exception) => Future.failed(exception)
@@ -28,7 +29,8 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpaceAwareSimulator,
 
   private def sideEffectExecution(program : js.Function0[Any]) : TickBased = {
     val execution : (Int => Unit) = batchSize => {
-      val exports = (0 until batchSize).map(_ => backend.exec(WebDsl.adaptForScafi(program)))
+      //TODO FIX (it'isnt easy...)
+      val exports = (0 until batchSize).map(_ => backend.exec(interpreter.adaptForScafi(program).asInstanceOf[js.Function1[CONTEXT,EXPORT]]))
       sideEffectsStream.onNext(ExportProduced(exports))
     }
     backend.clearExports() //clear export for the new script
@@ -40,7 +42,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpaceAwareSimulator,
 object SimulationExecutionPlatform {
   private def rawToFunction(code : String) : js.Function0[Any] = {
     val wrappedCode = s"""() => {
-                         | with(scafiDsl) {
+                         | with(Lang) {
                          |   ${code};
                          | }
                          |}""".stripMargin

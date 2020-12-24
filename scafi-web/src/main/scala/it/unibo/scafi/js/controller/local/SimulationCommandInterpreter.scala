@@ -1,10 +1,10 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.utils.JSNumber
-import it.unibo.scafi.js.dsl.WebIncarnation._
 import it.unibo.scafi.js.controller.CommandInterpreter
-import it.unibo.scafi.js.controller.local.SimulationCommand.{CantChange, ChangeSensor, Executed, Move, Result, ToggleSensor, Unkown}
-import it.unibo.scafi.js.controller.local.SimulationSideEffect.{PositionChanged, SensorChanged}
+import it.unibo.scafi.js.controller.local.SimulationCommand._
+import it.unibo.scafi.js.utils.JSNumber
+import it.unibo.scafi.simulation.SpatialSimulation
+import it.unibo.scafi.space.Point2D
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -16,9 +16,9 @@ import scala.util.{Failure, Success, Try}
   * It change the local state of the simulator.
   */
 trait SimulationCommandInterpreter
-  extends CommandInterpreter[SpaceAwareSimulator, SimulationSideEffect, SimulationCommand, SimulationCommand.Result] {
+  extends CommandInterpreter[SpatialSimulation#SpaceAwareSimulator, SimulationSideEffect, SimulationCommand, SimulationCommand.Result] {
   self : SimulationSupport =>
-
+  import self.incarnation._
   def execute(command : SimulationCommand) : Future[Result] = Future.successful {
     command match {
       case ChangeSensor(sensor, ids, value) => onChangeSensorValue(sensor, ids, value)
@@ -29,7 +29,7 @@ trait SimulationCommandInterpreter
   }
 
   private def onMove(positionMap : Map[String, (Double, Double)]) : Result = {
-    val toScafiBackend = positionMap.mapValues { case (x, y) => new P(x, y) }
+    val toScafiBackend = positionMap.mapValues { case (x, y) => new Point2D(x, y) }
       .mapValues(self.systemConfig.coordinateMapping.toBackend)
     toScafiBackend.foreach { case (id, position : P) => backend.setPosition(id, position)}
     sideEffectsStream.onNext(PositionChanged(toScafiBackend))

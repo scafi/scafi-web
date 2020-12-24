@@ -14,7 +14,6 @@ import it.unibo.scafi.simulation.s2.frontend.launcher.scafi.{ListDemo, Console =
 import it.unibo.scafi.simulation.s2.frontend.view.scalaFX.drawer.FastFXOutput
 import it.unibo.scafi.space.graphics2D.BasicShape2D.Circle
 
-
 object DemoLauncher extends App {
   /**
     * Full screen simulation

@@ -1,25 +1,25 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.dsl.WebIncarnation._
 import it.unibo.scafi.js.controller.AggregateSystemSupport
-import it.unibo.scafi.js.controller.local.SimulationSideEffect.{ExportProduced, Invalidated, NewConfiguration, PositionChanged, SensorChanged}
+import it.unibo.scafi.js.controller.local.SimulationSideEffect._
+import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs}
 import it.unibo.scafi.js.model._
+import it.unibo.scafi.simulation.SpatialSimulation
 import it.unibo.scafi.space.Point3D
-import monix.eval.Task
 import monix.execution.Cancelable
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
-
 import scala.concurrent.Future
 
 /**
   * Support for manage a local aggregate simulation simulation
-  * @param systemConfig initializate the backend with this configuration object
+  * @param systemConfig initialize the backend with this configuration object
   */
-class SimulationSupport(protected var systemConfig: SupportConfiguration)
-  extends AggregateSystemSupport[SpaceAwareSimulator, SupportConfiguration, SimulationSideEffect] {
+class SimulationSupport(protected var systemConfig: SupportConfiguration)(implicit val incarnation: BasicWebIncarnation, implicit val interpreter : ScafiInterpreterJs[BasicWebIncarnation])
+  extends AggregateSystemSupport[SpatialSimulation#SpaceAwareSimulator, SupportConfiguration, SimulationSideEffect]
+    with SideEffects {
   import SimulationSupport._
-
+  import incarnation._
   protected var backend: SpaceAwareSimulator = fromConfig(systemConfig)
 
   protected val sideEffectsStream : PublishSubject[SimulationSideEffect] = PublishSubject()
@@ -40,9 +40,10 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)
   private def fromConfig(config: SupportConfiguration) : SpaceAwareSimulator = {
     backend = (config.network, config.neighbour) match {
       case (grid : GridLikeNetwork, SpatialRadius(range)) =>
-        simulatorFactory.gridLike(grid.toGridSettings, range, seeds = config.seed.toSeeds).asInstanceOf[SpaceAwareSimulator]
+        simulatorFactory.gridLike(grid.toGridSettings, range, seeds = backendSeed(config)).asInstanceOf[SpaceAwareSimulator]
       case (random : RandomNetwork, SpatialRadius(range)) =>
-        simulatorFactory.random(random.min, random.max, range, random.howMany, config.seed.toSeeds)
+        //TODO FIX
+        simulatorFactory.random(random.min, random.max, range, random.howMany, backendSeed(config)).asInstanceOf[SpaceAwareSimulator] //todo improve this
       case _ => throw new IllegalArgumentException("configuration not supported")
     }
     config.deviceShape.sensors.foreach { case (sensorName, value) => backend.addSensor(sensorName, value) }
@@ -103,8 +104,14 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)
   private def computeVertices() : Set[Vertex] = backend.getAllNeighbours()
     .flatMap { case (id, elements) => elements.map(Vertex(id, _)) }
     .toSet
+
+  private def backendSeed(config : SupportConfiguration) : Seeds = {
+    val SimulationSeeds(configSeed, simulationSeed, randomSensorSeed) = config.seed
+    Seeds(configSeed.toLong, simulationSeed.toLong, randomSensorSeed.toLong)
+  }
 }
 
 object SimulationSupport {
   val EXPORT_LABEL = "export"
+  type INCARNATION = BasicWebIncarnation with
 }

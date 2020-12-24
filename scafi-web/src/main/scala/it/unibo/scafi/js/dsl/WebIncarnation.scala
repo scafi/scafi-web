@@ -1,13 +1,11 @@
 package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.config.GridSettings
-import it.unibo.scafi.incarnations.BasicSimulationIncarnation.ID
 import it.unibo.scafi.incarnations.Incarnation
-import it.unibo.scafi.js.dsl.WebIncarnation.ID
 import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.lib.StandardLibrary
-import it.unibo.scafi.simulation.{Simulation, SpatialSimulation}
-import it.unibo.scafi.space.{BasicSpatialAbstraction, Point2D}
+import it.unibo.scafi.simulation.SpatialSimulation
+import it.unibo.scafi.space.Point2D
 import it.unibo.scafi.time.BasicTimeAbstraction
 import it.unibo.utils.{Interop, Linearizable}
 
@@ -16,12 +14,13 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 trait BasicWebIncarnation extends Incarnation
-  with Simulation with BasicTimeAbstraction with StandardLibrary {
+  with SpatialSimulation with StandardLibrary {
   import Builtins.Bounded
   override implicit val idBounded: Bounded[ID] = Builtins.Bounded.of_s
   override type LSNS = String
   override type NSNS = String
   override type ID = String
+  override type P = Point2D
   override type EXECUTION = AggregateInterpreter
   override val LSNS_POSITION: String = "position"
   override val LSNS_TIME: String = "currentTime"
@@ -49,26 +48,11 @@ trait BasicWebIncarnation extends Incarnation
     def toString(nsns: NSNS): String = nsns.toString
     def fromString(str: String): NSNS = str
   }
-}
-
-object WebIncarnation extends BasicWebIncarnation
-  with SpatialSimulation
-  with BasicSpatialAbstraction
-  with StandardLibrary {
-  override type P = Point2D
-
-  override def buildNewSpace[E](elems: Iterable[(E,P)]): SPACE[E] =
-    buildSpatialContainer(elems, EuclideanStrategy.DefaultProximityThreshold)
-
-  def buildSpatialContainer[E](elems: Iterable[(E,P)] = Iterable.empty,
-                               range: Double = EuclideanStrategy.DefaultProximityThreshold): SPACE[E] =
-    new Basic3DSpace(elems.toMap) with EuclideanStrategy {
-      override val proximityThreshold = range
-    }
 
   trait WebSimulatorFactory extends SimulatorFactory {
-    def random(min : Double, max : Double, range : Double, howMany : Int, seeds: Seeds) : SpaceAwareSimulator
+    def random(min : Double, max : Double, range : Double, howMany : Int, seeds: Seeds) : NETWORK
   }
+
   override def simulatorFactory: WebSimulatorFactory = {
     val superReference = super.simulatorFactory
     new WebSimulatorFactory {
@@ -100,9 +84,23 @@ object WebIncarnation extends BasicWebIncarnation
                             rng: JSNumber,
                             lsnsMap: mutable.Map[String, mutable.Map[String, Any]],
                             nsnsMap: mutable.Map[String, mutable.Map[String, mutable.Map[String, Any]]],
-                            seeds: WebIncarnation.Seeds): NETWORK = {
+                            seeds: Seeds): NETWORK = {
         superReference.gridLike(gsettings, rng, lsnsMap, nsnsMap, seeds)
       }
     }
   }
+}
+
+object WebIncarnation extends BasicWebIncarnation
+  with StandardLibrary {
+  override type P = Point2D
+
+  override def buildNewSpace[E](elems: Iterable[(E,P)]): SPACE[E] =
+    buildSpatialContainer(elems, EuclideanStrategy.DefaultProximityThreshold)
+
+  def buildSpatialContainer[E](elems: Iterable[(E,P)] = Iterable.empty,
+                               range: Double = EuclideanStrategy.DefaultProximityThreshold): SPACE[E] =
+    new Basic3DSpace(elems.toMap) with EuclideanStrategy {
+      override val proximityThreshold = range
+    }
 }

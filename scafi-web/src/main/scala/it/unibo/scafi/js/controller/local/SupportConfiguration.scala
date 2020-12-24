@@ -2,7 +2,6 @@ package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.js.utils.JSNumber
-import it.unibo.scafi.js.dsl.WebIncarnation._
 import it.unibo.scafi.space.Point3D
 
 import scala.scalajs.js
@@ -23,6 +22,7 @@ case class SupportConfiguration(network: NetworkConfiguration,
                                 deviceShape: DeviceConfiguration,
                                 seed : SimulationSeeds,
                                 coordinateMapping : CoordinateMapping = CoordinateMapping.identity)
+
 
 /**
   * top level trait to describe a network configuration that tells how node are placed in the world.
@@ -101,7 +101,6 @@ object DeviceConfiguration {
 case class SimulationSeeds(@JSExport configSeed: JSNumber = System.currentTimeMillis(),
                            @JSExport simulationSeed: JSNumber = System.currentTimeMillis(),
                            @JSExport randomSensorSeed: JSNumber = System.currentTimeMillis()) {
-  def toSeeds : Seeds = Seeds(configSeed.toLong, simulationSeed.toLong, randomSensorSeed.toLong)
 }
 
 /**
