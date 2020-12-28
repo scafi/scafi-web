@@ -262,14 +262,11 @@ lazy val `scafi-web` = project
         "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
         "io.monix" %%% "monix-reactive" % "3.2.2",
         "org.querki" %%% "jquery-facade" % "2.0"
-        // "org.singlespaced" %%% "scalajs-d3" % "0.3.4" // only ScalaJs 0.6
       ),
       version in installJsdom := "12.0.0",
       requireJsDomEnv in Test := true,
       webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
       npmDependencies in Compile ++= Seq(
-        "sigma" -> "2.0.0-alpha32",
-        "jsnetworkx" -> "0.3.4",
         "codemirror" -> "5.32.0",
         "jquery" -> "3.5.1",
         "bootstrap" -> "4.5.2",
@@ -282,8 +279,7 @@ lazy val `scafi-web` = project
         "imports-loader" -> "0.8.0",
         "expose-loader" -> "0.7.5",
         "css-loader" -> "4.2.1",
-        "style-loader" -> "1.2.1",
-        "file-loader" -> "6.1.0"
+        "style-loader" -> "1.2.1"
       ),
       webpackConfigFile := Some(baseDirectory.value / "src" /"main" / "resources" / "dev.webpack.config.js"),
       webpackConfigFile in Test := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),

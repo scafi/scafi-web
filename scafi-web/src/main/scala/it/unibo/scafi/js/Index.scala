@@ -38,7 +38,6 @@ object Index {
 
   @JSExport
   def main(args: Array[String]): Unit = configurePage()
-
   val programs = Map(
     "round counter" -> "return rep(() => 0, (k) => k+1)",
     "hello scafi" -> "return \"hello scafi\"",

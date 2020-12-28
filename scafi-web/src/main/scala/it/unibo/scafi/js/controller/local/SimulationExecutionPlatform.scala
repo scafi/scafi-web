@@ -3,8 +3,7 @@ package it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.ExecutionPlatform
 import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
 import it.unibo.scafi.js.controller.local.SimulationSideEffect.SideEffects
-import it.unibo.scafi.js.controller.scripting.Script
-import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs}
+import it.unibo.scafi.js.controller.scripting.{Javascript, Script}
 import it.unibo.scafi.simulation.SpatialSimulation
 
 import scala.concurrent.Future
@@ -19,8 +18,8 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   self : SimulationSupport with SideEffects =>
   import SimulationExecutionPlatform._
   import incarnation._
-  override def loadScript(script: Script): Future[SimulationExecution] = script.lang match {
-    case "javascript" => Try { rawToFunction(script.code) } match {
+  override def loadScript(script: Script): Future[SimulationExecution] = script match {
+    case Javascript(code) => Try { rawToFunction(code) } match {
       case Failure(exception) => Future.failed(exception)
       case Success(value) => Future.successful(sideEffectExecution(value))
     }
