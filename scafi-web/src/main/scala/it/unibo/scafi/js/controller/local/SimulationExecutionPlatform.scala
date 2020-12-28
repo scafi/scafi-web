@@ -3,12 +3,14 @@ package it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.ExecutionPlatform
 import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
 import it.unibo.scafi.js.controller.local.SimulationSideEffect.SideEffects
-import it.unibo.scafi.js.controller.scripting.{Javascript, Script}
+import it.unibo.scafi.js.controller.scripting.Script
+import it.unibo.scafi.js.controller.scripting.Script.{Javascript, ScaFi}
+import it.unibo.scafi.js.dsl.JF1
 import it.unibo.scafi.simulation.SpatialSimulation
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
   * the execution platform of a local simulation in web browser.
@@ -19,17 +21,21 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   import SimulationExecutionPlatform._
   import incarnation._
   override def loadScript(script: Script): Future[SimulationExecution] = script match {
-    case Javascript(code) => Try { rawToFunction(code) } match {
-      case Failure(exception) => Future.failed(exception)
-      case Success(value) => Future.successful(sideEffectExecution(value))
+    case Javascript(code) => Future.fromTry {
+      Try { rawToFunction(code) }
+        .map(interpreter.adaptForScafi)
+        .map(_.asInstanceOf[JF1[CONTEXT, EXPORT]]) //TODO NOT SAFE! FIND ANOTHER WAY
+        .map(sideEffectExecution)
+    }
+    case aggregateClass : ScaFi[AggregateProgram] => Future.fromTry {
+      Try { sideEffectExecution(aggregateClass.program) }
     }
     case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
-
-  private def sideEffectExecution(program : js.Function0[Any]) : TickBased = {
+  private def sideEffectExecution(program : js.Function1[CONTEXT, EXPORT]) : TickBased = {
     val execution : (Int => Unit) = batchSize => {
       //TODO FIX (it'isnt easy...)
-      val exports = (0 until batchSize).map(_ => backend.exec(interpreter.adaptForScafi(program).asInstanceOf[js.Function1[CONTEXT,EXPORT]]))
+      val exports = (0 until batchSize).map(_ => backend.exec(program))
       sideEffectsStream.onNext(ExportProduced(exports))
     }
     backend.clearExports() //clear export for the new script

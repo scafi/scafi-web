@@ -21,20 +21,18 @@ object SimulationControlsSection {
   private val tick = button("tick", buttonClass).render
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  def render(execution : SimulationExecutionPlatform, editor : Editor, controlDiv : Div) : Unit = {
+  //TODO move the execution far from here...
+  def render(execution : SimulationExecutionPlatform,
+             editor : Editor, controlDiv : Div,
+             script : Option[Script] = None) : Unit = {
     var simulation : Option[SimulationExecution] = None
+    script.foreach(loadScript)
     (loadButton :: startButton :: stopButton :: tick :: Nil) foreach (el => controlDiv.appendChild(el))
     (labelBatch :: rangeBatch :: valueBatch :: labelDelta :: rangeDelta :: valueDelta :: Nil) foreach (el => controlDiv.appendChild(el))
     (tick :: stopButton :: startButton :: Nil) foreach {el => el.disabled = true }
     new SimpleBar(controlDiv)
 
-    loadButton.onclick = event => execution.loadScript(Script.javascript(editor.getValue())).onComplete {
-      case Success(ticker : TickBased) =>
-        simulation foreach clearSimulationExecution
-        simulation = Some(ticker)
-        (tick :: startButton :: Nil) foreach { el => el.disabled = false }
-      case Failure(exception) => //TODO
-    }
+    loadButton.onclick = event => loadScript(Script.javascript(editor.getValue()))
 
     tick.onclick = _ => simulation match {
       case Some(ticker: TickBased) => ticker.withBatchSize(rangeBatch.intValue).tick()
@@ -53,7 +51,14 @@ object SimulationControlsSection {
         stopButton.disabled = true
         (tick :: startButton :: loadButton :: Nil) foreach { el => el.disabled = false }
         (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = false }
+    }
 
+    def loadScript(script : Script) : Unit = execution.loadScript(Script.javascript(editor.getValue())).onComplete {
+      case Success(ticker : TickBased) =>
+        simulation foreach clearSimulationExecution
+        simulation = Some(ticker)
+        (tick :: startButton :: Nil) foreach { el => el.disabled = false }
+      case Failure(exception) => //TODO
     }
   }
 

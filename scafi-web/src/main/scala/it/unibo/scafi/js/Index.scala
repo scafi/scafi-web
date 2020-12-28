@@ -2,16 +2,14 @@ package it.unibo.scafi.js
 
 import java.util.concurrent.TimeUnit
 
-import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.dsl.semantics.{BlockGJs, BlockTJs, BuiltinsJs, LanguageJs, StandardSensorJs}
-import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
+import it.unibo.scafi.js.dsl.semantics._
+import it.unibo.scafi.js.dsl.{ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.Execution
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.static.SkeletonPage
-import it.unibo.scafi.simulation.SpatialSimulation
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
