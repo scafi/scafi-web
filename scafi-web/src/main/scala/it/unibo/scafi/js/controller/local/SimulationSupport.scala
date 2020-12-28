@@ -113,5 +113,4 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(implic
 
 object SimulationSupport {
   val EXPORT_LABEL = "export"
-  type INCARNATION = BasicWebIncarnation with
 }
