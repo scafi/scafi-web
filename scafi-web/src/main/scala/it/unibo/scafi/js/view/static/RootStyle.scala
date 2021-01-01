@@ -11,13 +11,13 @@ import scala.scalajs.js.annotation.JSImport
   */
 object RootStyle extends StyleSheet.Standalone {
   import dsl._
-
   private val navHeight = 10 vh
-  private val pageContentHeight = 88 vh
+  private val pageContentHeight = (100 - navHeight.n) vh
   private val contentHeight = 86 vh
   private val visualizationHeight = 76 vh
-  private val editorHeight = 82 vh
-  val utilsVisualizationHeight = 5 vh
+  private val editorHeight = 83 vh
+  private val demoSelectionHeight = (contentHeight.n - editorHeight.n) vh
+  private val utilsVisualizationHeight = 5 vh
 
   "html, body" - (height(100 %%))
   "nav" -(height(navHeight))
@@ -29,6 +29,8 @@ object RootStyle extends StyleSheet.Standalone {
     position.relative,
     overflow.auto
   )
+
+  "select-program" - (height(demoSelectionHeight))
 
   ".CodeMirror" - (height(editorHeight).important)
 

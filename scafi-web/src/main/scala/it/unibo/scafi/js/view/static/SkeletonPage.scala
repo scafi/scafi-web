@@ -51,7 +51,7 @@ object SkeletonPage {
   )
 
   private def navBar : Tag = tag("nav")(
-    cls := "navbar navbar-dark flex-shrink-0 mb-3 bg-secondary",
+    cls := "navbar navbar-dark flex-shrink-0 bg-secondary",
     span(
       cls := "navbar-brand",
       h1(cls := "text-light", "Scafi")
@@ -63,7 +63,7 @@ object SkeletonPage {
   )
 
   private def pageContainer : TypedTag[Div] = div(
-    cls := "row flex-grow-1 m-0 bg-dark",
+    cls := "row flex-grow-1 m-0 bg-dark pt-3",
     id := "page-container",
     backendConfig,
     editor,
