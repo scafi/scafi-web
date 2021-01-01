@@ -15,7 +15,8 @@ import scala.concurrent.Future
   * Support for manage a local aggregate simulation simulation
   * @param systemConfig initialize the backend with this configuration object
   */
-class SimulationSupport(protected var systemConfig: SupportConfiguration)(implicit val incarnation: BasicWebIncarnation, implicit val interpreter : ScafiInterpreterJs[BasicWebIncarnation])
+class SimulationSupport(protected var systemConfig: SupportConfiguration)
+                       (implicit val incarnation: BasicWebIncarnation, implicit val interpreter : ScafiInterpreterJs[BasicWebIncarnation])
   extends AggregateSystemSupport[SpatialSimulation#SpaceAwareSimulator, SupportConfiguration, SimulationSideEffect]
     with SideEffects {
   import SimulationSupport._
