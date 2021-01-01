@@ -26,10 +26,10 @@ object SimulationControlsSection {
              editor : Editor, controlDiv : Div,
              script : Option[Script] = None) : Unit = {
     var simulation : Option[SimulationExecution] = None
-    script.foreach(loadScript)
     (loadButton :: startButton :: stopButton :: tick :: Nil) foreach (el => controlDiv.appendChild(el))
     (labelBatch :: rangeBatch :: valueBatch :: labelDelta :: rangeDelta :: valueDelta :: Nil) foreach (el => controlDiv.appendChild(el))
     (tick :: stopButton :: startButton :: Nil) foreach {el => el.disabled = true }
+    script.foreach(loadScript)
     new SimpleBar(controlDiv)
 
     loadButton.onclick = event => loadScript(Script.javascript(editor.getValue()))
@@ -53,7 +53,7 @@ object SimulationControlsSection {
         (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = false }
     }
 
-    def loadScript(script : Script) : Unit = execution.loadScript(Script.javascript(editor.getValue())).onComplete {
+    def loadScript(script : Script) : Unit = execution.loadScript(script).onComplete {
       case Success(ticker : TickBased) =>
         simulation foreach clearSimulationExecution
         simulation = Some(ticker)

@@ -44,8 +44,8 @@ object LabelRender {
 
   def textifyBitmap : LabelRender = {
     val fontSize = 9 //todo put in a global configuration object
-    val textureUrl = "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png"
-    val fontUrl = "http://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
+    val textureUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png"
+    val fontUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
     LabelRender {
       case (node, elements, scene) =>
         val result = elements

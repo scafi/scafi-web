@@ -16,17 +16,6 @@ import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
-object X {
-  var listen = false
-  var counter = 0
-  var array = js.Array[String]()
-    @JSExportTopLevel("startcount")
-  def start(): Unit = {
-    listen = true
-    counter = 0
-    array = js.Array[String]()
-  }
-}
 class PhaserGraphSection(paneSection : HTMLElement,
                          interaction : ((Scene, NodeDescriptionPopup, Container) => Unit),
                          settings: VisualizationSettingsSection,
@@ -51,7 +40,6 @@ class PhaserGraphSection(paneSection : HTMLElement,
     dom = new DOMContainerConfig(createContainer = true),
     transparent = true
   )
-  Debug("game", game)
   private val game = new Phaser.Game(config)
   private var popup : NodeDescriptionPopup = _
   private var mainContainer : GameObjects.Container = _

@@ -4,7 +4,7 @@ import it.unibo.scafi.js.controller.ExecutionPlatform
 import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
 import it.unibo.scafi.js.controller.local.SimulationSideEffect.SideEffects
 import it.unibo.scafi.js.controller.scripting.Script
-import it.unibo.scafi.js.controller.scripting.Script.{Javascript, ScaFi}
+import it.unibo.scafi.js.controller.scripting.Script.{Javascript, ScaFi, Scala}
 import it.unibo.scafi.js.dsl.JF1
 import it.unibo.scafi.simulation.SpatialSimulation
 
@@ -30,6 +30,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     case aggregateClass : ScaFi[AggregateProgram] => Future.fromTry {
       Try { sideEffectExecution(aggregateClass.program) }
     }
+    case Scala(code) => Future.failed(new IllegalArgumentException("lang not supported"))
     case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
   private def sideEffectExecution(program : js.Function1[CONTEXT, EXPORT]) : TickBased = {
