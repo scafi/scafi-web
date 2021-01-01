@@ -30,7 +30,7 @@ object RootStyle extends StyleSheet.Standalone {
     overflow.auto
   )
 
-  "select-program" - (height(demoSelectionHeight))
+  "#select-program" - (height(demoSelectionHeight))
 
   ".CodeMirror" - (height(editorHeight).important)
 

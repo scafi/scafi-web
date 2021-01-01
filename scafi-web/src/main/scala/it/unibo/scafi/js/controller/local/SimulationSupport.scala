@@ -10,7 +10,7 @@ import monix.execution.Cancelable
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
 import scala.concurrent.Future
-
+//TODO make support more general
 /**
   * Support for manage a local aggregate simulation simulation
   * @param systemConfig initialize the backend with this configuration object
