@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.js.controller.local.SimulationSideEffect._
+import it.unibo.scafi.js.controller.local.SupportTesterLike.incarnation
 import it.unibo.scafi.js.dsl.WebIncarnation
 import it.unibo.scafi.js.model.Vertex
 import it.unibo.scafi.space.Point3D
@@ -58,7 +58,7 @@ class SimulationSupportTest extends SupportTesterLike {
       val newPositionX = 100
       val newPositionY = 100
       val node = "1"
-      val sideEffect = PositionChanged(Map(node -> Point3D(newPositionX, newPositionY, 0)))
+      val sideEffect = localPlatform.PositionChanged(Map(node -> Point3D(newPositionX, newPositionY, 0)))
       val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
       localPlatform.publish(sideEffect)
       newGraph.map { graph => graph(node).position shouldBe Point3D(newPositionX, newPositionY, 0) }
@@ -69,7 +69,7 @@ class SimulationSupportTest extends SupportTesterLike {
       val newPositionY = 100
       val node = "1"
       val sensor = "obstacle"
-      val sideEffect = SensorChanged(Map(node -> Map(sensor -> true)))
+      val sideEffect = localPlatform.SensorChanged(Map(node -> Map(sensor -> true)))
       val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
       localPlatform.publish(sideEffect)
       newGraph.map { graph => graph(node).labels(sensor) shouldBe true }
@@ -78,8 +78,8 @@ class SimulationSupportTest extends SupportTesterLike {
     it("should support export produced side effect") {
       val node = "1"
       val exportName = "export"
-      val export: WebIncarnation.EXPORT = new WebIncarnation.ExportImpl()
-      val sideEffect = ExportProduced(Seq(node -> export))
+      val export : WebIncarnation.EXPORT = new WebIncarnation.ExportImpl()
+      val sideEffect = localPlatform.exportProduced(node, export) //TODO FIX!
       val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
       localPlatform.publish(sideEffect)
       newGraph.map { graph => graph(node).labels(exportName) shouldBe export }
@@ -87,13 +87,13 @@ class SimulationSupportTest extends SupportTesterLike {
 
     it("should support new configuration side effect") {
       val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
-      localPlatform.publish(NewConfiguration)
+      localPlatform.publish(localPlatform.NewConfiguration)
       newGraph.map { graph => graph.nodes.size shouldBe cols * cols }
     }
 
     it("should support invalidated side effect") {
       val newGraph = localPlatform.graphStream.firstL.runToFuture(monixScheduler)
-      localPlatform.publish(Invalidated)
+      localPlatform.publish(localPlatform.Invalidated)
       newGraph.map { graph => graph.nodes.size shouldBe cols * cols }
     }
   }

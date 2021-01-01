@@ -10,6 +10,7 @@ import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 class SimulationExecutionTest extends SupportTesterLike {
   import SimulationExecutionTest._
+
   //a non global context bring to a problems
   val longWait = 100
   describe("Execution platform") {
@@ -21,22 +22,24 @@ class SimulationExecutionTest extends SupportTesterLike {
       }
     }
 
+
     it("should check javascript error before creating execution") {
       val result = localPlatform.loadScript(Script.javascript("val u"))
       result.transform {
-        case Success(value) => Try{ fail() }
-        case Failure(exception) => Try{ succeed }
-      }
+        case Success(any) => Try { fail() }
+        case _ => Try { succeed }
+      }(monixScheduler)
     }
+
     it("should support tick by tick execution") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val ticksTimes = 10
-      val count = completeAfterN(ticksTimes, localPlatform.graphStream).runToFuture(monixScheduler)
+      val count = completeAfterN(ticksTimes, localPlatform.graphStream)
       execution.foreach {
         case ticker : TickBased => execTickMultipleTimes(ticker, ticksTimes).runToFuture(monixScheduler)
         case _ =>
       }
-      count map { case `ticksTimes` => succeed }
+      count map { case `ticksTimes` => succeed } runToFuture(monixScheduler)
     }
 
     it("daemon produce side effects") {
@@ -52,6 +55,7 @@ class SimulationExecutionTest extends SupportTesterLike {
         }
       }
     }
+
     it("daemon can be stopped") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val someComputations = 10
@@ -68,7 +72,6 @@ class SimulationExecutionTest extends SupportTesterLike {
         }
       }
     }
-
     it("daemon delta change frequency") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val delta = 50
@@ -86,6 +89,7 @@ class SimulationExecutionTest extends SupportTesterLike {
         }
       }
     }
+
     it("batch size impact on changes in the graph") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       var unsafeList: List[Graph] = List.empty
@@ -94,18 +98,18 @@ class SimulationExecutionTest extends SupportTesterLike {
       val countNonBatched = completeAfterN(tickTimes, localPlatform.graphStream).runToFuture(monixScheduler)
       localPlatform.graphStream.foreach(graph => unsafeList = graph :: unsafeList)(monixScheduler)
       execution.foreach {
-        case ticker : TickBased => execTickMultipleTimes(ticker, tickTimes).runToFuture(monixScheduler)
+        case ticker: TickBased => execTickMultipleTimes(ticker, tickTimes).runToFuture(monixScheduler)
         case _ =>
       }
       val countFuture = countNonBatched.map(_ => countDifferences(unsafeList.head, unsafeList.tail.head) shouldBe 1)
       countFuture.flatMap { _ =>
         unsafeList = List.empty
         execution.foreach {
-          case ticker : TickBased => execTickMultipleTimes(ticker.withBatchSize(batchTickSize), tickTimes).runToFuture(monixScheduler)
+          case ticker: TickBased => execTickMultipleTimes(ticker.withBatchSize(batchTickSize), tickTimes).runToFuture(monixScheduler)
           case _ =>
         }
         completeAfterN(tickTimes, localPlatform.graphStream).runToFuture(monixScheduler)
-      }.map {_ => countDifferences(unsafeList.head, unsafeList.tail.head) shouldNot be (1)}
+      }.map { _ => countDifferences(unsafeList.head, unsafeList.tail.head) shouldNot be(1) }
     }
   }
 }

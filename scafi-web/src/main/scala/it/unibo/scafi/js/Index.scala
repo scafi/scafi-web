@@ -20,7 +20,7 @@ object Index {
   import org.scalajs.dom._
   implicit val incarnation = WebIncarnation //incarnation choosed
   @JSExportTopLevel("Lang")
-  implicit val languageJsInterpreter = new ScafiInterpreterJs() with BlockGJs
+  implicit val languageJsInterpreter = new ScafiInterpreterJs("Lang") with BlockGJs
     with LanguageJs with BlockTJs with StandardSensorJs with BuiltinsJs// interpreter choosen
   val configuration = SupportConfiguration(
     GridLikeNetwork(10, 10, 60, 60, 0),
@@ -35,7 +35,9 @@ object Index {
     with SimulationCommandInterpreter
 
   @JSExport
-  def main(args: Array[String]): Unit = configurePage()
+  def main(args: Array[String]): Unit = {
+    configurePage()
+  }
   val programs = Map(
     "round counter" -> "return rep(() => 0, (k) => k+1)",
     "hello scafi" -> "return \"hello scafi\"",

@@ -1,12 +1,13 @@
 package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.incarnations.Incarnation
+import it.unibo.scafi.js.dsl.ScafiInterpreterJs.rawToFunction
 import it.unibo.scafi.js.dsl.typeclass.BoundedJs
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportAll
 @JSExportAll
-class ScafiInterpreterJs[+I <: Incarnation](implicit val incarnation: I) {
+class ScafiInterpreterJs[+I <: Incarnation](val exportedName : String)(implicit val incarnation: I) {
   import incarnation._
   private val adapter = new BasicInterpreter()
   class BasicInterpreter extends AggregateProgram {
@@ -42,11 +43,24 @@ class ScafiInterpreterJs[+I <: Incarnation](implicit val incarnation: I) {
   def adaptForScafi(fun : js.Function0[Any]) : js.Function1[CONTEXT,EXPORT] = context => {
     adapter.round(context, fun())
   }
+  def adaptForScafi(code : String) : js.Function1[CONTEXT, EXPORT] = adaptForScafi(rawToFunction(code, exportedName))
+
   protected implicit def boundedConversion[A](bound : BoundedJs[A]) : incarnation.Builtins.Bounded[A] = {
     new incarnation.Builtins.Bounded[A] {
       override def top: A = bound.top
       override def bottom: A = bound.bottom
       override def compare(a: A, b: A): Int = bound.compare(a, b)
     }
+  }
+}
+
+object ScafiInterpreterJs {
+  def rawToFunction(code : String, dslName : String) : js.Function0[Any] = {
+    val wrappedCode = s"""() => {
+                         | with($dslName) {
+                         |   ${code};
+                         | }
+                         |}""".stripMargin
+    js.eval(wrappedCode).asInstanceOf[js.Function0[Any]]
   }
 }

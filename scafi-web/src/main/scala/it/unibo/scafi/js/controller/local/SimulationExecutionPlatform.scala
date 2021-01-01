@@ -22,8 +22,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   import incarnation._
   override def loadScript(script: Script): Future[SimulationExecution] = script match {
     case Javascript(code) => Future.fromTry {
-      Try { rawToFunction(code) }
-        .map(interpreter.adaptForScafi)
+      Try { interpreter.adaptForScafi(code) }
         .map(_.asInstanceOf[JF1[CONTEXT, EXPORT]]) //TODO NOT SAFE! FIND ANOTHER WAY
         .map(sideEffectExecution)
     }
@@ -46,9 +45,10 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
 }
 
 object SimulationExecutionPlatform {
-  private def rawToFunction(code : String) : js.Function0[Any] = {
+  //TODO put in interpreter
+  private def rawToFunction(code : String, dslName : String) : js.Function0[Any] = {
     val wrappedCode = s"""() => {
-                         | with(Lang) {
+                         | with($dslName) {
                          |   ${code};
                          | }
                          |}""".stripMargin
