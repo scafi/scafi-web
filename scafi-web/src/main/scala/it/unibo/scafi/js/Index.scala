@@ -1,18 +1,22 @@
 package it.unibo.scafi.js
 
 import java.util.concurrent.TimeUnit
-
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
+import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.Execution
 import it.unibo.scafi.js.view.dynamic._
+import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
-import it.unibo.scafi.js.view.static.SkeletonPage
+import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
+import jdk.nashorn.api.scripting.URLReader
+import org.scalajs.dom.experimental.URLSearchParams
 
 import scala.concurrent.duration.FiniteDuration
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
+import scala.scalajs.js.Object.{entries, keys}
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel, JSGlobal}
 /**
   * Root object, it initialize the simulation, the page and the backend.
   */
@@ -36,7 +40,9 @@ object Index {
 
   @JSExport
   def main(args: Array[String]): Unit = {
-    configurePage()
+    val queryParams = new URLSearchParams(document.location.search)
+    if (queryParams.has("headless")) { contentOnly() } else { spaPage() }
+    scafiInitialization()
   }
   val programs = Map(
     "round counter" -> "return rep(() => 0, (k) => k+1)",
@@ -56,14 +62,23 @@ object Index {
                    |return channel(sense("source"), sense("obstacle"), 1)""".stripMargin
   )
 
-  def configurePage(): Unit = {
-    implicit val context = Execution.timeoutBasedScheduler
+  def spaPage() : Unit = {
     //page injection
-    document.head.appendChild(SkeletonPage.renderedStyle.render)
-    document.body.appendChild(SkeletonPage.content.render)
+    document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withNav()).render)
+    document.body.appendChild(SkeletonPage.fullPage.render)
+  }
+
+  def contentOnly() : Unit = {
+    //page injection
+    document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withoutNav).render)
+    document.body.appendChild(SkeletonPage.contentOnly.render)
+  }
+
+  def scafiInitialization() : Unit = {
+    implicit val context = Execution.timeoutBasedScheduler
     //dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders : Seq[LabelRender.LabelRender] = Seq(LabelRender.booleanRender, LabelRender.booleanExport, /*LabelRender.gradientLike, test only*/ LabelRender.textifyBitmap)
+    val renders : Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)

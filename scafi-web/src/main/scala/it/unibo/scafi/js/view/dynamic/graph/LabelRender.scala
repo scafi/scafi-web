@@ -5,116 +5,110 @@ import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser.Scene
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{GameObject, Shape, Text}
 import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
+import it.unibo.scafi.js.model.Graph
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import org.scalajs.dom.ext.Color
 
 object LabelRender {
-  type SensorEntry = Seq[(String, Any)]
+  type SensorEntries = Seq[(String, Any)]
   type Output = Seq[(GameObject, Seq[String])]
 
-  trait LabelRender extends ((GameobjectNode, SensorEntry, Scene) => Output) {
-    def init : Scene => Unit
+  trait LabelRender {
+    def graphicalRepresentation(node : GameobjectNode, elements : SensorEntries, world : Graph, scene : Scene) : Output
+    def onInit(scene : Scene) : Unit = {}
   }
 
-  private case class LabelRenderImpl(logic : (GameobjectNode, SensorEntry, Scene) => Output, init : Scene => Unit = scene => {}) extends LabelRender {
-    override def apply(v1: GameobjectNode, v2: SensorEntry, v3: Scene): Output = logic(v1, v2, v3)
-  }
-
-  def apply(function: (GameobjectNode, SensorEntry, Scene) => Output) : LabelRender = new LabelRenderImpl(function)
-
-  implicit class RichLabelRender(labelRender: LabelRender) {
-    def onInit(init : Scene => Unit) : LabelRender = LabelRenderImpl(labelRender, init)
-  }
-  def textify : LabelRender = {
-    var textMap : Map[String, Text] = Map.empty
-    LabelRender {
-      case (node, elements, scene) =>
-        val result = elements
-          .map { case (name, value) => normalizeValue(value) }
-          .mkString("\n")
-        val gameobject = textMap.get(node.id)
-          .map(_.setText(normalizeValue(result)))
-          .map(_.setPosition(node.x, node.y))
-          .getOrElse(scene.add.text(node.x, node.y, normalizeValue(result)))
-        textMap += node.id -> gameobject
-        gameobject.ignoreDestroy = true
-        Seq((gameobject, elements.map { case (name, value) => name}))
+  case class Textify() extends LabelRender {
+    private var textCache : Map[String, Text] = Map.empty
+    override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph, scene: Scene): Output = {
+      val result = elements
+        .map { case (_, value) => normalizeValue(value) }
+        .mkString("\n")
+      val gameobject = textCache.get(node.id)
+        .map(_.setText(normalizeValue(result)))
+        .map(_.setPosition(node.x, node.y))
+        .getOrElse(scene.add.text(node.x, node.y, normalizeValue(result)))
+      textCache += node.id -> gameobject
+      gameobject.ignoreDestroy = true
+      Seq((gameobject, elements.map { case (name, value) => name}))
     }
   }
 
-  def textifyBitmap : LabelRender = {
+  case class TextifyBitmap() extends LabelRender {
     val fontSize = 9 //todo put in a global configuration object
     val textureUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png"
     val fontUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
-    LabelRender {
-      case (node, elements, scene) =>
-        val result = elements
-          .map { case (name, value) => normalizeValue(value) }
-          .mkString("\n")
-        val gameobject = scene.add.bitmapText(node.x, node.y, "font", normalizeValue(result), fontSize)
-        Seq((gameobject, elements.map { case (name, value) => name}))
-    } onInit {
-      scene => scene.load.bitmapFont("font", textureUrl, fontUrl)
+
+    override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph, scene: Scene): Output = {
+      val result = elements
+        .map { case (name, value) => normalizeValue(value) }
+        .mkString("\n")
+      val gameobject = scene.add.bitmapText(node.x, node.y, "font", normalizeValue(result), fontSize)
+      Seq((gameobject, elements.map { case (name, value) => name}))
     }
+    override def onInit(scene : Scene) : Unit = scene.load.bitmapFont("font", textureUrl, fontUrl)
   }
 
-  def booleanRender : LabelRender = {
+  case class BooleanRender() extends LabelRender {
     val falseAlpha = 0.2
     val colorMultiplier = 1000
     val initialColor : Int = Color.White
     val trueAlpha = 1
     val lineWidth = 1
-    LabelRender {
-      case (node, elements, scene) =>
-        val circleSize = (node.width / 2).toInt
-        val deltaY = circleSize * 2
-        val deltaX = node.width
-        val result = elements.collect { case (name, value : Boolean) => name -> value }
-        type FoldType = (Int, Seq[(GameObject, Seq[String])])
-        result.foldLeft[FoldType](0, Seq.empty){
-          case ((delta, result), (name, value)) =>
-            val nodeColor = initialColor - (delta * colorMultiplier)
-            val nodeAlpha = if(value) trueAlpha else falseAlpha
-            val gameObject = scene.add.circle(node.x - deltaX, node.y + delta, circleSize, nodeColor, nodeAlpha)
-            gameObject.setStrokeStyle(lineWidth, nodeColor)
-            (delta + deltaY, result :+ (gameObject -> Seq(name)))
-        }._2
+
+    override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph, scene: Scene): Output = {
+      val circleSize = (node.width / 2).toInt
+      val deltaY = circleSize * 2
+      val deltaX = node.width
+      val result = elements.collect { case (name, value : Boolean) => name -> value }
+      type FoldType = (Int, Seq[(GameObject, Seq[String])])
+      result.foldLeft[FoldType](0, Seq.empty){
+        case ((delta, result), (name, value)) =>
+          val nodeColor = initialColor - (delta * colorMultiplier)
+          val nodeAlpha = if(value) trueAlpha else falseAlpha
+          val gameObject = scene.add.circle(node.x - deltaX, node.y + delta, circleSize, nodeColor, nodeAlpha)
+          gameObject.setStrokeStyle(lineWidth, nodeColor)
+          (delta + deltaY, result :+ (gameObject -> Seq(name)))
+      }._2
     }
   }
 
-  def booleanExport : LabelRender = LabelRender {
-    case (node, elements, _) =>
-      val falseExport = 0.3
-      val trueExport = 1.0
-      val strokeSize = 2
+  case class BooleanExport() extends LabelRender {
+    val falseExport = 0.3
+    val trueExport = 1.0
+    val strokeSize = 2
+
+    override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph,  scene: Scene): Output = {
       val exp = elements.collect { case ("export", e: BasicWebIncarnation#EXPORT) => e }
-        .map { _.root[Any]() }
+        .map {
+          _.root[Any]()
+        }
         .collectFirst { case e: Boolean => e }
       exp match {
         case None => Seq.empty
-        case Some(value) => val exportValue = if(value) trueExport else falseExport
-          val computedStrokeSize = if(value) strokeSize else 0
-          val unsafeNode : Shape = node.asInstanceOf[Shape]
+        case Some(value) => val exportValue = if (value) trueExport else falseExport
+          val computedStrokeSize = if (value) strokeSize else 0
+          val unsafeNode: Shape = node.asInstanceOf[Shape]
           unsafeNode.setFillStyle(unsafeNode.fillColor, alpha = exportValue)
           unsafeNode.setStrokeStyle(computedStrokeSize, Color.Cyan, 1)
-          Seq((node : GameObject) -> Seq("export"))
+          Seq((node: GameObject) -> Seq("export"))
       }
+    }
   }
 
-  def gradientLike : LabelRender = {
-    LabelRender {
-      case (node, elements, scene) =>
-        val label = "export"
-        val circleSize = (node.width / 2)
-        val result = elements.collect { case (`label`, e : BasicWebIncarnation#EXPORT) => e.root[Any]() }
-          .collect { case e : Double => e }
-        type FoldType = (Int, Seq[(GameObject, Seq[String])])
-        result.flatMap {
-          gradient =>
-            val nodeColor = ColorNamespace.HSLToColor(gradient / 1920, 0.5, 0.5)
-            val gameObject = scene.add.circle(node.x, node.y, circleSize, nodeColor.color)
-            Seq(gameObject -> Seq(label))
-        }
+  case class GradientLike() extends LabelRender {
+    override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph,  scene: Scene): Output = {
+      val label = "export"
+      val circleSize = (node.width / 2)
+      val result = elements.collect { case (`label`, e: BasicWebIncarnation#EXPORT) => e.root[Any]() }
+        .collect { case e: Double => e }
+      type FoldType = (Int, Seq[(GameObject, Seq[String])])
+      result.flatMap {
+        gradient =>
+          val nodeColor = ColorNamespace.HSLToColor(gradient / 1920, 0.5, 0.5)
+          val gameObject = scene.add.circle(node.x, node.y, circleSize, nodeColor.color)
+          Seq(gameObject -> Seq(label))
+      }
     }
   }
 

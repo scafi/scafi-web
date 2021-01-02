@@ -16,7 +16,7 @@ object SkeletonPage {
   /**
    * The root style of the web page.
    */
-  lazy val renderedStyle = RootStyle.render[TypedTag[HTMLStyleElement]]
+  def renderedStyle(style : RootStyle) : TypedTag[HTMLStyleElement] = style.render[TypedTag[HTMLStyleElement]]
   /**
    * Textarea associated with the editor section.
    */
@@ -44,9 +44,16 @@ object SkeletonPage {
   /**
    * The entirely page content.
    */
-  val content : TypedTag[Div] = div(
+  val fullPage : TypedTag[Div] = div(
     cls:= "container-fluid d-flex flex-column p-0 bg-dark",
     navBar,
+    pageContainer
+  )
+  /**
+    * The main section of the page.
+    */
+  val contentOnly : TypedTag[Div] = div(
+    cls:= "container-fluid d-flex flex-column p-0 bg-dark",
     pageContainer
   )
 
