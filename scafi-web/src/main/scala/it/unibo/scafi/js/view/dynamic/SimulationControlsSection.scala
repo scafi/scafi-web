@@ -3,6 +3,7 @@ package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased}
 import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecutionPlatform}
 import it.unibo.scafi.js.controller.scripting.Script
+import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.facade.codemirror.Editor
 import it.unibo.scafi.js.facade.simplebar.SimpleBarConfig.{ForceX, IsVisible}
 import it.unibo.scafi.js.facade.simplebar.{SimpleBar, SimpleBarConfig}
@@ -23,15 +24,14 @@ object SimulationControlsSection {
   import scala.concurrent.ExecutionContext.Implicits.global
   //TODO move the execution far from here...
   def render(execution : SimulationExecutionPlatform,
-             editor : Editor, controlDiv : Div,
-             script : Option[Script] = None) : Unit = {
+             editor : Editor, controlDiv : Div) : Unit = {
     var simulation : Option[SimulationExecution] = None
     (loadButton :: startButton :: stopButton :: tick :: Nil) foreach (el => controlDiv.appendChild(el))
     (labelBatch :: rangeBatch :: valueBatch :: labelDelta :: rangeDelta :: valueDelta :: Nil) foreach (el => controlDiv.appendChild(el))
     (tick :: stopButton :: startButton :: Nil) foreach {el => el.disabled = true }
-    script.foreach(loadScript)
-    new SimpleBar(controlDiv)
-
+    EventBus.listen {
+      case code @ ScaFi(_) => loadScript(code)
+    }
     loadButton.onclick = event => loadScript(Script.javascript(editor.getValue()))
 
     tick.onclick = _ => simulation match {

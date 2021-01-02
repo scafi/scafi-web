@@ -47,7 +47,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
   private var nodeContainer : GameObjects.Container = _
   private var labelContainer : GameObjects.Container = _
   private lazy val sceneHandler : types.scenes.CreateSceneFromObjectConfig =  types.scenes.callbacks(
-    preload = (scene) => labelRenders.foreach(_.init(scene)),
+    preload = (scene) => labelRenders.foreach(_.onInit(scene)),
     create = (scene, _) => {
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
@@ -100,10 +100,8 @@ class PhaserGraphSection(paneSection : HTMLElement,
     gameobjectNodes.foreach(nodeContainer.add(_))
     import js.JSConverters._
     scene.physics.add.staticGroup(gameobjectNodes.toJSArray)
-    if(settings.anyLabelEnabled) { renderLabel(nodes, scene) }
+    if(settings.anyLabelEnabled) { renderLabel(nodes, scene, graph) }
     model = model.copy(_2 = false)
-    println(vertexContainer.list.size,  nodeContainer.list.size,
-      labelContainer.list.size)
   }
 
   private def renderVertex(graph : Graph, scene : Scene) : Unit = {
@@ -113,12 +111,13 @@ class PhaserGraphSection(paneSection : HTMLElement,
       .foreach(vertexContainer.add(_))
   }
 
-  private def renderLabel[E <: GameobjectNode](nodes : Set[(Node, E)], scene : Scene) : Unit = {
+  private def renderLabel[E <: GameobjectNode](nodes : Set[(Node, E)], scene : Scene, world : Graph) : Unit = {
     def renderNodeLabels(node : E, labels : List[(String, Any)]) : Seq[GameObject] = {
       type FoldType = (Seq[(String, Any)], Seq[GameObject])
 
       labelRenders.foldLeft[FoldType](labels, Seq.empty){
-        case ((labelsRemains, gameObjects), render) => val rendered = render.apply(node, labelsRemains, scene)
+        case ((labelsRemains, gameObjects), render) =>
+          val rendered = render.graphicalRepresentation(node, labelsRemains, world, scene)
           val renderedLabel = rendered.flatMap { case (_, labels) => labels }
           val renderedGameobject = rendered.map { case (gameobj,_) => gameobj }
           val labelsRemainsUpdated = labelsRemains.filterNot { case (name, value) => renderedLabel.contains(name) }
