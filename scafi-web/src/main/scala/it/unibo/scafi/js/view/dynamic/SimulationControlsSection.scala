@@ -24,7 +24,7 @@ object SimulationControlsSection {
   import scala.concurrent.ExecutionContext.Implicits.global
   //TODO move the execution far from here...
   def render(execution : SimulationExecutionPlatform,
-             editor : Editor, controlDiv : Div) : Unit = {
+             editor : EditorSection, controlDiv : Div) : Unit = {
     var simulation : Option[SimulationExecution] = None
     (loadButton :: startButton :: stopButton :: tick :: Nil) foreach (el => controlDiv.appendChild(el))
     (labelBatch :: rangeBatch :: valueBatch :: labelDelta :: rangeDelta :: valueDelta :: Nil) foreach (el => controlDiv.appendChild(el))
@@ -32,7 +32,7 @@ object SimulationControlsSection {
     EventBus.listen {
       case code @ ScaFi(_) => loadScript(code)
     }
-    loadButton.onclick = event => loadScript(Script.javascript(editor.getValue()))
+    loadButton.onclick = event => loadScript(editor.getScript())
 
     tick.onclick = _ => simulation match {
       case Some(ticker: TickBased) => ticker.withBatchSize(rangeBatch.intValue).tick()
