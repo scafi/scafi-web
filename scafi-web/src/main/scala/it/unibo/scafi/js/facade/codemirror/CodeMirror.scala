@@ -16,6 +16,7 @@ trait Editor extends js.Object {
   def save() : js.Any = js.native
   def getValue() : String = js.native
   def setValue(s : String) : js.Any = js.native
+  def setOption(key : String, value : String) : js.Any = js.native
   /*TODO*/
 }
 /*TODO enrich with more options*/

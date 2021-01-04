@@ -1,22 +1,19 @@
 package it.unibo.scafi.js
 
-import java.util.concurrent.TimeUnit
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.Execution
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
-import it.unibo.scafi.js.view.dynamic.graph.{LabelRender, PhaserGraphSection, PhaserInteraction}
+import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
-import jdk.nashorn.api.scripting.URLReader
 import org.scalajs.dom.experimental.URLSearchParams
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
-import scala.scalajs.js.Object.{entries, keys}
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel, JSGlobal}
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 /**
   * Root object, it initialize the simulation, the page and the backend.
   */
@@ -38,13 +35,15 @@ object Index {
     with SimulationExecutionPlatform
     with SimulationCommandInterpreter
 
+  lazy val editor = EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, SkeletonPage.modeSelector, programs)
+
   @JSExport
   def main(args: Array[String]): Unit = {
     val queryParams = new URLSearchParams(document.location.search)
     if (queryParams.has("headless")) { contentOnly() } else { spaPage() }
     scafiInitialization()
   }
-  val programs = Map(
+  lazy val programs = Map(
     "round counter" -> "return rep(() => 0, (k) => k+1)",
     "hello scafi" -> "return \"hello scafi\"",
     "gradient" -> """return rep(() => Infinity, (d) => {
@@ -73,7 +72,6 @@ object Index {
     document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withoutNav).render)
     document.body.appendChild(SkeletonPage.contentOnly.render)
   }
-
   def scafiInitialization() : Unit = {
     implicit val context = Execution.timeoutBasedScheduler
     //dynamic part configuration
@@ -81,8 +79,7 @@ object Index {
     val renders : Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
-    val editor = new EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
-    SimulationControlsSection.render(support, editor.editor, SkeletonPage.controlsDiv)
+    SimulationControlsSection.render(support, editor, SkeletonPage.controlsDiv)
     //attach the simulator with the view
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
     //force repaint

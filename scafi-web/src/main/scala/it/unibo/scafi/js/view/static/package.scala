@@ -29,6 +29,11 @@ package object static {
   @JSImport("codemirror/mode/javascript/javascript.js", JSImport.Namespace)
   object JavascriptStyle extends js.Any
   JavascriptStyle
+  //code mirror javascript style
+  @js.native
+  @JSImport("codemirror/mode/clike/clike.js", JSImport.Namespace)
+  object CLikeStyle extends js.Any
+  CLikeStyle
   /*  JAVASCRIPT LIB */
   //bootstrap and popper
   @js.native
