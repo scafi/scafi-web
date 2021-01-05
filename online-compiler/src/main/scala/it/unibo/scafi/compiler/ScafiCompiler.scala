@@ -1,9 +1,20 @@
 package it.unibo.scafi.compiler
 
+import org.slf4j.LoggerFactory
+
 import scala.util.{Failure, Success, Try}
 
 object ScafiCompiler {
   val library = new LibraryManager(Seq.empty)
+  val log = LoggerFactory.getLogger(getClass)
+
+  def init() : Unit = {
+    val compiler = new Compiler(library, "object CompilerInit {}")
+    compiler.compile() match {
+      case (_, Some(b)) => compiler.fastOpt(b)
+        log.debug("initialization success")
+    }
+  }
   def compile(core: String): Try[String] = {
     val h = '"'
     val code = s"""
@@ -33,6 +44,7 @@ object ScafiCompiler {
     result match {
       case (_, Some(b)) =>
         val res = compiler.fastOpt(b)
+
         Success(compiler.`export`(res))
       case (a, _) => Failure(throw new IllegalArgumentException(a))
     }
