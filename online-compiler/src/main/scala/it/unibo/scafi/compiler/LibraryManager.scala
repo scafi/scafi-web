@@ -70,6 +70,7 @@ class LibraryManager(val depLibs: Seq[ExtLib]) {
         .getOrElse(List.empty[String])
 
     }
+
     val names : List[String] = if (loadFromJar.isEmpty) {
       loadFromLocal()
     } else {

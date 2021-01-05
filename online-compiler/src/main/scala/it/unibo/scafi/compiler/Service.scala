@@ -10,6 +10,8 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
+import it.unibo.scafi.compiler.cache.CodeCache
+import org.slf4j.LoggerFactory
 
 import java.util.UUID
 import scala.concurrent.ExecutionContextExecutor
@@ -17,17 +19,19 @@ import scala.io.{Codec, Source, StdIn}
 import scala.util.{Failure, Success}
 
 object Service {
+  val log = LoggerFactory.getLogger(getClass)
   implicit val system : ActorSystem = ActorSystem()
   implicit val materializer : ActorMaterializer = ActorMaterializer()
   implicit val context : ExecutionContextExecutor =  system.dispatcher
   val defaultPort = 8080
   val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(defaultPort) //todo put in configuration
-  val host = "localhost" //todo put in configuration
+  val host = "0.0.0.0" //todo put in configuration
   val page : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
   val code : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("scafi-web-opt-bundle.js"))(Codec("UTF-8")).mkString
   val webpack : String = code.split("""Object.freeze""")(0)
-
-  var codeMap: Map[String, String] = Map("index.js" -> code)
+  val codeCacheLimit = 5
+  val runtime = Runtime.getRuntime
+  var codeCache: CodeCache = CodeCache.limit(codeCacheLimit).put("index.js", code)
 
   lazy val index : Route = get {
     path("") {
@@ -37,7 +41,7 @@ object Service {
 
   lazy val jsCode : Route = get {
     path("js" / Segment) { id =>
-      codeMap.get(id) match {
+      codeCache.get(id) match {
         case Some(id) => complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, id))
         case _ => complete(StatusCodes.NotFound)
       }
@@ -62,7 +66,9 @@ object Service {
         val compiled = ScafiCompiler.compile(code)
         compiled match {
           case Success(result) => val id = UUID.randomUUID().toString
-            codeMap += (id -> (webpack + result))
+            codeCache = codeCache put (id, (webpack + result))
+            log.debug("done : " + id)
+            log.debug("occupied ram : " + (runtime.totalMemory() - runtime.freeMemory()) / 1000000.0 + " Mb")
             complete(id)
           case Failure(exception) => complete(StatusCodes.InternalServerError, exception.toString)
         }
@@ -71,6 +77,7 @@ object Service {
   }
 
   def main(args: Array[String]): Unit = {
+    ScafiCompiler.init()
     val route = concat(index, jsCode, compilatedPage, codeCompilationRequest, target)
     val bindingFuture = Http().newServerAt(host, port).bind(route)
   }
