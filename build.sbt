@@ -266,7 +266,6 @@ lazy val `scafi-web` = project
         "org.querki" %%% "jquery-facade" % "2.0"
       ),
       version in installJsdom := "12.0.0",
-      webpackEmitSourceMaps := false,
       requireJsDomEnv in Test := true,
       webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
       npmDependencies in Compile ++= Seq(
@@ -298,11 +297,17 @@ def runtimeProject(p: Project, scalaJSVersion: String): Project = {
   )
 }
 lazy val runtime1x = runtimeProject(project, scalaJSVersion)
+
 lazy val `online-compiler` = project.
   enablePlugins(JavaAppPackaging).
   dependsOn(runtime1x).
   settings(
     commonSettings,
+    assemblyMergeStrategy in assembly := {
+      case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+      case "reference.conf" => MergeStrategy.concat
+      case y => MergeStrategy.first
+    },
     libraryDependencies ++= Seq("org.scala-js"   %% "scalajs-library" % scalaJSVersion,
       "org.scala-js"   % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
       "org.scala-js"   %% "scalajs-linker" % scalaJSVersion,
@@ -322,7 +327,7 @@ lazy val `online-compiler` = project.
       "-deprecation",
       "-feature",
     ),
-      Compile / resourceGenerators += Def.task {
+    Compile / resourceGenerators += (Def.task {
       // store build a / version property file
       val file = (Compile / resourceManaged).value / "version.properties"
       val contents =
@@ -333,7 +338,13 @@ lazy val `online-compiler` = project.
            |""".stripMargin
       IO.write(file, contents)
       Seq(file)
-    }.taskValue,
+    } dependsOn(Compile / compile)).taskValue,
+    Compile / resourceGenerators += (Def.task {
+      val major = scalaVersion.value.take(4) //works only for scala version > 10
+      IO.listFiles(
+        (LocalProject("scafi-web") / Compile / target).value / s"scala-${major}" / "scalajs-bundler" / "main"
+      ).toSeq.filter(file => file.getName.contains("scafi-web-opt-bundle"))
+    } dependsOn(Compile / compile)).taskValue,
     (Compile / compile) := ((compile in Compile) dependsOn (`scafi-web` / Compile / fullOptJS / webpack)).value,
     (Compile / resources) ++= Seq(
       (LocalProject("scafi-web") / Compile / packageBin).value,
@@ -342,12 +353,6 @@ lazy val `online-compiler` = project.
       (simulatorCross.js / Compile / packageBin).value,
     ),
     (Compile / resources) ++= (LocalProject("runtime1x") / Compile / managedClasspath).value.map(_.data),
-    (Compile / resources) ++= {
-      val major = scalaVersion.value.take(4) //works only for scala version > 10
-      IO.listFiles(
-        (LocalProject("scafi-web") / Compile / target).value / s"scala-${major}" / "scalajs-bundler" / "main"
-      ).toSeq.filter(file => file.getName.contains("scafi-web-opt-bundle"))
-    },
     (Compile / resources) ++= (LocalProject("scafi-web") / Compile / resources).value,
     resolvers += "Typesafe Repo" at "https://repo.typesafe.com/typesafe/releases/",
   )

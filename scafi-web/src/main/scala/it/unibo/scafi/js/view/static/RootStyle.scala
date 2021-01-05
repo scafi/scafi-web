@@ -24,8 +24,8 @@ case class RootStyle(measures : Measure) extends StyleSheet.Standalone {
     position.relative,
     overflow.auto
   )
-
-  "#select-program, #select-mode" - (height(demoSelectionHeight))
+  "#editor-header" - (height(demoSelectionHeight))
+  "#select-program, #select-mode" - (height(100 %%))
 
   ".CodeMirror" - (height(editorHeight).important)
 

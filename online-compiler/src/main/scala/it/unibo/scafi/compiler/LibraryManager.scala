@@ -5,6 +5,7 @@ import akka.stream.ActorMaterializer
 import coursier.maven.MavenRepository
 import coursier.{Cache, Dependency, Fetch, Module, Resolution}
 import it.unibo.scafi.compiler.ScalaJSCompat.{IRContainer, IRFile, flatJarFileToIRContainer, loadIRFilesInIRContainers}
+import it.unibo.scafi.compiler.Service.getClass
 import it.unibo.scafi.compiler.cache.{AbstractFlatFileSystem, AbstractFlatJar, FlatFileSystem, LRUCache}
 import org.apache.maven.artifact.versioning.ComparableVersion
 import org.slf4j.{Logger, LoggerFactory}
@@ -12,6 +13,7 @@ import scalaz.concurrent.Task
 import scalaz.{-\/, \/-}
 
 import java.io._
+import java.net.URI
 import java.nio.channels.{FileLock, OverlappingFileLockException}
 import java.nio.file.Paths
 import scala.concurrent.duration._
@@ -52,13 +54,28 @@ class LibraryManager(val depLibs: Seq[ExtLib]) {
   )
 
   def scafiWebDependencies : Seq[(String, InputStream)] = {
-    def listUrls(cl: ClassLoader): Array[java.net.URL] = cl match {
-      case null => Array()
-      case u: java.net.URLClassLoader => u.getURLs() ++ listUrls(cl.getParent)
-      case _ => listUrls(cl.getParent)
+    def loadFromJar : List[String] = {
+      val c = getClass.getProtectionDomain.getCodeSource
+      import java.util.zip.ZipInputStream
+      val zip = new ZipInputStream(c.getLocation.openStream)
+      val stream = Stream.continually(zip.getNextEntry).takeWhile(_ != null).toList
+      stream.map(_.getName)
     }
-    val urls = listUrls(getClass.getClassLoader).distinct.map(url => new File(url.toURI).getName)
-    val scalaJsDep = urls.filter(_.contains("sjs")).map(name => s"/$name")
+    def loadFromLocal(): List[String] = {
+      val root : Option[URI] = Option(getClass.getResource("/").toURI)
+      root
+        .map(uri => new File(uri))
+        .map(file => file.listFiles())
+        .map(files => files.map(_.getName).toList)
+        .getOrElse(List.empty[String])
+
+    }
+    val names : List[String] = if (loadFromJar.isEmpty) {
+      loadFromLocal()
+    } else {
+      loadFromJar
+    }
+    val scalaJsDep = names.filter(_.contains("sjs1_")).map(name => s"/$name")
     scalaJsDep.map(resourceStream(_))
   }
 
@@ -68,7 +85,7 @@ class LibraryManager(val depLibs: Seq[ExtLib]) {
     log.debug("Loading common libraries...")
     val jarFiles = baseLibs
     val bootFiles = for {
-      prop <- Seq("sun.boot.class.path")
+      prop <-  Seq("sun.boot.class.path")
       path <- System.getProperty(prop).split(System.getProperty("path.separator"))
       vfile = scala.reflect.io.File(path)
       if vfile.exists && !vfile.isDirectory

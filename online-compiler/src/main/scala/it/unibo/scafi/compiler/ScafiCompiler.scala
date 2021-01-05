@@ -7,6 +7,7 @@ object ScafiCompiler {
   def compile(core: String): Try[String] = {
     val h = '"'
     val code = s"""
+        |import it.unibo.scafi.js.view.dynamic.EditorSection.ScalaMode
         |import it.unibo.scafi.js.Index
         |import it.unibo.scafi.js.Index.configuration
         |import it.unibo.scafi.js.controller.scripting.Script.ScaFi
@@ -21,7 +22,7 @@ object ScafiCompiler {
         |  def main() {
         |     Index.main(Array())
         |     $core
-        |     Index.editor.editor.setValue($h$h$h$core$h$h$h)
+        |     Index.editor.setCode($h$h$h$core$h$h$h, ScalaMode)
         |     EventBus.publish(ScaFi(program))
         |  }
         |}
