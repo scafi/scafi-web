@@ -20,8 +20,9 @@ object Service {
   implicit val system : ActorSystem = ActorSystem()
   implicit val materializer : ActorMaterializer = ActorMaterializer()
   implicit val context : ExecutionContextExecutor =  system.dispatcher
-  implicit val port = 8081 //todo put in configuration
-  implicit val host = "localhost" //todo put in configuration
+  val defaultPort = 8080
+  val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(defaultPort) //todo put in configuration
+  val host = "localhost" //todo put in configuration
   val page : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
   val code : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("scafi-web-opt-bundle.js"))(Codec("UTF-8")).mkString
   val webpack : String = code.split("""Object.freeze""")(0)
@@ -70,11 +71,7 @@ object Service {
   }
 
   def main(args: Array[String]): Unit = {
-    val route : Route = concat(index, jsCode, compilatedPage, codeCompilationRequest, target)
+    val route = concat(index, jsCode, compilatedPage, codeCompilationRequest, target)
     val bindingFuture = Http().newServerAt(host, port).bind(route)
-    StdIn.readLine() // let it run until user presses return
-    bindingFuture
-      .flatMap(_.unbind()) // trigger unbinding from the port
-      .onComplete(_ => system.terminate()) // and shutdown when done*/
   }
 }

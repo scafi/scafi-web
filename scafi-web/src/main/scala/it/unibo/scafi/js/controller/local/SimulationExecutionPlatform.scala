@@ -11,6 +11,9 @@ import it.unibo.scafi.simulation.SpatialSimulation
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.Try
+import org.scalajs.dom
+import dom.ext.Ajax
+import org.scalajs.dom.document
 
 /**
   * the execution platform of a local simulation in web browser.
@@ -18,8 +21,17 @@ import scala.util.Try
   */
 trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#SpaceAwareSimulator, SimulationSideEffect, SimulationExecution]{
   self : SimulationSupport with SideEffects =>
-  import SimulationExecutionPlatform._
   import incarnation._
+  //TODO add better support
+  import scala.concurrent
+    .ExecutionContext
+    .Implicits
+    .global
+
+  val location = document.location
+  val server = s"${location.protocol}//${location.host}"
+  val url = s"$server/code"
+
   override def loadScript(script: Script): Future[SimulationExecution] = script match {
     case Javascript(code) => Future.fromTry {
       Try { interpreter.adaptForScafi(code) }
@@ -29,7 +41,16 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     case aggregateClass : ScaFi[AggregateProgram] => Future.fromTry {
       Try { sideEffectExecution(aggregateClass.program) }
     }
-    case Scala(code) => Future.failed(new IllegalArgumentException("lang not supported"))
+    case Scala(code) =>
+      Ajax.post(url, Ajax.InputData.str2ajax(code))
+        .filter(_.status == 200)
+        .map(_.responseText)
+        .map{ id =>
+          document.location.replace(s"$server/compilation/$id") //injection...
+          sideEffectExecution(new AggregateProgram {
+            override def main(): Any = {}
+          }) //TODO USELESS, find another way
+        }
     case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
   private def sideEffectExecution(program : js.Function1[CONTEXT, EXPORT]) : TickBased = {
@@ -41,17 +62,5 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     backend.clearExports() //clear export for the new script
     sideEffectsStream.onNext(Invalidated) //invalid old graph value
     TickBased(exec = execution)
-  }
-}
-
-object SimulationExecutionPlatform {
-  //TODO put in interpreter
-  private def rawToFunction(code : String, dslName : String) : js.Function0[Any] = {
-    val wrappedCode = s"""() => {
-                         | with($dslName) {
-                         |   ${code};
-                         | }
-                         |}""".stripMargin
-    js.eval(wrappedCode).asInstanceOf[js.Function0[Any]]
   }
 }

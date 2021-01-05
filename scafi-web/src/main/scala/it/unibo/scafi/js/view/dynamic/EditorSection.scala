@@ -63,7 +63,11 @@ object EditorSection {
     }
     optionInSelect.foreach(option => examples.appendChild(option))
 
-    override def setCode(code: String, mode: Mode): Unit = editor.setValue(code)
+    override def setCode(code: String, mode: Mode): Unit = {
+      editor.setValue(code)
+      this.mode = mode
+      modes.filter(_.value == mode.lang).foreach(_.selected = true)
+    }
 
     override def getScript(): Script = mode match {
       case JavascriptMode => Javascript(getRaw())
