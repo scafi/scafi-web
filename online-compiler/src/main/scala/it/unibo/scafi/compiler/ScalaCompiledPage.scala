@@ -1,5 +1,5 @@
 package it.unibo.scafi.compiler
-
+//old way, reload the entire page
 object ScalaCompiledPage {
   def html(scriptId: String): String =
     s"""<!DOCTYPE html>
@@ -9,7 +9,7 @@ object ScalaCompiledPage {
       |    <title>Scafi</title>
       |</head>
       |<body>
-      |    <script type="text/javascript" src="/js/$scriptId"></script>
+      |    <script id="scafiWeb" type="text/javascript" src="/js/$scriptId"></script>
       |    <script>
       |     Injector.main() //needed for run program injected
       |    </script>

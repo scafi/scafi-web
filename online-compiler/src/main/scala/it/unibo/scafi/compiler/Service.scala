@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 
 import java.util.UUID
 import scala.concurrent.ExecutionContextExecutor
-import scala.io.{Codec, Source, StdIn}
+import scala.io.{Codec, Source}
 import scala.util.{Failure, Success}
 
 object Service {
@@ -31,7 +31,7 @@ object Service {
   val webpack : String = code.split("""Object.freeze""")(0)
   val codeCacheLimit = 5
   val runtime = Runtime.getRuntime
-  var codeCache: CodeCache = CodeCache.limit(codeCacheLimit).put("index.js", code)
+  var codeCache: CodeCache = CodeCache.limit(codeCacheLimit)
 
   lazy val index : Route = get {
     path("") {
@@ -66,7 +66,7 @@ object Service {
         val compiled = ScafiCompiler.compile(code)
         compiled match {
           case Success(result) => val id = UUID.randomUUID().toString
-            codeCache = codeCache put (id, (webpack + result))
+            codeCache = codeCache put (id, (result))
             log.debug("done : " + id)
             log.debug("occupied ram : " + (runtime.totalMemory() - runtime.freeMemory()) / 1000000.0 + " Mb")
             complete(id)
