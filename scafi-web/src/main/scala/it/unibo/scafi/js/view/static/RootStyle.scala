@@ -68,8 +68,8 @@ object RootStyle extends StyleSheet.Standalone {
       pageContentHeight = (maxVh - nav) vh,
       contentHeight = 86 vh,
       visualizationHeight = 76 vh,
-      editorHeight = 83 vh,
-      demoSelectionHeight = 3 vh,
+      editorHeight = 81 vh,
+      demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
     )
     RootStyle(measure)
@@ -81,8 +81,8 @@ object RootStyle extends StyleSheet.Standalone {
       pageContentHeight = (maxVh) vh,
       contentHeight = 96 vh,
       visualizationHeight = 86 vh,
-      editorHeight = 93 vh,
-      demoSelectionHeight = 3 vh,
+      editorHeight = 91 vh,
+      demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
     )
     RootStyle(measure)

@@ -66,6 +66,7 @@ object EditorSection {
     override def setCode(code: String, mode: Mode): Unit = {
       editor.setValue(code)
       this.mode = mode
+      editor.setOption("mode", mode.codeMirrorMode)
       modes.filter(_.value == mode.lang).foreach(_.selected = true)
     }
 
