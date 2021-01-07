@@ -44,8 +44,13 @@ object ScafiCompiler {
     result match {
       case (_, Some(b)) =>
         val res = compiler.fastOpt(b)
+        val jsCode =
+          s"""
+             |{${compiler.`export`(res)}}
+             |Injector.main()
+             |""".stripMargin
+        Success(jsCode) //the {} usage allow to reval the same scala.js code in browser
 
-        Success(compiler.`export`(res))
       case (a, _) => Failure(throw new IllegalArgumentException(a))
     }
   }

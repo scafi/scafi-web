@@ -46,7 +46,14 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
         .filter(_.status == 200)
         .map(_.responseText)
         .map{ id =>
-          document.location.replace(s"$server/compilation/$id") //injection...
+          val script = document.getElementById("scafiWeb")
+          document.body.innerHTML = "" //TODO NOT SAFE
+          val newScript = document.createElement("script").asInstanceOf[dom.html.Script]
+          newScript.src = s"$server/js/$id"
+          newScript.`type` = "text/javascript"
+          newScript.id = "scafiWeb"
+          document.body.appendChild(newScript)
+          //document.location.replace(s"$server/compilation/$id") //injection...
           sideEffectExecution(new AggregateProgram {
             override def main(): Any = {}
           }) //TODO USELESS, find another way
