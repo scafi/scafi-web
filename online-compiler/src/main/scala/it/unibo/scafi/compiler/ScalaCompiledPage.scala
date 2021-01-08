@@ -9,10 +9,8 @@ object ScalaCompiledPage {
       |    <title>Scafi</title>
       |</head>
       |<body>
+      |    <script id="common" type="text/javascript" src="/js/common.js"></script>
       |    <script id="scafiWeb" type="text/javascript" src="/js/$scriptId"></script>
-      |    <script>
-      |     Injector.main() //needed for run program injected
-      |    </script>
       |</body>
       |</html>""".stripMargin
 }

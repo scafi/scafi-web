@@ -9,7 +9,7 @@ trait CodeCache {
 object CodeCache {
   def limit(elements : Int) : CodeCache = CodeCacheLimited(elements, Seq.empty)
 
-  private case class CodeCacheLimited(elements : Int, codeSeq : Seq[(String, String)]) extends CodeCache {
+  case class CodeCacheLimited(elements : Int, codeSeq : Seq[(String, String)]) extends CodeCache {
     override def put(id: String, code: String): CodeCache = if (codeSeq.size >= elements) {
       CodeCacheLimited(elements, codeSeq.tail :+ (id -> code))
     } else {

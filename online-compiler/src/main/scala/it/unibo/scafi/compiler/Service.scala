@@ -26,12 +26,19 @@ object Service {
   val defaultPort = 8080
   val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(defaultPort) //todo put in configuration
   val host = "0.0.0.0" //todo put in configuration
-  val page : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
-  val code : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("scafi-web-opt-bundle.js"))(Codec("UTF-8")).mkString
-  val webpack : String = code.split("""Object.freeze""")(0)
+  val indexJs = "scafi-web-opt-bundle.js"
+  val commonsCode = "common.js"
+  val page : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index-server.html")).mkString
+  val code : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(indexJs))(Codec("UTF-8")).mkString
+  val codeDivision = code.split("Object.freeze")
+  val webpack : String = codeDivision(0)
+  val core = codeDivision(1)
   val codeCacheLimit = 5
   val runtime = Runtime.getRuntime
   var codeCache: CodeCache = CodeCache.limit(codeCacheLimit)
+    .put(indexJs, core)
+    .put(commonsCode, webpack)
+
 
   lazy val index : Route = get {
     path("") {
@@ -45,12 +52,6 @@ object Service {
         case Some(id) => complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, id))
         case _ => complete(StatusCodes.NotFound)
       }
-    }
-  }
-  //for the first request
-  lazy val target : Route = get {
-    path("target" / Remaining) { _ =>
-      complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, code))
     }
   }
 
@@ -78,7 +79,7 @@ object Service {
 
   def main(args: Array[String]): Unit = {
     ScafiCompiler.init()
-    val route = concat(index, jsCode, compilatedPage, codeCompilationRequest, target)
+    val route = concat(index, jsCode, compilatedPage, codeCompilationRequest)
     val bindingFuture = Http().newServerAt(host, port).bind(route)
   }
 }
