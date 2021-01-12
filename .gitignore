@@ -39,3 +39,4 @@ local.*
 
 # For Gradle
 .gradle/
+/.bsp/
