@@ -20,5 +20,5 @@ trait Editor extends js.Object {
   /*TODO*/
 }
 /*TODO enrich with more options*/
-class EditorConfiguration(val mode : String, val scrollbarStyle : String, val lineNumbers : Boolean) extends js.Object
+class EditorConfiguration(val mode : String, val scrollbarStyle : String, val lineNumbers : Boolean, val theme : String) extends js.Object
 

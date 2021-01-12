@@ -38,7 +38,8 @@ object EditorSection {
     extends EditorSection {
     import scalatags.JsDom.all._
     var mode: Mode = JavascriptMode
-    private lazy val editor : Editor = CodeMirror.fromTextArea(textArea, new EditorConfiguration(mode.codeMirrorMode, "native", true))
+    val editorConfiguration = new EditorConfiguration(mode.codeMirrorMode, "native", true, "material")
+    private lazy val editor : Editor = CodeMirror.fromTextArea(textArea, editorConfiguration)
     new SimpleBar(textArea, new SimpleBarConfig(forceVisible = ForceX)).recalculate()
     private val optionInSelect = codeExample.keys.map(key => option(value := key, key).render).toList
 
