@@ -1,11 +1,10 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.utils.Debug
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.JQueryBootstrap._
 import org.querki.jquery.$
 import org.scalajs.dom.html.{Button, Element}
-import org.scalajs.dom.raw.{CSSStyleDeclaration, MouseEvent}
+import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
 
 import java.util.UUID
@@ -21,16 +20,18 @@ trait Modal extends HtmlRenderable[Element] {
   def toggle() : Unit = $(s"#$modalId").modal("toggle")
   def show() : Unit = $(s"#$modalId").modal("show")
   def hide() : Unit = $(s"#$modalId").modal("hide")
+  def dispose() : Unit = $(s"#$modalId").modal("dispose")
   def bodyStyle : String = ""
   def footerStyle : String = ""
+  def headerStyle : String = ""
   var onClose : (MouseEvent) => Unit = e => hide()
   override lazy val html: Element = div(role := "dialog", cls :="modal", tabindex := "-1", id := { this.modalId },
     div(
-      width := minBound,
+      style := s"min-width: ${minBound}px",
       cls := "modal-dialog", role := "document",
       div(
         cls := "modal-content",
-        div(cls := "modal-header", title, closeButton),
+        div(cls := "modal-header", style := headerStyle, title, closeButton),
         div(cls := "modal-body", style := bodyStyle, body),
         div(cls := "modal-footer", style := footerStyle, footer)
       )

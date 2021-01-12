@@ -7,12 +7,16 @@ import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.facade.codemirror.Editor
 import it.unibo.scafi.js.facade.simplebar.SimpleBarConfig.{ForceX, IsVisible}
 import it.unibo.scafi.js.facade.simplebar.{SimpleBar, SimpleBarConfig}
+import org.scalajs.dom.ext.AjaxException
 import org.scalajs.dom.html.{Div, Input, Label}
 import org.scalajs.dom.raw.HTMLElement
 import scalatags.JsDom.all._
 
 import scala.util.{Failure, Success}
 object SimulationControlsSection {
+  import it.unibo.scafi.js.utils.Execution
+  implicit val exc = Execution.timeoutBasedScheduler
+
   private val buttonClass =  cls := "btn btn-primary ml-1 btn-sm"
   private val loadButton = button("load", buttonClass).render
   private val startButton = button("start", buttonClass).render
@@ -21,8 +25,8 @@ object SimulationControlsSection {
   private val (rangeDelta, labelDelta, valueDelta) = rangeWithLabel("period", 0, 1000, 0)
   private val tick = button("tick", buttonClass).render
 
-  import scala.concurrent.ExecutionContext.Implicits.global
   //TODO move the execution far from here...
+  //TODO replace println with modal popup
   def render(execution : SimulationExecutionPlatform,
              editor : EditorSection, controlDiv : Div) : Unit = {
     var simulation : Option[SimulationExecution] = None
@@ -35,12 +39,23 @@ object SimulationControlsSection {
     loadButton.onclick = event => loadScript(editor.getScript())
 
     tick.onclick = _ => simulation match {
-      case Some(ticker: TickBased) => ticker.withBatchSize(rangeBatch.intValue).tick()
+      case Some(ticker: TickBased) => ticker.withBatchSize(rangeBatch.intValue).tick() onComplete {
+        case Failure(exc) => ErrorModal.showError(exc.getMessage)
+        case _ =>
+      }
       case _ =>
     }
 
     startButton.onclick = _ => simulation match {
-      case Some(ticker : TickBased) => simulation = Some(ticker.toDaemon(rangeDelta.intValue, rangeBatch.intValue))
+      case Some(ticker : TickBased) =>
+        val daemon = ticker.toDaemon(rangeDelta.intValue, rangeBatch.intValue)
+        daemon.failed.onComplete {
+          case Failure(exc) =>
+            ErrorModal.showError(exc.getMessage)
+            stopButton.click()
+          case _ =>
+        }
+        simulation = Some(daemon)
         stopButton.disabled = false
         (tick :: startButton :: loadButton :: Nil) foreach { el => el.disabled = true }
         (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = true }
@@ -58,7 +73,9 @@ object SimulationControlsSection {
         simulation foreach clearSimulationExecution
         simulation = Some(ticker)
         (tick :: startButton :: Nil) foreach { el => el.disabled = false }
-      case Failure(exception) => //TODO
+      case Failure(e : AjaxException) if(e.xhr.status == 404) => ErrorModal.showError(s"Compilation service not found...")
+      case Failure(e : AjaxException) => ErrorModal.showError(s"request error, code : ${e.xhr.status }, message : ${e.getMessage}")
+      case Failure(exception) => ErrorModal.showError(exception.toString)
     }
   }
 
