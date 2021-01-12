@@ -40,10 +40,10 @@ object GradientsDemo extends App {
   * a set of number, if you use GradientFXOutput you see a map of color).
   */
 @Demo
-class GradientWithObstacle extends AggregateProgram with SensorDefinitions with Gradients {
+class GradientWithObstacle extends AggregateProgram with SensorDefinitions with Gradients with BlockC with BlockT {
   def main = g2(sense1, sense2)
-
   def g1(isSrc: Boolean, isObstacle: Boolean): Double = mux(isObstacle){
+        impulsesEvery()
     () => aggregate { Double.PositiveInfinity }
   }{
     () => aggregate { classic(isSrc) }

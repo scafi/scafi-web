@@ -4,7 +4,7 @@ import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{ScafiInterpreterJs, WebIncarnation}
-import it.unibo.scafi.js.utils.Execution
+import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
@@ -73,6 +73,10 @@ object Index {
     document.body.appendChild(SkeletonPage.contentOnly.render)
   }
   def scafiInitialization() : Unit = {
+    if(!Cookie.has("visited")) {
+      Explanation.render(SkeletonPage.backendConfig, SkeletonPage.visualizationSection)
+      Cookie.store("visited", "true")
+    }
     implicit val context = Execution.timeoutBasedScheduler
     //dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
