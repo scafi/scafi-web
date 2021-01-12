@@ -2,15 +2,14 @@ package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
 import it.unibo.scafi.js.view.HtmlRenderable
+import it.unibo.scafi.js.view.dynamic.CarouselModal._
+import it.unibo.scafi.js.view.dynamic.Modal.ZeroPaddingModal
 import org.scalajs.dom.html.{Div, Element, LI, UList}
-import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
-import CarouselModal._
 
-case class CarouselModal(carousel: CarouselContent) extends HtmlRenderable[Element] {
-  private val closeButton = button(`type` := "button", cls := "close", span("×")).render
-  private val title = h6(cls := "modal-tile").render
-  private val minBound = 200
+case class CarouselModal(carousel: CarouselContent) extends Modal {
+  override val title = h6(cls := "modal-tile").render
+  override val minBound = 200
   private val innerHeight = 150
   private val carouselInner = div(
     cls := "carousel-inner overflow-auto",
@@ -33,28 +32,16 @@ case class CarouselModal(carousel: CarouselContent) extends HtmlRenderable[Eleme
     span( cls := "carousel-control-prev-icon")
   )
 
-  private val modal : Div = div(role := "dialog",
-    div(
-      width := minBound,
-      cls := "modal-dialog", role := "document",
-      div(
-        cls := "modal-content",
-        div(cls := "modal-header", title, closeButton),
-        div(cls := "modal-body", style := "padding : 0 !important", carouselSection),
-        div(cls := "modal-footer", style := "padding : 0 !important", prevSlide, nextSlide)
-      )
-    )
-  ).render
+  private val innerModal = ZeroPaddingModal(title, Seq(carouselSection), Seq(prevSlide.render, nextSlide.render), minBound)
 
-  override lazy val html: Element = modal
+  override lazy val html: Element = innerModal.html
 
-  def updateTitle(value : String) : Unit = title.textContent = value
-
-  var onClose : (MouseEvent) => _ = (ev : MouseEvent) => {}
-
+  innerModal.onClose = (e => this.onClose(e))
   SimpleBar.wrap(carouselInner)
 
-  closeButton.onclick = ev => onClose(ev)
+  override def body: Seq[Element] = innerModal.body
+
+  override def footer: Seq[Element] = innerModal.footer
 }
 
 object CarouselModal {

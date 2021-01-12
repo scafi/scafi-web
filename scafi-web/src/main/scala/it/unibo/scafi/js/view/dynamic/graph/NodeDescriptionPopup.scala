@@ -24,10 +24,11 @@ object NodeDescriptionPopup {
   def apply(container: Container, scene : Scene) : NodeDescriptionPopup = new NodeDescriptionPopupImpl(container, scene)
 
   private class NodeDescriptionPopupImpl(container: Container, scene : Scene) extends NodeDescriptionPopup {
+    private def updateTitle(title : String) = modal.title.innerHTML = title
     var selectedId : Option[String] = None
 
     def refresh(node: Node): Unit = {
-      modal.updateTitle("node : " + node.id)
+      updateTitle("node : " + node.id)
       val sensorsContent = node.labels
         .map { case (name, value) => name -> LabelRender.normalizeValue(value) }
         .map { case (name, value) => s"$name : $value"}
@@ -51,7 +52,7 @@ object NodeDescriptionPopup {
     private val exportList = ContentList()
     private val carouselContent = CarouselContent(CarouselItem(sensorList, true), CarouselItem(exportList))
     private val modal = CarouselModal(carouselContent)
-
+    modal.html.removeAttribute("class") //otherwise, it isn't visible in phase
     val gameElement = scene.add.dom(0,0,modal.html)
     val domContainer = scene.add.container(0,0, js.Array(gameElement))
     container.add(domContainer)

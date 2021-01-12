@@ -4,15 +4,17 @@ import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{ScafiInterpreterJs, WebIncarnation}
-import it.unibo.scafi.js.utils.{Cookie, Execution}
+import it.unibo.scafi.js.utils.{Cookie, Debug, Execution}
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
+import org.querki.jquery.$
 import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 /**
   * Root object, it initialize the simulation, the page and the backend.
@@ -62,9 +64,9 @@ object Index {
   )
 
   def spaPage() : Unit = {
-    //page injection
     document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withNav()).render)
     document.body.appendChild(SkeletonPage.fullPage.render)
+    //modal.toggle()
   }
 
   def contentOnly() : Unit = {
@@ -74,7 +76,10 @@ object Index {
   }
   def scafiInitialization() : Unit = {
     if(!Cookie.has("visited")) {
-      Explanation.render(SkeletonPage.backendConfig, SkeletonPage.visualizationSection)
+      // TODO Explanation.render(SkeletonPage.backendConfig, SkeletonPage.visualizationSection)
+      val modal = Modal.textual("Welcome", "discover the power of the collective", 300)
+      document.body.appendChild(modal.html)
+      modal.toggle()
       Cookie.store("visited", "true")
     }
     implicit val context = Execution.timeoutBasedScheduler
