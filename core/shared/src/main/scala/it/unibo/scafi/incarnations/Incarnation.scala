@@ -100,7 +100,6 @@ trait Incarnation extends Core
       * @return a random double from 0 to 1
       */
     def randomGenerator(): Random = sense[Random](LSNS_RANDOM)
-
     /**
       * @return a random double from 0 to 1
       */

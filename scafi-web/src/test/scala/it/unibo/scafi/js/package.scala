@@ -7,4 +7,6 @@ package object js {
   @JSImport("canvas", JSImport.Namespace)
   object Canvas extends jsLib.Object
   Canvas
+
+
 }
