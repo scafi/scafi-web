@@ -39,4 +39,6 @@ local.*
 
 # For Gradle
 .gradle/
-/.bsp/
+
+# For JSON files generated for BSP
+.bsp
