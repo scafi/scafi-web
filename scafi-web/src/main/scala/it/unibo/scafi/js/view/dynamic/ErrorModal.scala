@@ -5,7 +5,7 @@ import org.scalajs.dom.html.Element
 import scalatags.JsDom.all._
 
 object ErrorModal extends Modal {
-  private val text = pre(cls := "overflow-auto").render// init the page
+  private val text = pre(cls := "overflow-auto", style := "max-height : 50vh").render// init the page
   private var bar : SimpleBar = null
   override val title: Element = h4(cls := "modal-tile", "Error!").render
   override val body: Seq[Element] = Seq(text)
@@ -17,8 +17,7 @@ object ErrorModal extends Modal {
       this.toggle()
   }
   document.body.appendChild(this.html) //put in the page..
-  this.text.style = "max-height : 50vh"
-  onClose = e => {
+  onClose = _ => {
     bar.unMount()
     this.hide()
   }

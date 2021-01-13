@@ -85,7 +85,8 @@ object Index {
     val renders : Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
-    SimulationControlsSection.render(support, editor, SkeletonPage.controlsDiv)
+    val controls = new SimulationControlsSection()
+    controls.render(support, editor, SkeletonPage.controlsDiv)
     //attach the simulator with the view
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
     //force repaint
