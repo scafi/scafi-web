@@ -27,7 +27,7 @@ object VisualizationSettingsSection {
     private val sensorButton = a(cls := "btn btn-primary btn-sm mr-2 mt-1", attr("data-toggle") := "collapse", href := "#sensorsSpan", "sensors")
     private var sensors: js.Dictionary[CheckBox] = js.Dictionary()
     private val idEnabledSection = CheckBox("id")
-    private val neighbourhoodSection = CheckBox("neighbourhood")
+    private val neighbourhoodSection = CheckBox("neighborhood")
 
     def idEnabled: Boolean = idEnabledSection.enabled
 
