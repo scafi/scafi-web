@@ -9,15 +9,16 @@ import org.scalajs.dom.raw.MouseEvent
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-class ConfigurationSection(configuration : Div, support : AggregateSystemSupport[_, SupportConfiguration, _]) {
+class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_, SupportConfiguration, _]) {
+
   import ConfigurationSection._
   import scalatags.JsDom.all._
 
-  val container : Div = div(cls:= "pt-1, pb-1").render
+  val container: Div = div(cls := "pt-1, pb-1").render
   configuration.appendChild(container)
   SimpleBar.wrap(configuration)
-  val selectMode: Select = select (cls := "form-control", option(Random.toString), option(Grid.toString)).render
-  val loadButton: Button = button( cls := "btn btn-primary btn-sm ml-1 mr-1",`type` := "button", "load config").render
+  val selectMode: Select = select(cls := "form-control", option(Random.toString), option(Grid.toString)).render
+  val loadButton: Button = button(cls := "btn btn-primary btn-sm ml-1 mr-1", `type` := "button", "load config").render
   val mainDiv: Div = div(cls := "input-group input-group-sm pt-1", selectMode, loadButton).render
   selectMode.onchange = _ => init(getModeFromSelect(selectMode))
   loadButton.onclick = _ => load(getModeFromSelect(selectMode))
@@ -34,21 +35,23 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
     new SensorInputText("obstacle", "false"),
     new SensorInputText("target", "false")
   )
-  def onRemoveSensor(sensor : SensorInputText) : MouseEvent => Unit = ev => {
+
+  def onRemoveSensor(sensor: SensorInputText): MouseEvent => Unit = _ => {
     sensors = sensors.filterNot(_ == sensor)
     init(getModeFromSelect(selectMode))
   }
-  sensors.foreach(sensor => sensor.closeButton.onclick = onRemoveSensor(sensor))
-  private val addSensorButton = button( cls := "btn btn-primary btn-sm",`type` := "button", "add sensor").render
 
-  addSensorButton.onclick = ev => {
+  sensors.foreach(sensor => sensor.closeButton.onclick = onRemoveSensor(sensor))
+  private val addSensorButton = button(cls := "btn btn-primary btn-sm", `type` := "button", "add sensor").render
+
+  addSensorButton.onclick = _ => {
     val newElement = new SensorInputText()
     newElement.closeButton.onclick = onRemoveSensor(newElement)
     sensors = sensors ::: List(newElement)
     container.appendChild(newElement.render)
   }
 
-  private def init(mode : Mode) : Unit = {
+  private def init(mode: Mode): Unit = {
     container.textContent = ""
     container.appendChild(mainDiv)
     val elements = mode match {
@@ -56,19 +59,20 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
       case Random => randomValue
     }
 
-    elements foreach { (input) => container.appendChild(input.render) }
+    elements foreach { input => container.appendChild(input.render) }
     container.appendChild(radius.render)
+    container.appendChild(h3(cls := "text-light", "Sensors configuration").render)
     container.appendChild(addSensorButton)
     sensors foreach { input => container.appendChild(input.render) }
     println(sensors)
   }
 
-  private def load(mode : Mode) : Unit = {
+  private def load(mode: Mode): Unit = {
     val netSettings = mode match {
       case Grid => GridLikeNetwork(rows.intValue, cols.intValue, stepX.intValue, stepY.intValue, tolerance.intValue)
       case Random => RandomNetwork(min.intValue, max.intValue, howMany.intValue)
     }
-    val sensorMap = js.Dictionary[Any](sensors.map(_.nameAndValue):_*)
+    val sensorMap = js.Dictionary[Any](sensors.map(_.nameAndValue): _*)
     val configuration = SupportConfiguration(netSettings, SpatialRadius(radius.intValue), DeviceConfiguration(sensorMap), SimulationSeeds())
     support.evolve(configuration)
     EventBus.publish(configuration)
@@ -78,49 +82,67 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
 }
 
 object ConfigurationSection {
+
   import scalatags.JsDom.all._
-  private class SensorInputText(name : String = "", default : String = "") {
-    private val nameTag = input (`type` := "text", placeholder := "name", cls := "form-control mr-1", value := name).render
-    private val valueTag = input (`type` := "text", placeholder := "value", cls := "form-control", value := default).render
-    val closeButton : Button = button(cls := "btn-sm btn-danger ml-1", span(cls := "text-light", "X")).render
-    private def booleanFromString(value : String) : Try[Boolean] = value match {
+
+  private class SensorInputText(name: String = "", default: String = "") {
+    private val nameTag = input(`type` := "text", placeholder := "name", cls := "form-control mr-1", value := name).render
+    private val valueTag = input(`type` := "text", placeholder := "value", cls := "form-control", value := default).render
+    val closeButton: Button = button(cls := "btn-sm btn-danger ml-1", span(cls := "text-light", "X")).render
+
+    private def booleanFromString(value: String): Try[Boolean] = value match {
       case "true" => Success(true)
       case "false" => Success(false)
       case _ => Failure(new IllegalArgumentException)
     }
 
-    def nameAndValue : (String, Any) = (nameTag.value, parseValue)
+    def nameAndValue: (String, Any) = (nameTag.value, parseValue)
 
-    def parseValue : Any = Try(valueTag.value.toInt)
+    def parseValue: Any = Try(valueTag.value.toInt)
       .recoverWith { case _ => Try(valueTag.value.toDouble) }
-      .recoverWith { case _ => (booleanFromString(valueTag.value)) }
+      .recoverWith { case _ => booleanFromString(valueTag.value) }
       .getOrElse(valueTag.value)
-    val render =  div (
+
+    val render: Div = div(
       cls := "input-group-sm mb-2 mt-2",
       div(cls := "input-group-prepend", nameTag, valueTag, closeButton),
     ).render
   }
 
-  private case class InputText(label : String, defaultValue : Int) {
+  /**
+   * Models a input spinner with a string label.
+   *
+   * @param label the label text
+   * @param defaultValue the default value
+   */
+  private case class InputText(label: String, defaultValue: Int) {
     private val inputSection = input(`type` := "number", cls := "form-control", value := defaultValue).render
-    def intValue : Int = inputSection.value.toInt
-    val render = div (
+
+    def intValue: Int = inputSection.value.toInt
+
+    val render: Div = div(
       cls := "input-group input-group-sm mb-2 mt-2",
-      div(cls := "input-group-prepend", span (cls := "input-group-text", label)),
+      div(cls := "input-group-prepend", span(cls := "input-group-text", label)),
       inputSection
     ).render
   }
 
   private trait Mode
-  private case object Random extends Mode { override def toString: String = "random" }
-  private case object Grid extends Mode { override def toString: String = "grid" }
 
-  private def modeFromString(mode : String) : Mode = mode match {
+  private case object Random extends Mode {
+    override def toString: String = "random"
+  }
+
+  private case object Grid extends Mode {
+    override def toString: String = "grid"
+  }
+
+  private def modeFromString(mode: String): Mode = mode match {
     case "random" => Random
     case "grid" => Grid
   }
 
-  private def getModeFromSelect(select : Select) : Mode = {
+  private def getModeFromSelect(select: Select): Mode = {
     val option = select.selectedIndex
     modeFromString(select.children.item(option).textContent)
   }
