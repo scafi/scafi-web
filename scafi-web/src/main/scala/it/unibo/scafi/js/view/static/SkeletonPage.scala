@@ -37,7 +37,12 @@ object SkeletonPage {
   /**
    * Editor header that contains the program and mode selector
    */
-  lazy val editorHeader: Div = div(id := "editor-header", cls := "input-group input-group-sm pt-1 pb-1", selectionProgram, modeSelector).render
+  lazy val editorHeader: Div = div(
+    id := "editor-header",
+    cls := "input-group input-group-sm pt-1 pb-1",
+    selectionProgram,
+    modeSelector
+  ).render
   /**
    * Section that contains the controls to manage the visualization, it is support specific.
    */
