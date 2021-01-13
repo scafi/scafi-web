@@ -70,4 +70,5 @@ object VisualizationSettingsSection {
       label(cls := "form-check-label text-light", `for` := labelValue, labelValue)
     ).render
   }
+
 }

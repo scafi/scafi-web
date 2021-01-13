@@ -16,9 +16,9 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
   val container : Div = div(cls:= "pt-1, pb-1").render
   configuration.appendChild(container)
   SimpleBar.wrap(configuration)
-  val selectMode = select (cls := "form-control", option(Random.toString), option(Grid.toString)).render
-  val loadButton = button( cls := "btn btn-primary btn-sm ml-1 mr-1",`type` := "button", "load config").render
-  val mainDiv = div(cls := "input-group input-group-sm pt-1", selectMode, loadButton).render
+  val selectMode: Select = select (cls := "form-control", option(Random.toString), option(Grid.toString)).render
+  val loadButton: Button = button( cls := "btn btn-primary btn-sm ml-1 mr-1",`type` := "button", "load config").render
+  val mainDiv: Div = div(cls := "input-group input-group-sm pt-1", selectMode, loadButton).render
   selectMode.onchange = _ => init(getModeFromSelect(selectMode))
   loadButton.onclick = _ => load(getModeFromSelect(selectMode))
 

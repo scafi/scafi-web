@@ -1,11 +1,10 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.utils.Debug
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.JQueryBootstrap._
 import org.querki.jquery.$
 import org.scalajs.dom.html.{Button, Element}
-import org.scalajs.dom.raw.{CSSStyleDeclaration, MouseEvent}
+import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
 
 import java.util.UUID
