@@ -1,0 +1,52 @@
+##########################################
+# Common Settings
+##########################################
+
+# This file is the top-most EditorConfig file
+root = true
+
+# All Files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+max_line_length = 120
+tab_width = 4
+
+# Non-standard rulers size rules
+ij_visual_guides = 120
+guidelines = 120
+
+##########################################
+# File Extension Settings
+##########################################
+
+# Human-Optimized Config Object Notation (HOCON) files
+[*.conf]
+indent_size = 2
+tab_width = 2
+
+# Scala files
+[*.scala]
+indent_size = 2
+tab_width = 2
+
+# Batch Files
+[*.{cmd,bat}]
+end_of_line = crlf
+
+# Unix shell scripts
+[{*.bash,*.sh,*.zsh}]
+end_of_line = lf
+indent_size = 2
+tab_width = 2
+
+# JSON files
+[{*.har,*.jsb2,*.jsb3,*.json,*.json5,*.webmanifest,.babelrc,.eslintrc,.prettierrc,.stylelintrc,bowerrc,jest.config}]
+indent_size = 2
+
+# YAML files
+[{*.yaml,*.yml}]
+indent_size = 2
