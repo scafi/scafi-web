@@ -24,11 +24,7 @@ object SkeletonPage {
   /**
    * Select part to choose an aggregate program.
    */
-  lazy val selectionProgram : Select = select(id := "select-program", cls := "form-control").render
-  /**
-    * Select the language mode
-    */
-  lazy val modeSelector : Select = select(id := "select-mode", cls := "form-control ml-1").render
+  lazy val selectionProgram : Select = select(id := "select-program", cls := "form-control bg-dark text-white").render
   /**
    * Section that contains the controls to manage the backend, it is support specific.
    */
@@ -36,7 +32,7 @@ object SkeletonPage {
   /**
     * Editor header that contains the program and mode selector
     */
-  lazy val editorHeader = div(id := "editor-header", cls := "input-group input-group-sm pt-1 pb-1", selectionProgram, modeSelector).render
+  lazy val editorHeader = div(id := "editor-header", cls := "input-group input-group-sm pt-1 pb-1", selectionProgram).render
   /**
     * Section that contains the controls to manage the visualization, it is support specific.
     */

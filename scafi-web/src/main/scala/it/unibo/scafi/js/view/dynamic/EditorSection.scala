@@ -34,10 +34,10 @@ object EditorSection {
     case JavascriptMode.lang => JavascriptMode
   }
 
-  private class EditorSectionImpl(textArea : TextArea, examples: html.Select, modeSelector : html.Select, codeExample : Map[String, String])
+  private class EditorSectionImpl(textArea : TextArea, examples: html.Select, codeExample : Map[String, String])
     extends EditorSection {
     import scalatags.JsDom.all._
-    var mode: Mode = JavascriptMode
+    var mode: Mode = ScalaMode
     val editorConfiguration = new EditorConfiguration(mode.codeMirrorMode, "native", true, "material")
     private lazy val editor : Editor = CodeMirror.fromTextArea(textArea, editorConfiguration)
     new SimpleBar(textArea, new SimpleBarConfig(forceVisible = ForceX)).recalculate()
@@ -48,19 +48,9 @@ object EditorSection {
       editor.setValue(codeExample(option.value))
     })
 
-    private val modes = Seq(JavascriptMode, ScalaMode).map(_.lang).map(data => option(value := data, data).render)
-    modes.head.selected = true
-    modes.foreach(modeSelector.add(_))
-
     examples.onchange = _ => {
       val option = optionInSelect(examples.selectedIndex)
       editor.setValue(codeExample(option.value))
-    }
-
-    modeSelector.onchange = _ => {
-      val selectedMode = modes(modeSelector.selectedIndex)
-      mode = modeFromLang(selectedMode.value)
-      editor.setOption("mode", mode.codeMirrorMode)
     }
     optionInSelect.foreach(option => examples.appendChild(option))
 
@@ -68,7 +58,6 @@ object EditorSection {
       editor.setValue(code)
       this.mode = mode
       editor.setOption("mode", mode.codeMirrorMode)
-      modes.filter(_.value == mode.lang).foreach(_.selected = true)
     }
 
     override def getScript(): Script = mode match {
@@ -80,7 +69,7 @@ object EditorSection {
 
   }
 
-  def apply(textArea : TextArea, examples: html.Select, modeSelector : html.Select, codeExample : Map[String, String]) : EditorSection = {
-    new EditorSectionImpl(textArea, examples, modeSelector, codeExample)
+  def apply(textArea : TextArea, examples: html.Select, codeExample : Map[String, String]) : EditorSection = {
+    new EditorSectionImpl(textArea, examples, codeExample)
   }
 }

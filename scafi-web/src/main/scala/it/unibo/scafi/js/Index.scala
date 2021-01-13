@@ -35,7 +35,7 @@ object Index {
     with SimulationExecutionPlatform
     with SimulationCommandInterpreter
 
-  lazy val editor = EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, SkeletonPage.modeSelector, programs)
+  lazy val editor = EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
 
   @JSExport
   def main(args: Array[String]): Unit = {
