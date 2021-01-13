@@ -40,7 +40,7 @@ class SimulationControlsSection {
       }
       simulation = Some(daemon)
       stopButton.disabled = false
-      (tick :: startButton :: loadButton :: Nil) foreach { el => el.disabled = true }
+      (tick :: startButton :: Nil) foreach { el => el.disabled = true }
       (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = true }
   }
 

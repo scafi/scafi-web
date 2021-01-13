@@ -10,7 +10,7 @@ import scalatags.JsDom.all._
 import java.util.UUID
 
 trait Modal extends HtmlRenderable[Element] {
-  private val closeButton : Button = button(`type` := "button", cls := "close", span("×")).render
+  private val closeButton : Button = button(`type` := "button", cls := "close text-danger", span("×")).render
   closeButton.onclick = ev => onClose(ev)
   lazy val modalId : String = UUID.randomUUID().toString
   def title : Element
@@ -30,7 +30,7 @@ trait Modal extends HtmlRenderable[Element] {
       style := s"min-width: ${minBound}px",
       cls := "modal-dialog", role := "document",
       div(
-        cls := "modal-content",
+        cls := "modal-content bg-secondary text-white",
         div(cls := "modal-header", style := headerStyle, title, closeButton),
         div(cls := "modal-body", style := bodyStyle, body),
         div(cls := "modal-footer", style := footerStyle, footer)
