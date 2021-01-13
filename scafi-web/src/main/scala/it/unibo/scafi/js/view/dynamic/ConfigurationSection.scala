@@ -60,7 +60,6 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
     container.appendChild(radius.render)
     container.appendChild(addSensorButton)
     sensors foreach { input => container.appendChild(input.render) }
-    println(sensors)
   }
 
   private def load(mode : Mode) : Unit = {

@@ -71,7 +71,9 @@ object Service {
             log.debug("done : " + id)
             log.debug("occupied ram : " + (runtime.totalMemory() - runtime.freeMemory()) / 1000000.0 + " Mb")
             complete(id)
-          case Failure(exception) => complete(StatusCodes.InternalServerError, exception.toString)
+          case Failure(exception) => {
+            complete(StatusCodes.InternalServerError, exception.getMessage)
+          }
         }
       }
     }

@@ -15,6 +15,7 @@ import scala.tools.nsc.reporters.StoreReporter
   * scalac/scalajs-tools to compile and optimize code submitted by users.
   */
 class Compiler(libManager: LibraryManager, code: String) { self =>
+  private val fileName = "ScafiWeb.scala"
   val log = LoggerFactory.getLogger(getClass)
   private val sjsLogger    = new Log4jLogger()
   private val dependencyRE = """ *// \$FiddleDependency (.+)""".r
@@ -41,7 +42,7 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
     * Converts a bunch of bytes into Scalac's weird VirtualFile class
     */
   private def makeFile(src: Array[Byte]) = {
-    val singleFile = new io.VirtualFile("ScalaFiddle.scala")
+    val singleFile = new io.VirtualFile(fileName)
     val output     = singleFile.output
     output.write(src)
     output.close()
@@ -63,7 +64,7 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
     compiler.reporter.reset()
     val startOffset = pos
     val source      = code.take(startOffset) + "_CURSOR_ " + code.drop(startOffset)
-    val unit        = compiler.newCompilationUnit(source, "ScalaFiddle.scala")
+    val unit        = compiler.newCompilationUnit(source, fileName)
     val richUnit    = new compiler.RichCompilationUnit(unit.source)
     //log.debug(s"Source: ${source.take(startOffset)}${scala.Console.RED}|${scala.Console.RESET}${source.drop(startOffset)}")
     compiler.unitOfFile(richUnit.source.file) = richUnit

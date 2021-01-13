@@ -50,8 +50,8 @@ object ScafiCompiler {
              |Injector.main()
              |""".stripMargin
         Success(jsCode) //the {} usage allow to reval the same scala.js code in browser
-
-      case (a, _) => Failure(throw new IllegalArgumentException(a))
+      case (a, _) => log.debug(a)
+        Failure(new IllegalArgumentException(a))
     }
   }
 }

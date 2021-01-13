@@ -64,7 +64,6 @@ object Index {
   def spaPage() : Unit = {
     document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withNav()).render)
     document.body.appendChild(SkeletonPage.fullPage.render)
-    //modal.toggle()
   }
 
   def contentOnly() : Unit = {

@@ -12,7 +12,7 @@ import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 import org.scalajs.dom
-import dom.ext.Ajax
+import dom.ext.{Ajax, AjaxException}
 import org.scalajs.dom.document
 
 /**
