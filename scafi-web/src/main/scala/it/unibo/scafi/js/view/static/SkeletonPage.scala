@@ -25,7 +25,7 @@ object SkeletonPage {
   /**
    * Select part to choose an aggregate program.
    */
-  lazy val selectionProgram: Select = select(id := "select-program", cls := "form-controlbg-dark text-white").render
+  lazy val selectionProgram: Select = select(id := "select-program", cls := "form-control bg-dark text-white").render
   /**
    * Section that contains the controls to manage the backend, it is support specific.
    */
@@ -35,8 +35,9 @@ object SkeletonPage {
    */
   lazy val editorHeader: Div = div(
     id := "editor-header",
-    cls := "row",
-    labeledSelect(selectionProgram, "Example"),
+    cls := "input-group",
+    div(cls := "input-group-prepend", span(cls := "input-group-text", "Examples")),
+    selectionProgram,
   ).render
   /**
    * Section that contains the controls to manage the visualization, it is support specific.
@@ -103,20 +104,5 @@ object SkeletonPage {
     controlsDiv,
     visualizationOptionDiv,
     visualizationSection
-  )
-
-  /**
-   * Prepends a label text to a [[Select]].
-   * @param select the item to wrap and describe
-   * @param label the description text
-   * @return the wrapper [[Div]]
-   */
-  private def labeledSelect(select: Select, label: String): TypedTag[Div] = div(
-    cls := "col-6",
-    div(
-      cls := "input-group input-group-sm",
-      div(cls := "input-group-prepend", span(cls := "input-group-text", label)),
-      select,
-    )
   )
 }
