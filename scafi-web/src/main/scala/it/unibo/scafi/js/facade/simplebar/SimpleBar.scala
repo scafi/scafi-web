@@ -10,6 +10,7 @@ import scala.scalajs.js.annotation.{JSImport, JSName}
 @JSImport("simplebar", JSImport.Default)
 class SimpleBar(element : dom.Element, config : SimpleBarConfig = new SimpleBarConfig()) extends js.Object {
   def recalculate() : Unit = js.native
+  def unMount() : Unit = js.native
 }
 import it.unibo.scafi.js.facade.simplebar.SimpleBarConfig._
 class SimpleBarConfig(val autoHide : Boolean = false,
@@ -45,5 +46,5 @@ class BarClassName(content : String = "simplebar-content",
                   ) extends CleanableObject
 
 object SimpleBar {
-  def wrap(content : dom.Element) : Unit = new SimpleBar(content)
+  def wrap(content : dom.Element) : SimpleBar = new SimpleBar(content)
 }

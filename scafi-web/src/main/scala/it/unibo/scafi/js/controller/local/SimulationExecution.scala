@@ -2,6 +2,9 @@ package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.js.utils.Execution
 
+import scala.concurrent.{Future, Promise}
+import scala.util.Failure
+
 /**
   * the root trait of a simulator run. It can be "Tick" (i.e. the simulation go on by user click) or
   * a "Deamon" (i.e. the simulation go on by itself in background)
@@ -15,7 +18,7 @@ sealed trait SimulationExecution {
   /**
     * internal representation used to go on in the simulation
     */
-  protected val exec : (Int) => Unit
+  protected val exec : (Int) => Future[Unit]
 }
 
 object SimulationExecution {
@@ -24,11 +27,11 @@ object SimulationExecution {
     * the execution is controlled externally by calling a method (tick).
     * @param batchSize how many element are processed during a simulation step
     */
-  case class TickBased(batchSize : Int = 1, protected val exec : (Int) => Unit) extends SimulationExecution {
+  case class TickBased(batchSize : Int = 1, protected val exec : (Int) => Future[Unit]) extends SimulationExecution {
     /**
       * produce a side effect calling exec with the batch size
       */
-    def tick() : Unit = exec(batchSize)
+    def tick() : Future[Unit] = exec(batchSize)
 
     /**
       * turn tick based execution in a daemon one.
@@ -50,9 +53,18 @@ object SimulationExecution {
     * @param batchSize how many element are processed during a simulation step
     * @param delta the execution period
     */
-  case class Daemon(batchSize : Int = 1, delta : Int = 0, protected val exec : (Int) => Unit) extends SimulationExecution {
-    private val timer = Execution.schedule(delta){exec(batchSize)}
-
+  case class Daemon(batchSize : Int = 1, delta : Int = 0, protected val exec : (Int) => Future[Unit]) extends SimulationExecution {
+    private val promiseFuture : Promise[Unit] = Promise.apply()
+    val failed : Future[Unit] = promiseFuture.future
+    private val timer = Execution.schedule(delta){
+      exec(batchSize).onComplete {
+        case Failure(exception) => {
+          stop()
+          if(!promiseFuture.isCompleted) { promiseFuture.failure(exception) }
+        }
+        case _ =>
+      }(Execution.timeoutBasedContext)
+    }
     /**
       * stop current Daemon and turn to "Tick" based execution
       * @return the execution instance

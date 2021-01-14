@@ -3,9 +3,9 @@ package it.unibo.scafi.js
 import scala.scalajs.js
 
 /**
- * Helper class to clean undefined properties. By default scala put key with undefined value.
- * todo make a macro that does this job
- */
+  * Helper class to clean undefined properties. By default scala put key with undefined value.
+  * todo make a macro that does this job
+  */
 class CleanableObject extends js.Object {
   def clean(): Unit = {
     js.Object.entries(this)

@@ -1,4 +1,4 @@
-package it.unibo.scafi.js.controller.local
+  package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.js.utils.JSNumber

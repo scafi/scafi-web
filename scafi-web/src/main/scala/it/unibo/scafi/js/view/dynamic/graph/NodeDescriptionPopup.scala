@@ -24,6 +24,8 @@ object NodeDescriptionPopup {
   def apply(container: Container, scene : Scene) : NodeDescriptionPopup = new NodeDescriptionPopupImpl(container, scene)
 
   private class NodeDescriptionPopupImpl(container: Container, scene : Scene) extends NodeDescriptionPopup {
+    private val width = 200
+    private val heigth = 150
     private def updateTitle(title : String) = modal.title.innerHTML = title
     var selectedId : Option[String] = None
 
@@ -51,8 +53,9 @@ object NodeDescriptionPopup {
     private val sensorList = ContentList()
     private val exportList = ContentList()
     private val carouselContent = CarouselContent(CarouselItem(sensorList, true), CarouselItem(exportList))
-    private val modal = CarouselModal(carouselContent)
+    private val modal = CarouselModal(carouselContent, width, heigth)
     modal.html.removeAttribute("class") //otherwise, it isn't visible in phase
+    modal.html.setAttribute("width", width.toString) //otherwise doesn't work the horizontal scroll
     val gameElement = scene.add.dom(0,0,modal.html)
     val domContainer = scene.add.container(0,0, js.Array(gameElement))
     container.add(domContainer)

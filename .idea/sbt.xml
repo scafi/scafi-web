@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaSbtSettings">
+    <option name="linkedExternalProjectsSettings">
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/commons/js" />
+            <option value="$PROJECT_DIR$/commons/jvm" />
+            <option value="$PROJECT_DIR$/commons/shared" />
+            <option value="$PROJECT_DIR$/core/js" />
+            <option value="$PROJECT_DIR$/core/jvm" />
+            <option value="$PROJECT_DIR$/core/shared" />
+            <option value="$PROJECT_DIR$/demos" />
+            <option value="$PROJECT_DIR$/demos-distributed" />
+            <option value="$PROJECT_DIR$/demos-new" />
+            <option value="$PROJECT_DIR$/distributed" />
+            <option value="$PROJECT_DIR$/online-compiler" />
+            <option value="$PROJECT_DIR$/project" />
+            <option value="$PROJECT_DIR$/renderer-3d" />
+            <option value="$PROJECT_DIR$/runtime1x" />
+            <option value="$PROJECT_DIR$/scafi-web" />
+            <option value="$PROJECT_DIR$/simulator-gui" />
+            <option value="$PROJECT_DIR$/simulator-gui-new" />
+            <option value="$PROJECT_DIR$/simulator/js" />
+            <option value="$PROJECT_DIR$/simulator/jvm" />
+            <option value="$PROJECT_DIR$/simulator/shared" />
+            <option value="$PROJECT_DIR$/spala" />
+            <option value="$PROJECT_DIR$/stdlib-ext" />
+            <option value="$PROJECT_DIR$/tests" />
+          </set>
+        </option>
+        <option name="sbtVersion" value="1.4.3" />
+      </SbtProjectSettings>
+    </option>
+  </component>
+</project>

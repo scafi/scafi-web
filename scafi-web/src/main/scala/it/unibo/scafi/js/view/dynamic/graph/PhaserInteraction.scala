@@ -195,6 +195,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
       keys.zip(sensors).
         map { case (key, name) => name -> scene.input.keyboard.get.addKey(key) }
         .foreach { case (sensor, key) => key.on(DOWN, onClickDown(sensor)) }
+      resetSelection() //fix selection problems
     case _ =>
   }
 

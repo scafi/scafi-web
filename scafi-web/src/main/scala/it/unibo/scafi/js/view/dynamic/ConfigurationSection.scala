@@ -64,7 +64,6 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
     container.appendChild(h3(cls := "text-light", "Sensors configuration").render)
     container.appendChild(addSensorButton)
     sensors foreach { input => container.appendChild(input.render) }
-    println(sensors)
   }
 
   private def load(mode: Mode): Unit = {

@@ -8,11 +8,11 @@ import it.unibo.scafi.js.controller.scripting.Script.{Javascript, ScaFi, Scala}
 import it.unibo.scafi.js.dsl.JF1
 import it.unibo.scafi.simulation.SpatialSimulation
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import org.scalajs.dom
-import dom.ext.Ajax
+import dom.ext.{Ajax, AjaxException}
 import org.scalajs.dom.document
 
 /**
@@ -42,11 +42,11 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
       Try { sideEffectExecution(aggregateClass.program) }
     }
     case Scala(code) =>
-      Ajax.post(url, Ajax.InputData.str2ajax(code))
+      val result = Ajax.post(url, Ajax.InputData.str2ajax(code))
+      result
         .filter(_.status == 200)
         .map(_.responseText)
         .map{ id =>
-          val script = document.getElementById("scafiWeb")
           document.body.innerHTML = "" //TODO NOT SAFE
           val newScript = document.createElement("script").asInstanceOf[dom.html.Script]
           newScript.src = s"$server/js/$id"
@@ -61,10 +61,12 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
   private def sideEffectExecution(program : js.Function1[CONTEXT, EXPORT]) : TickBased = {
-    val execution : (Int => Unit) = batchSize => {
-      //TODO FIX (it'isnt easy...)
-      val exports = (0 until batchSize).map(_ => backend.exec(program))
-      sideEffectsStream.onNext(ExportProduced(exports))
+    val execution : (Int => Future[Unit]) = batchSize => {
+      val execution = Future.fromTry(Try[Unit] {
+        val exports = (0 until batchSize).map(_ => backend.exec(program))
+        sideEffectsStream.onNext(ExportProduced(exports))
+      })
+      execution
     }
     backend.clearExports() //clear export for the new script
     sideEffectsStream.onNext(Invalidated) //invalid old graph value

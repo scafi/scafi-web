@@ -19,6 +19,13 @@ package object static {
 
   CodeMirrorStyle
 
+  //code mirror css
+  @js.native
+  @JSImport("codemirror/theme/material.css", JSImport.Namespace)
+  object Dark extends js.Any
+
+  Dark
+
   //bootstrap css style
   @js.native
   @JSImport("bootstrap/dist/css/bootstrap.min.css", JSImport.Namespace)

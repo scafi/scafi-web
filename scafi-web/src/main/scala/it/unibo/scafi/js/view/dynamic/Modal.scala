@@ -10,7 +10,7 @@ import scalatags.JsDom.all._
 import java.util.UUID
 
 trait Modal extends HtmlRenderable[Element] {
-  private val closeButton : Button = button(`type` := "button", cls := "close", span("×")).render
+  private val closeButton : Button = button(`type` := "button", cls := "close text-danger", span("×")).render
   closeButton.onclick = ev => onClose(ev)
   lazy val modalId : String = UUID.randomUUID().toString
   def title : Element
@@ -20,16 +20,18 @@ trait Modal extends HtmlRenderable[Element] {
   def toggle() : Unit = $(s"#$modalId").modal("toggle")
   def show() : Unit = $(s"#$modalId").modal("show")
   def hide() : Unit = $(s"#$modalId").modal("hide")
+  def dispose() : Unit = $(s"#$modalId").modal("dispose")
   def bodyStyle : String = ""
   def footerStyle : String = ""
+  def headerStyle : String = ""
   var onClose : (MouseEvent) => Unit = e => hide()
   override lazy val html: Element = div(role := "dialog", cls :="modal", tabindex := "-1", id := { this.modalId },
     div(
-      width := minBound,
+      style := s"min-width: ${minBound}px",
       cls := "modal-dialog", role := "document",
       div(
-        cls := "modal-content",
-        div(cls := "modal-header", title, closeButton),
+        cls := "modal-content bg-secondary text-white",
+        div(cls := "modal-header", style := headerStyle, title, closeButton),
         div(cls := "modal-body", style := bodyStyle, body),
         div(cls := "modal-footer", style := footerStyle, footer)
       )

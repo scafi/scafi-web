@@ -7,10 +7,8 @@ import it.unibo.scafi.js.view.dynamic.Modal.ZeroPaddingModal
 import org.scalajs.dom.html.{Div, Element, LI, UList}
 import scalatags.JsDom.all._
 
-case class CarouselModal(carousel: CarouselContent) extends Modal {
+case class CarouselModal(carousel: CarouselContent, minBound : Double, innerHeight : Int) extends Modal {
   override val title = h6(cls := "modal-tile").render
-  override val minBound = 200
-  private val innerHeight = 150
   private val carouselInner = div(
     cls := "carousel-inner overflow-auto",
     style := s"height : ${innerHeight}px",

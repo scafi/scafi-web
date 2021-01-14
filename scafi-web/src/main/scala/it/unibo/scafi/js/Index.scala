@@ -17,8 +17,8 @@ import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 /**
- * Root object, it initialize the simulation, the page and the backend.
- */
+  * Root object, it initialize the simulation, the page and the backend.
+  */
 object Index {
 
   import org.scalajs.dom._
@@ -26,8 +26,8 @@ object Index {
   implicit val incarnation: BasicWebIncarnation = WebIncarnation // incarnation chosen
 
   /**
-   * Interpreter chosen.
-   */
+    * Interpreter chosen.
+    */
   @JSExportTopLevel("Lang")
   implicit val languageJsInterpreter: ScafiInterpreterJs[BasicWebIncarnation] =
   new ScafiInterpreterJs("Lang")
@@ -52,7 +52,7 @@ object Index {
     with SimulationCommandInterpreter
 
   lazy val editor: EditorSection =
-    EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, SkeletonPage.modeSelector, programs)
+    EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
 
   @JSExport
   def main(args: Array[String]): Unit = {
@@ -88,7 +88,6 @@ object Index {
   def spaPage(): Unit = {
     document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withNav()).render)
     document.body.appendChild(SkeletonPage.fullPage.render)
-    //modal.toggle()
   }
 
   def contentOnly(): Unit = {
@@ -111,7 +110,8 @@ object Index {
     val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
-    SimulationControlsSection.render(support, editor, SkeletonPage.controlsDiv)
+    val controls = new SimulationControlsSection()
+    controls.render(support, editor, SkeletonPage.controlsDiv)
     //attach the simulator with the view
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
     //force repaint
