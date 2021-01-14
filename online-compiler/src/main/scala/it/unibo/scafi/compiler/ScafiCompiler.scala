@@ -15,6 +15,21 @@ object ScafiCompiler {
         log.debug("initialization success")
     }
   }
+  def compilePure(code : String) : Try[String] = {
+    val compiler = new Compiler(library, code)
+    val result   = compiler.compile()
+    result match {
+      case (_, Some(b)) =>
+        val res = compiler.fastOpt(b)
+        val jsCode =
+          s"""
+             |{${compiler.`export`(res)}}
+             |""".stripMargin
+        Success(jsCode) //the {} usage allow to reval the same scala.js code in browser
+      case (a, _) => log.debug(a)
+        Failure(new IllegalArgumentException(a))
+    }
+  }
   def compile(core: String): Try[String] = {
     val h = '"'
     val code = s"""

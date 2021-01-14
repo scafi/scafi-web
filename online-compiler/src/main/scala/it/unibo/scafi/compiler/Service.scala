@@ -36,8 +36,8 @@ object Service {
   val codeCacheLimit = 5
   val runtime = Runtime.getRuntime
   var codeCache: CodeCache = CodeCache.limit(codeCacheLimit)
-    .put(indexJs, core)
-    .put(commonsCode, webpack)
+    .permanent(indexJs, core)
+    .permanent(commonsCode, webpack)
 
 
   lazy val index : Route = get {
@@ -61,6 +61,21 @@ object Service {
     }
   }
 
+  lazy val pureCodeRequest : Route = post {
+    path("pure" / "code") {
+      entity[String](as[String]) { code =>
+        val compiled = ScafiCompiler.compilePure(code)
+        compiled match {
+          case Success(result) => val id = UUID.randomUUID().toString
+            codeCache = codeCache put(id, (result))
+            complete(id)
+          case Failure(exception) => {
+            complete(StatusCodes.InternalServerError, exception.getMessage)
+          }
+        }
+      }
+    }
+  }
   lazy val codeCompilationRequest : Route = post {
     path("code") {
       entity[String](as[String]) { code =>
@@ -81,7 +96,7 @@ object Service {
 
   def main(args: Array[String]): Unit = {
     ScafiCompiler.init()
-    val route = concat(index, jsCode, compilatedPage, codeCompilationRequest)
+    val route = concat(index, jsCode, compilatedPage, codeCompilationRequest, pureCodeRequest)
     val bindingFuture = Http().newServerAt(host, port).bind(route)
   }
 }
