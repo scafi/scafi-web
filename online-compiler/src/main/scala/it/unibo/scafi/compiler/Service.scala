@@ -8,15 +8,15 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{PathMatcher, Route}
 import akka.stream.ActorMaterializer
 import it.unibo.scafi.compiler.cache.CodeCache
 import org.slf4j.LoggerFactory
 
 import java.util.UUID
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.io.{Codec, Source}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object Service {
   val log = LoggerFactory.getLogger(getClass)
@@ -62,24 +62,20 @@ object Service {
   }
 
   lazy val pureCodeRequest : Route = post {
-    path("pure" / "code") {
-      entity[String](as[String]) { code =>
-        val compiled = ScafiCompiler.compilePure(code)
-        compiled match {
-          case Success(result) => val id = UUID.randomUUID().toString
-            codeCache = codeCache put(id, (result))
-            complete(id)
-          case Failure(exception) => {
-            complete(StatusCodes.InternalServerError, exception.getMessage)
-          }
-        }
-      }
-    }
+    compileRoot((compiler, code) => compiler.compilePure(code), "code" / "pure")
   }
-  lazy val codeCompilationRequest : Route = post {
-    path("code") {
+
+  lazy val fullCode : Route = post {
+    compileRoot((compiler, code) => compiler.compile(code), "code")
+  }
+
+  lazy val easyCode : Route = post {
+    compileRoot((compiler, code) => compiler.compileEasy(code), "code" / "easy")
+  }
+  def compileRoot(logic : (ScafiCompiler.type, String) => Try[String], pathMatch : PathMatcher[Unit]) : Route = {
+    path(pathMatch) {
       entity[String](as[String]) { code =>
-        val compiled = ScafiCompiler.compile(code)
+        val compiled = logic(ScafiCompiler, code)
         compiled match {
           case Success(result) => val id = UUID.randomUUID().toString
             codeCache = codeCache put (id, (result))
@@ -96,7 +92,7 @@ object Service {
 
   def main(args: Array[String]): Unit = {
     ScafiCompiler.init()
-    val route = concat(index, jsCode, compilatedPage, codeCompilationRequest, pureCodeRequest)
+    val route = concat(index, jsCode, compilatedPage, fullCode, easyCode, pureCodeRequest)
     val bindingFuture = Http().newServerAt(host, port).bind(route)
   }
 }

@@ -67,18 +67,18 @@ class SimulationControlsSection {
 
     def loadScript(script : Script) : Unit = {
       loader.load()
-      execution.loadScript(script).andThen {
-        case _ => loader.loaded()
-      }
-      execution.loadScript(script).onComplete {
-        case Success(ticker : TickBased) =>
-          simulation foreach clearSimulationExecution
-          simulation = Some(ticker)
-          (tick :: startButton :: Nil) foreach { el => el.disabled = false }
-        case Failure(e : AjaxException) if(e.xhr.status == 404) => ErrorModal.showError(s"Compilation service not found...")
-        case Failure(e : AjaxException) => ErrorModal.showError(s"request error, code : ${e.xhr.status }\n${e.xhr.responseText}")
-        case Failure(exception) => ErrorModal.showError(exception.toString)
-      }
+      execution.loadScript(script).onComplete(result => {
+        loader.loaded()
+        result match {
+          case Success(ticker : TickBased) =>
+            simulation foreach clearSimulationExecution
+            simulation = Some(ticker)
+            (tick :: startButton :: Nil) foreach { el => el.disabled = false }
+          case Failure(e : AjaxException) if(e.xhr.status == 404) => ErrorModal.showError(s"Compilation service not found...")
+          case Failure(e : AjaxException) => ErrorModal.showError(s"request error, code : ${e.xhr.status }\n${e.xhr.responseText}")
+          case Failure(exception) => ErrorModal.showError(exception.toString)
+        }
+      })
     }
   }
 

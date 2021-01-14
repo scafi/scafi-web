@@ -1,12 +1,11 @@
 package it.unibo.scafi.js.view.static
 
-import org.scalajs.dom.html.{Button, Div, Select, TextArea}
+import it.unibo.scafi.js.view.static.CssSettings._
+import org.scalajs.dom.html.{Div, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
-import scalatags.JsDom.TypedTag
-import scalatags.JsDom.all._
-import scalatags.JsDom._
 import scalacss.ScalatagsCss._
-import CssSettings._
+import scalatags.JsDom.{TypedTag, _}
+import scalatags.JsDom.all._
 
 /**
  * the skeleton page of this web site. it contains the main dom element (editor, visualization, configuration)
@@ -26,13 +25,20 @@ object SkeletonPage {
    */
   lazy val selectionProgram : Select = select(id := "select-program", cls := "form-control bg-dark text-white").render
   /**
+    * Advanced and easy mode selection
+    */
+  lazy val modeSelection : Div = div(cls := "d-flex pl-2 pr-2 align-items-center",
+    input(`type` := "checkbox", id := "modeSelection"),
+    label(`for` := "modeSelection", cls := "form-check-label text-white ml-1", "advanced")
+  ).render
+  /**
    * Section that contains the controls to manage the backend, it is support specific.
    */
   lazy val controlsDiv : Div = div(id := "controls").render
   /**
     * Editor header that contains the program and mode selector
     */
-  lazy val editorHeader = div(id := "editor-header", cls := "input-group input-group-sm pt-1 pb-1", selectionProgram).render
+  lazy val editorHeader : Div = div(id := "editor-header", cls := "input-group input-group-sm pt-1 pb-1", selectionProgram, modeSelection).render
   /**
     * Section that contains the controls to manage the visualization, it is support specific.
     */

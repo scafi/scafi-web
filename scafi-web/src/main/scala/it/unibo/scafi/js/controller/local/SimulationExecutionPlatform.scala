@@ -4,7 +4,7 @@ import it.unibo.scafi.js.controller.ExecutionPlatform
 import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
 import it.unibo.scafi.js.controller.local.SimulationSideEffect.SideEffects
 import it.unibo.scafi.js.controller.scripting.Script
-import it.unibo.scafi.js.controller.scripting.Script.{Javascript, ScaFi, Scala}
+import it.unibo.scafi.js.controller.scripting.Script.{Javascript, ScaFi, Scala, ScalaEasy}
 import it.unibo.scafi.js.dsl.JF1
 import it.unibo.scafi.simulation.SpatialSimulation
 
@@ -31,7 +31,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   val location = document.location
   val server = s"${location.protocol}//${location.host}"
   val url = s"$server/code"
-
+  val easyCompilationUrl = s"$url/easy"
   override def loadScript(script: Script): Future[SimulationExecution] = script match {
     case Javascript(code) => Future.fromTry {
       Try { interpreter.adaptForScafi(code) }
@@ -41,23 +41,8 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     case aggregateClass : ScaFi[AggregateProgram] => Future.fromTry {
       Try { sideEffectExecution(aggregateClass.program) }
     }
-    case Scala(code) =>
-      val result = Ajax.post(url, Ajax.InputData.str2ajax(code))
-      result
-        .filter(_.status == 200)
-        .map(_.responseText)
-        .map{ id =>
-          document.body.innerHTML = "" //TODO NOT SAFE
-          val newScript = document.createElement("script").asInstanceOf[dom.html.Script]
-          newScript.src = s"$server/js/$id"
-          newScript.`type` = "text/javascript"
-          newScript.id = "scafiWeb"
-          document.body.appendChild(newScript)
-          //document.location.replace(s"$server/compilation/$id") //injection...
-          sideEffectExecution(new AggregateProgram {
-            override def main(): Any = {}
-          }) //TODO USELESS, find another way
-        }
+    case ScalaEasy(code) => remoteRequest(code, easyCompilationUrl)
+    case Scala(code) => remoteRequest(code, url)
     case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
   private def sideEffectExecution(program : js.Function1[CONTEXT, EXPORT]) : TickBased = {
@@ -71,5 +56,23 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     backend.clearExports() //clear export for the new script
     sideEffectsStream.onNext(Invalidated) //invalid old graph value
     TickBased(exec = execution)
+  }
+
+  private def remoteRequest(code : String, path : String) : Future[SimulationExecution] = {
+    Ajax.post(path, Ajax.InputData.str2ajax(code))
+      .filter(_.status == 200)
+      .map(_.responseText)
+      .map{ id =>
+        document.body.innerHTML = "" //TODO NOT SAFE
+        val newScript = document.createElement("script").asInstanceOf[dom.html.Script]
+        newScript.src = s"$server/js/$id"
+        newScript.`type` = "text/javascript"
+        newScript.id = "scafiWeb"
+        document.body.appendChild(newScript)
+        //document.location.replace(s"$server/compilation/$id") //injection...
+        sideEffectExecution(new AggregateProgram {
+          override def main(): Any = {}
+        }) //TODO USELESS, find another way
+      }
   }
 }

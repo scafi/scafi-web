@@ -5,6 +5,7 @@ import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.{Cookie, Execution}
+import it.unibo.scafi.js.view.dynamic.EditorSection.ScalaModeFull
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
@@ -44,19 +45,21 @@ object Index {
     scafiInitialization()
   }
   lazy val programs = Map(
-    "round counter" -> "return rep(() => 0, (k) => k+1)",
-    "hello scafi" -> "return \"hello scafi\"",
-    "gradient" -> """return rep(() => Infinity, (d) => {
-        |  return mux(sense("source"), 0.0,
-        |    foldhoodPlus(() => Infinity, Math.min, () => nbr(() => d) + nbrvar("nbrRange"))
-        |  )
-        | })
-        |""".stripMargin,
-    "channel" -> """var metric = () => nbrRange()
-                   |
-                   |function channel(source, target, width) {
-                   |  	var threshold = distanceBetween(source, target, metric) + width
-                   | 	return distanceTo(source, metric) + distanceTo(target, metric) < threshold
+    "round counter" -> "rep(0)(_ + 1)",
+    "hello scafi" -> "\"hello scafi\"",
+    "gradient" -> """// using StandardSensors
+                    |rep(Double.PositiveInfinity) {
+                    |  d => {
+                    |    mux(sense[Boolean]("source")) { 0.0 } {
+                    |    	foldhoodPlus(d)(Math.min)(nbr(d) + nbrRange())
+                    |    }
+                    |  }
+                    |}
+                    |""".stripMargin,
+    "channel" -> """//using BlockG, StandardSensors
+                   |def channel(source : Boolean, target : Boolean, width : Double) : Boolean = {
+                   |  	val threshold : Double = distanceBetween(source, target, nbrRange) + width
+                   | 	 distanceTo(source, nbrRange) + distanceTo(target, nbrRange) < threshold
                    |}
                    |return channel(sense("source"), sense("obstacle"), 1)""".stripMargin
   )
