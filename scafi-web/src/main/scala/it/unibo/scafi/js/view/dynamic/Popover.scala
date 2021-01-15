@@ -1,9 +1,9 @@
 package it.unibo.scafi.js.view.dynamic
 
-import org.querki.jquery.$
-import org.scalajs.dom.Element
 import it.unibo.scafi.js.view.JQueryBootstrap._
 import it.unibo.scafi.js.view.dynamic.Popover.Direction
+import org.querki.jquery.$
+import org.scalajs.dom.Element
 
 import scala.scalajs.js
 
@@ -37,4 +37,5 @@ object Popover {
   case object Left extends Direction("left")
 
   case object Right extends Direction("right")
+
 }

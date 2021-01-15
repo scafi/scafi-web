@@ -96,14 +96,18 @@ object Index {
     document.body.appendChild(SkeletonPage.contentOnly.render)
   }
 
+  lazy val welcomeModal: Modal = Modal.textual(
+    "Welcome to ScaFi: discover the power of the collective!",
+    "ScaFi-web is an online playground for creating, sharing and embedding ScaFi aggregate programs that run in your browser.",
+    300)
+
   def scafiInitialization(): Unit = {
-    if (!Cookie.has("visited")) {
-      // TODO Explanation.render(SkeletonPage.backendConfig, SkeletonPage.visualizationSection)
-      val modal = Modal.textual("Welcome", "discover the power of the collective", 300)
+//    if (!Cookie.has("visited")) {
+      val modal = welcomeModal
       document.body.appendChild(modal.html)
       modal.toggle()
-      Cookie.store("visited", "true")
-    }
+//      Cookie.store("visited", "true")
+//    }
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     //dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
