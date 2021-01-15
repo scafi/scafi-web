@@ -4,7 +4,7 @@ import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.dsl.semantics._
-import it.unibo.scafi.js.utils.{Cookie, Execution}
+import it.unibo.scafi.js.utils.{Cookie, Execution, GlobalStore}
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
@@ -87,7 +87,7 @@ object Index {
       """//using BlockG, StandardSensors
         |def channel(source : Boolean, target : Boolean, width : Double) : Boolean = {
         |  val threshold : Double = distanceBetween(source, target, nbrRange) + width
-        | 	distanceTo(source, nbrRange) + distanceTo(target, nbrRange) < threshold
+        |  distanceTo(source, nbrRange) + distanceTo(target, nbrRange) < threshold
         |}
         |return channel(sense("source"), sense("obstacle"), 1)""".stripMargin
   )

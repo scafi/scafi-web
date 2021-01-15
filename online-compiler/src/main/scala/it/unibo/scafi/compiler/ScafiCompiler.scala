@@ -59,6 +59,13 @@ object ScafiCompiler {
                   |     $core
                   |     Index.editor.setCode($h$h$h$showCode$h$h$h, ${mode.toString})
                   |     EventBus.publish(ScaFi(program))
+                  |     import it.unibo.scafi.js.controller.local.SupportConfiguration
+                  |     SupportConfiguration.loadGlobal().foreach {
+                  |       config => {
+                  |         Index.support.evolve(config)
+                  |         EventBus.publish(config)
+                  |       }
+                  |     }
                   |  }
                   |}
                   |""".stripMargin

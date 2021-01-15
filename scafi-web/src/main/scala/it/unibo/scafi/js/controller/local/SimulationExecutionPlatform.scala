@@ -13,6 +13,7 @@ import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 import org.scalajs.dom
 import dom.ext.{Ajax, AjaxException}
+import it.unibo.scafi.js.utils.GlobalStore
 import org.scalajs.dom.document
 
 /**
@@ -59,6 +60,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   }
 
   private def remoteRequest(code : String, path : String) : Future[SimulationExecution] = {
+    SupportConfiguration.storeGlobal(this.systemConfig)
     Ajax.post(path, Ajax.InputData.str2ajax(code))
       .filter(_.status == 200)
       .map(_.responseText)
