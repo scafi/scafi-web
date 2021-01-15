@@ -6,7 +6,7 @@ import org.scalajs.dom.html.{Div, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalacss.ScalatagsCss._
 import scalatags.JsDom.TypedTag
-import scalatags.JsDom.all._
+import scalatags.JsDom.all.{a, _}
 
 /**
   * The skeleton page of this web site.
@@ -47,12 +47,8 @@ object SkeletonPage {
     cls := "input-group input-group-sm pt-1 pb-1",
     div(
       cls := "input-group-prepend",
-      span(
-        cls := "input-group-text",
-//        attr("data-toggle") := "popover",
-//        attr("title") := "Popover title",
-//        attr("data-content") := "Default popover",
-        "Examples")),
+      span(cls := "input-group-text", "Examples")
+    ),
     selectionProgram,
     modeSelection
   ).render
@@ -69,7 +65,7 @@ object SkeletonPage {
       title = "Code editor",
       text = "With this selector you can choose a ScaFi example and edit it in the editor below")
     .addNextPopover(
-       attachTo = modeSelectionId,
+      attachTo = modeSelectionId,
       title = "Advanced mode",
       text =
         """In basic mode, you can write directly ScaFi code, without worrying about producing valid Scala code.
@@ -122,9 +118,10 @@ object SkeletonPage {
       cls := "navbar-brand",
       h1(cls := "text-light", "Scafi")
     ),
-    span(
-      cls := "navbar-text",
-      "Discover the power of the collective"
+    a(
+      cls := "navbar-right nav-item btn btn-secondary",
+      href := "https://scafi.github.io/",
+      "Learn ScaFi on its website"
     )
   )
 

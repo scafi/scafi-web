@@ -40,12 +40,15 @@ trait Modal extends HtmlRenderable[Element] {
 
   var onClose: MouseEvent => Unit = e => hide()
 
-  override lazy val html: Element = div(role := "dialog", cls := "modal", tabindex := "-1", id := {
-    this.modalId
-  },
+  override lazy val html: Element = div(
+    role := "dialog",
+    cls := "modal",
+    tabindex := "-1",
+    id := this.modalId,
     div(
       style := s"min-width: ${minBound}px",
-      cls := "modal-dialog", role := "document",
+      cls := "modal-dialog",
+      role := "document",
       div(
         cls := "modal-content bg-secondary text-light",
         div(cls := "modal-header", style := headerStyle, title, closeButton),
@@ -111,7 +114,7 @@ object Modal {
     cancel.onclick = _ => onCancel()
     val base = textual(title, body, 0).copy(footer = Seq(ok, cancel))
     val function: js.Function0[Unit] = () => onCancel()
-    base.appendOnRoot
+    base.appendOnRoot()
     $(s"#${base.modalId}").on("hidden.bs.modal", function)
     base
   }

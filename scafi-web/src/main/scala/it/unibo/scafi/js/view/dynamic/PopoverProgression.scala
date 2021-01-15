@@ -24,6 +24,8 @@ object PopoverProgression {
       */
     def addNextPopover(attachTo: String, title: String, text: String, direction: Direction = Popover.Bottom): Builder
 
+    def andFinally(action: () => Unit): Builder
+
     /** Start the tour. */
     def start(): PopoverProgression
   }
@@ -47,11 +49,17 @@ object PopoverProgression {
 
       /** @inheritdoc */
       override def start(): PopoverProgression = popoverTour
+
+      override def andFinally(action: () => Unit): Builder = {
+        popoverTour.doFinally = Some(action)
+        this
+      }
     }
 
     private sealed case class PopoverTour(var popovers: Seq[Popover]) extends PopoverProgression {
       private var iterator: Option[Iterator[Popover]] = None
       private var current: Option[Popover] = None
+      var doFinally: Option[() => Unit] = None
 
       /** Show next [[Popover]]. */
       override def stepForward(): Unit = {
@@ -70,7 +78,9 @@ object PopoverProgression {
           case (Some(iter), Some(curr)) if !iter.hasNext =>
             curr.hide()
             current = None
-            js.Dynamic.global.console.log("Last popover")
+            doFinally match {
+              case Some(action) => action()
+            }
         }
       }
     }
