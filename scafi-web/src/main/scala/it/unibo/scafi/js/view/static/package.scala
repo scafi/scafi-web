@@ -35,7 +35,7 @@ package object static {
 
   //simple bar style
   @js.native
-  @JSImport("simplebar/dist/simplebar.css", JSImport.Namespace)
+  @JSImport("simplebar/dist/simplebar.min.css", JSImport.Namespace)
   object SimpleBarCSS extends js.Any
 
   SimpleBarCSS
@@ -47,7 +47,7 @@ package object static {
 
   JavascriptStyle
 
-  //code mirror javascript style
+  //code mirror scala style
   @js.native
   @JSImport("codemirror/mode/clike/clike.js", JSImport.Namespace)
   object CLikeStyle extends js.Any
@@ -63,11 +63,14 @@ package object static {
   Bootstrap
 
   //bootstrap util
+
+  /* TODO I don't remember if this has some implications, check it.
   @js.native
   @JSImport("bootstrap/js/dist/util.js", JSImport.Namespace)
   object UtilBootstrap extends js.Any
 
   UtilBootstrap
+  */
 
   //phaser lib
   @js.native

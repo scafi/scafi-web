@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
-import org.scalajs.dom.document
 import org.scalajs.dom.html.Element
 import scalatags.JsDom.all._
 
@@ -16,7 +15,7 @@ object ErrorModal extends Modal {
       bar = SimpleBar.wrap(text) //with hide, the simple bar has some problem... with rewrapping it seems to work
       this.toggle()
   }
-  document.body.appendChild(this.html) //put in the page..
+  this.appendOnRoot //put in the page..
   onClose = _ => {
     bar.unMount()
     this.hide()

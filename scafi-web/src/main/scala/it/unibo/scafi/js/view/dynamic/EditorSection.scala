@@ -1,13 +1,17 @@
 package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.controller.scripting.Script
-import it.unibo.scafi.js.controller.scripting.Script.{Javascript, Scala}
+import it.unibo.scafi.js.controller.scripting.Script.{Javascript, Scala, ScalaEasy}
 import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Editor, EditorConfiguration}
 import it.unibo.scafi.js.facade.simplebar.SimpleBarConfig.ForceX
 import it.unibo.scafi.js.facade.simplebar.{SimpleBar, SimpleBarConfig}
+import it.unibo.scafi.js.utils.Execution
 import it.unibo.scafi.js.view.dynamic.EditorSection.Mode
-import org.scalajs.dom.html
-import org.scalajs.dom.html.TextArea
+import org.querki.jquery.{$, JQuery, JQueryEventObject}
+import org.scalajs.dom.{document, html}
+import org.scalajs.dom.html.{Input, TextArea}
+
+import scala.scalajs.js
 
 trait EditorSection {
   def setCode(code : String, mode : Mode)
@@ -21,27 +25,78 @@ object EditorSection {
     def lang : String
     def codeMirrorMode : String
   }
-  case object ScalaMode extends Mode {
-    override val lang: String = "scala"
+  case object ScalaModeFull extends Mode {
+    override val lang: String = "full-scala"
     override val codeMirrorMode: String = "text/x-scala"
+  }
+  case object ScalaModeEasy extends Mode {
+    private val pattern = """(?:\s*//\s*using\s*)(\w*(?:\s*,\s*\w+)*)""".r.unanchored
+    override val lang: String = "easy-scala"
+    override val codeMirrorMode: String = "text/x-scala"
+    def convertToFull(code : String) : String = {
+      val (libsCode, line) = code match {
+        case pattern(libs) if (libs.nonEmpty) =>
+          val libsCode = s"with ${libs.replaceAll("""\s*,\s*""", " with ")}"
+          val line = pattern.findAllIn(code).group(0)
+          (libsCode, line)
+        case _ => ("", "")
+      }
+      val body = code.replaceAll(line, "")
+      val bodyShifted = body.split("\n")
+        .filter(_.nonEmpty)
+        .map(line => "\t\t" + line)
+        .filter(_.nonEmpty).mkString("\n")
+      s"""class MyProgram extends AggregateProgram ${libsCode} {
+           |  override def main() : Any = {
+           |  ${bodyShifted}
+           |  }
+           |}
+           |val program = new MyProgram
+           |""".stripMargin
+    }
   }
   case object JavascriptMode extends Mode {
     override val lang: String = "javascript"
     override val codeMirrorMode: String = lang
   }
   def modeFromLang(lang : String) : Mode = lang match {
-    case ScalaMode.lang => ScalaMode
+    case ScalaModeFull.lang => ScalaModeFull
+    case ScalaModeEasy.lang => ScalaModeEasy
     case JavascriptMode.lang => JavascriptMode
   }
 
   private class EditorSectionImpl(textArea : TextArea, examples: html.Select, codeExample : Map[String, String])
     extends EditorSection {
     import scalatags.JsDom.all._
-    var mode: Mode = ScalaMode
+    var mode: Mode = ScalaModeEasy
+    private val modeSelection = new ModeSelection("modeSelection")
+    private lazy val popup : Modal = Modal.okCancel("Warning!", "The mode change will erase all your code, are you sure?",
+      onOk = () => {
+        this.setCode("", ScalaModeEasy)
+        popup.hide()
+        modeSelection.off()
+      },
+      onCancel = () => {
+        popup.hide()
+        modeSelection.on()
+      }
+    )
+
     val editorConfiguration = new EditorConfiguration(mode.codeMirrorMode, "native", true, "material")
     private lazy val editor : Editor = CodeMirror.fromTextArea(textArea, editorConfiguration)
     new SimpleBar(textArea, new SimpleBarConfig(forceVisible = ForceX)).recalculate()
     private val optionInSelect = codeExample.keys.map(key => option(value := key, key).render).toList
+
+    this.setCode("", ScalaModeEasy)
+    modeSelection.onClick(() => {
+      if(mode == ScalaModeEasy) {
+        val fullCode = ScalaModeEasy.convertToFull(this.getRaw())
+        editor.setValue(fullCode)
+        this.mode = ScalaModeFull
+      } else {
+        popup.show()
+      }
+    })
 
     optionInSelect.headOption.foreach( option => {
       option.selected = true
@@ -52,9 +107,15 @@ object EditorSection {
       val option = optionInSelect(examples.selectedIndex)
       editor.setValue(codeExample(option.value))
     }
+
     optionInSelect.foreach(option => examples.appendChild(option))
 
     override def setCode(code: String, mode: Mode): Unit = {
+      mode match {
+        case ScalaModeEasy => modeSelection.off()
+        case ScalaModeFull => modeSelection.on()
+        case _ =>
+      }
       editor.setValue(code)
       this.mode = mode
       editor.setOption("mode", mode.codeMirrorMode)
@@ -62,14 +123,24 @@ object EditorSection {
 
     override def getScript(): Script = mode match {
       case JavascriptMode => Javascript(getRaw())
-      case ScalaMode => Scala(getRaw())
+      case ScalaModeFull => Scala(getRaw())
+      case ScalaModeEasy => ScalaEasy(getRaw())
     }
 
     override def getRaw(): String = editor.getValue()
-
   }
 
   def apply(textArea : TextArea, examples: html.Select, codeExample : Map[String, String]) : EditorSection = {
     new EditorSectionImpl(textArea, examples, codeExample)
+  }
+
+  class ModeSelection(id : String) {
+    val mode = $(s"#$id")
+    def isChecked() : Boolean = mode.prop("checked").get.asInstanceOf[Boolean]
+    def onClick(handler : () => Unit) : JQuery = mode.click((e : JQueryEventObject) => {
+      handler()
+    })
+    def off() : Unit = mode.prop("checked",false).change()
+    def on() : Unit = mode.prop("checked",true).change()
   }
 }

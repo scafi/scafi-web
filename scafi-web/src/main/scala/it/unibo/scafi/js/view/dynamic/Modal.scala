@@ -1,13 +1,16 @@
 package it.unibo.scafi.js.view.dynamic
 
+import it.unibo.scafi.js.utils.Debug
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.JQueryBootstrap._
-import org.querki.jquery.$
+import org.querki.jquery.{$, EventHandler, JQuery}
+import org.scalajs.dom.document
 import org.scalajs.dom.html.{Button, Element}
 import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
 
 import java.util.UUID
+import scala.scalajs.js
 
 trait Modal extends HtmlRenderable[Element] {
   private val closeButton: Button = button(`type` := "button", cls := "close text-danger", span("×")).render
@@ -51,6 +54,7 @@ trait Modal extends HtmlRenderable[Element] {
       )
     )
   ).render
+  def appendOnRoot : Unit = document.body.appendChild(html)
 }
 
 object Modal {
@@ -63,7 +67,7 @@ object Modal {
     override def footerStyle: String = "padding : 0 !important"
   }
 
-  def textual(title: String, body: String, width: Double): Modal = textualWithFooter(title, body, width)(Option.empty)
+  def textual(title: String, body: String, width: Double): BaseModal = textualWithFooter(title, body, width)(Option.empty)
 
   def textualWithFooter(title: String, body: String, width: Double)(footer: Option[Element]): Modal = BaseModal(
     title = h6(cls := "modal-tile", title).render,
@@ -71,4 +75,16 @@ object Modal {
     footer = footer.toList,
     minBound = width
   )
+
+  def okCancel(title : String, body : String, onOk : () => Unit, onCancel : () => Unit) : Modal = {
+    val ok = button(cls := "btn btn-warning", "Ok").render
+    val cancel = button(cls := "btn btn-dark", "Cancel").render
+    ok.onclick = ev => onOk()
+    cancel.onclick = ev => onCancel()
+    val base = textual(title, body, 0).copy(footer = Seq(ok, cancel))
+    val function : js.Function0[Unit] = () => onCancel()
+    base.appendOnRoot
+    $(s"#${base.modalId}").on("hidden.bs.modal", function)
+    base
+  }
 }
