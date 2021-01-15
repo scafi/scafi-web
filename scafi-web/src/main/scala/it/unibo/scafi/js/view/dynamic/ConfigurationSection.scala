@@ -17,9 +17,15 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
   val container: Div = div(cls := "pt-1, pb-1").render
   configuration.appendChild(container)
   SimpleBar.wrap(configuration)
-  val selectMode: Select = select(cls := "form-control", option(Random.toString), option(Grid.toString)).render
+  val selectMode: Select = select(cls := "form-control bg-dark text-light", option(Random.toString), option(Grid.toString)).render
   val loadButton: Button = button(cls := "btn btn-primary btn-sm ml-1 mr-1", `type` := "button", "load config").render
-  val mainDiv: Div = div(cls := "input-group input-group-sm pt-1", selectMode, loadButton).render
+  val mainDiv: Div = div(
+    cls := "input-group input-group-sm pt-1",
+    div(
+      cls := "input-group-prepend",
+      span(cls := "input-group-text", "Displacement")),
+    selectMode,
+    loadButton).render
   selectMode.onchange = _ => init(getModeFromSelect(selectMode))
   loadButton.onclick = _ => load(getModeFromSelect(selectMode))
 
@@ -85,8 +91,8 @@ object ConfigurationSection {
   import scalatags.JsDom.all._
 
   private class SensorInputText(name: String = "", default: String = "") {
-    private val nameTag = input(`type` := "text", placeholder := "name", cls := "form-control mr-1", value := name).render
-    private val valueTag = input(`type` := "text", placeholder := "value", cls := "form-control", value := default).render
+    private val nameTag = input(`type` := "text", placeholder := "name", cls := "form-control mr-1 bg-dark text-light", value := name).render
+    private val valueTag = input(`type` := "text", placeholder := "value", cls := "form-control bg-dark text-light", value := default).render
     val closeButton: Button = button(cls := "btn-sm btn-danger ml-1", span(cls := "text-light", "X")).render
 
     private def booleanFromString(value: String): Try[Boolean] = value match {
@@ -115,7 +121,7 @@ object ConfigurationSection {
    * @param defaultValue the default value
    */
   private case class InputText(label: String, defaultValue: Int) {
-    private val inputSection = input(`type` := "number", cls := "form-control", value := defaultValue).render
+    private val inputSection = input(`type` := "number", cls := "form-control bg-dark text-light", value := defaultValue).render
 
     def intValue: Int = inputSection.value.toInt
 

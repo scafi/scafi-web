@@ -4,22 +4,24 @@ import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased
 import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecutionPlatform}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.ScaFi
+import monix.execution.Scheduler
 import org.scalajs.dom.ext.AjaxException
-import org.scalajs.dom.html.{Div, Input, Label}
+import org.scalajs.dom.html.{Button, Div, Input, Label}
 import scalatags.JsDom.all._
 
 import scala.util.{Failure, Success}
 
 class SimulationControlsSection {
   import it.unibo.scafi.js.utils.Execution
-  implicit val exc = Execution.timeoutBasedScheduler
+  implicit val exc: Scheduler = Execution.timeoutBasedScheduler
+
   private val buttonClass = cls := "btn btn-primary ml-1 btn-sm"
-  private val loadButton = button("load", buttonClass).render
-  private val startButton = button("start", buttonClass).render
-  private val stopButton = button("stop", buttonClass).render
-  private val (rangeBatch, labelBatch, valueBatch) = rangeWithLabel("batch", 1, 1000, 1)
-  private val (rangeDelta, labelDelta, valueDelta) = rangeWithLabel("period", 0, 1000, 0)
-  private val tick = button("tick", buttonClass).render
+  val loadButton: Button = button("load", buttonClass, id := "load-code").render
+  val startButton: Button = button("start", buttonClass, id := "start-sim").render
+  val stopButton: Button = button("stop", buttonClass, id := "stop-sim").render
+  val (rangeBatch, labelBatch, valueBatch) = rangeWithLabel("batch", 1, 1000, 1)
+  val (rangeDelta, labelDelta, valueDelta) = rangeWithLabel("period", 0, 1000, 0)
+  val tick: Button = button("tick", buttonClass, id := "tick-button").render
   var simulation : Option[SimulationExecution] = None
 
   stopButton.onclick = _ => simulation match {

@@ -1,9 +1,8 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.utils.Debug
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.JQueryBootstrap._
-import org.querki.jquery.{$, EventHandler, JQuery}
+import org.querki.jquery.$
 import org.scalajs.dom.document
 import org.scalajs.dom.html.{Button, Element}
 import org.scalajs.dom.raw.MouseEvent
@@ -39,7 +38,8 @@ trait Modal extends HtmlRenderable[Element] {
 
   def headerStyle: String = ""
 
-  var onClose: (MouseEvent) => Unit = e => hide()
+  var onClose: MouseEvent => Unit = e => hide()
+
   override lazy val html: Element = div(role := "dialog", cls := "modal", tabindex := "-1", id := {
     this.modalId
   },
@@ -47,14 +47,15 @@ trait Modal extends HtmlRenderable[Element] {
       style := s"min-width: ${minBound}px",
       cls := "modal-dialog", role := "document",
       div(
-        cls := "modal-content bg-secondary text-white",
+        cls := "modal-content bg-secondary text-light",
         div(cls := "modal-header", style := headerStyle, title, closeButton),
         div(cls := "modal-body", style := bodyStyle, body),
         div(cls := "modal-footer", style := footerStyle, footer)
       )
     )
   ).render
-  def appendOnRoot : Unit = document.body.appendChild(html)
+
+  def appendOnRoot(): Unit = document.body.appendChild(html)
 }
 
 object Modal {
@@ -67,22 +68,49 @@ object Modal {
     override def footerStyle: String = "padding : 0 !important"
   }
 
-  def textual(title: String, body: String, width: Double): BaseModal = textualWithFooter(title, body, width)(Option.empty)
+  /**
+    * Generate a pure textual modal popup window, with a title and a footer.
+    *
+    * @param title the text of the title
+    * @param body  the text of the body
+    * @param width the minimum bound of the width of the window
+    * @return the generated modal
+    */
+  def textual(title: String, body: String, width: Double): BaseModal =
+    textualWithFooter(title, body, width)(Option.empty)
 
-  def textualWithFooter(title: String, body: String, width: Double)(footer: Option[Element]): Modal = BaseModal(
+  /**
+    * Generate a textual modal which lets also set a component to put in the footer.
+    *
+    * @param title  the text of the title
+    * @param body   the text of the body
+    * @param width  the minimum bound of the width of the window
+    * @param footer the component to put in the footer
+    * @return the generated modal
+    */
+  def textualWithFooter(title: String, body: String, width: Double)(footer: Option[Element]): BaseModal = BaseModal(
     title = h6(cls := "modal-tile", title).render,
     body = Seq(div(p(body), style := "padding : 5").render),
     footer = footer.toList,
     minBound = width
   )
 
-  def okCancel(title : String, body : String, onOk : () => Unit, onCancel : () => Unit) : Modal = {
+  /**
+    * Generate a modal window with to buttons, OK and Cancel.
+    *
+    * @param title    the text of the title
+    * @param body     the text of the body
+    * @param onOk     what to do when OK button is pressed
+    * @param onCancel what to do when cancel button is pressed
+    * @return the generated modal
+    */
+  def okCancel(title: String, body: String, onOk: () => Unit, onCancel: () => Unit): Modal = {
     val ok = button(cls := "btn btn-warning", "Ok").render
     val cancel = button(cls := "btn btn-dark", "Cancel").render
-    ok.onclick = ev => onOk()
-    cancel.onclick = ev => onCancel()
+    ok.onclick = _ => onOk()
+    cancel.onclick = _ => onCancel()
     val base = textual(title, body, 0).copy(footer = Seq(ok, cancel))
-    val function : js.Function0[Unit] = () => onCancel()
+    val function: js.Function0[Unit] = () => onCancel()
     base.appendOnRoot
     $(s"#${base.modalId}").on("hidden.bs.modal", function)
     base

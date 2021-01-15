@@ -3,17 +3,17 @@ package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.js.view.JQueryBootstrap._
 import it.unibo.scafi.js.view.dynamic.Popover.Direction
 import org.querki.jquery.$
-import org.scalajs.dom.Element
+import org.scalajs.dom.html.Element
 
 import scala.scalajs.js
 
-case class Popover(attachTo: String, data: Element, title: String, direction: Direction) {
+case class Popover(attachTo: String, data: Element, title: String, direction: Direction, trigger: String = "manual") {
   val options: js.Object with js.Dynamic = js.Dynamic.literal(
     "animation" -> false,
     "html" -> true,
     "sanitize" -> false,
     "placement" -> direction.value,
-    "trigger" -> "manual",
+    "trigger" -> trigger,
     "content" -> data,
     "title" -> title
   )
@@ -25,6 +25,10 @@ case class Popover(attachTo: String, data: Element, title: String, direction: Di
 
   def hide(): Unit = $(s"#$attachTo").popover("hide")
 }
+
+
+
+
 
 object Popover {
 

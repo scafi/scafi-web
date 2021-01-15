@@ -5,17 +5,21 @@ import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.utils.{Cookie, Execution}
-import it.unibo.scafi.js.view.dynamic.EditorSection.ScalaModeFull
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
+import it.unibo.scafi.js.view.JQueryBootstrap.fromJquery
+import it.unibo.scafi.js.view.static.SkeletonPage.editorHeader
 import monix.execution.Scheduler
+import org.querki.jquery.$
 import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
+import scala.scalajs.js.Dynamic
 
 /**
   * Root object, it initialize the simulation, the page and the backend.
@@ -69,21 +73,23 @@ object Index {
   lazy val programs = Map(
     "round counter" -> "rep(0)(_ + 1)",
     "hello scafi" -> " \"hello scafi\"",
-    "gradient" -> """// using StandardSensors
-                    |rep(Double.PositiveInfinity) {
-                    |  d => {
-                    |    mux(sense[Boolean]("source")) { 0.0 } {
-                    |    	foldhoodPlus(d)(Math.min)(nbr(d) + nbrRange())
-                    |    }
-                    |  }
-                    |}
-                    |""".stripMargin,
-    "channel" -> """//using BlockG, StandardSensors
-                   |def channel(source : Boolean, target : Boolean, width : Double) : Boolean = {
-                   |  val threshold : Double = distanceBetween(source, target, nbrRange) + width
-                   | 	distanceTo(source, nbrRange) + distanceTo(target, nbrRange) < threshold
-                   |}
-                   |return channel(sense("source"), sense("obstacle"), 1)""".stripMargin
+    "gradient" ->
+      """// using StandardSensors
+        |rep(Double.PositiveInfinity) {
+        |  d => {
+        |    mux(sense[Boolean]("source")) { 0.0 } {
+        |    	foldhoodPlus(d)(Math.min)(nbr(d) + nbrRange())
+        |    }
+        |  }
+        |}
+        |""".stripMargin,
+    "channel" ->
+      """//using BlockG, StandardSensors
+        |def channel(source : Boolean, target : Boolean, width : Double) : Boolean = {
+        |  val threshold : Double = distanceBetween(source, target, nbrRange) + width
+        | 	distanceTo(source, nbrRange) + distanceTo(target, nbrRange) < threshold
+        |}
+        |return channel(sense("source"), sense("obstacle"), 1)""".stripMargin
   )
 
   def spaPage(): Unit = {
@@ -92,9 +98,13 @@ object Index {
   }
 
   def contentOnly(): Unit = {
-    //page injection
+    // page injection
     document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withoutNav).render)
     document.body.appendChild(SkeletonPage.contentOnly.render)
+//    $(document).ready(() => $("[data-toggle=popover]").popover(Dynamic.literal(
+//      "placement" -> Popover.Bottom.value,
+//      "trigger" -> "hover"
+//    )))
   }
 
   lazy val welcomeModal: Modal = Modal.textual(
@@ -103,12 +113,7 @@ object Index {
     300)
 
   def scafiInitialization(): Unit = {
-//    if (!Cookie.has("visited")) {
-      val modal = welcomeModal
-      document.body.appendChild(modal.html)
-      modal.toggle()
-//      Cookie.store("visited", "true")
-//    }
+
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     //dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
@@ -123,6 +128,39 @@ object Index {
     support.invalidate()
     SkeletonPage.visualizationSection.focus()
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
+
+    if (!Cookie.get("visited").exists(_.toBoolean)) {
+      val modal = welcomeModal
+      document.body.appendChild(modal.html)
+      // modal.toggle()
+      SkeletonPage
+        .popoverTourBuilder
+        .addNextPopover(
+          attachTo = controls.loadButton.id,
+          title = "Load code",
+          text = "Every time you edit your code and want to load it onto the network, click here ...",
+          direction = Popover.Bottom)
+        .addNextPopover(
+          attachTo = controls.startButton.id,
+          title = "Start the simulation",
+          text = "... and then start the simulation here"
+        )
+        .addNextPopover(
+          attachTo = controls.stopButton.id,
+          title = "Stop the simulation",
+          text = "You can stop the simulation with this butto to restart it later."
+        )
+        .addNextPopover(
+          attachTo = controls.tick.id,
+          title = "Tick-by-tick progression",
+          text = "You can also progress in the simulation tick-by-tick using this button."
+        )
+        // TODO add batch description
+        // TODO add period description
+        .start()
+        .stepForward()
+      Cookie.store("visited", "true")
+    }
   }
 
   @JSExportTopLevel("ScafiBackend")

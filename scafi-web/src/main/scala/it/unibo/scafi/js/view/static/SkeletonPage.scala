@@ -1,10 +1,11 @@
 package it.unibo.scafi.js.view.static
 
+import it.unibo.scafi.js.view.dynamic.{Popover, PopoverProgression}
 import it.unibo.scafi.js.view.static.CssSettings._
 import org.scalajs.dom.html.{Div, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalacss.ScalatagsCss._
-import scalatags.JsDom.{TypedTag, _}
+import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
 /**
@@ -12,7 +13,7 @@ import scalatags.JsDom.all._
   * It contains the main dom elements: editor, visualization and configuration.
   */
 object SkeletonPage {
-  //TODO find a good way to model bootstrap class (with a dedicated module?)
+  // TODO find a good way to model bootstrap class (with a dedicated module?)
   /**
     * The root style of the web page.
     */
@@ -25,16 +26,17 @@ object SkeletonPage {
   /**
     * Select part to choose an aggregate program.
     */
-  lazy val selectionProgram: Select = select(id := "select-program", cls := "form-control bg-dark text-white").render
+  lazy val selectionProgram: Select = select(id := "select-program", cls := "form-control bg-dark text-light").render
+  private val modeSelectionId = "modeSelection";
   /**
     * Advanced and easy mode selection
     */
-  lazy val modeSelection : Div = div(cls := "d-flex pl-2 pr-2 align-items-center",
-    input(`type` := "checkbox", id := "modeSelection"),
-    label(`for` := "modeSelection", cls := "form-check-label text-white ml-1", "advanced")
+  lazy val modeSelection: Div = div(cls := "d-flex pl-2 pr-2 align-items-center",
+    input(`type` := "checkbox", id := modeSelectionId),
+    label(`for` := "modeSelection", cls := "form-check-label text-light ml-1", "advanced")
   ).render
   /**
-   * Section that contains the controls to manage the backend, it is support specific.
+    * Section that contains the controls to manage the backend, it is support specific.
     */
   lazy val controlsDiv: Div = div(id := "controls").render
   /**
@@ -43,10 +45,45 @@ object SkeletonPage {
   lazy val editorHeader: Div = div(
     id := "editor-header",
     cls := "input-group input-group-sm pt-1 pb-1",
-    div(cls := "input-group-prepend", span(cls := "input-group-text", "Examples")),
+    div(
+      cls := "input-group-prepend",
+      span(
+        cls := "input-group-text",
+//        attr("data-toggle") := "popover",
+//        attr("title") := "Popover title",
+//        attr("data-content") := "Default popover",
+        "Examples")),
     selectionProgram,
     modeSelection
   ).render
+  lazy val editorHeaderPopover = new Popover(
+    attachTo = editorHeader.id,
+    title = "Examples",
+    data = p("Here you can select a ScaFi example").render,
+    direction = Popover.Bottom
+  )
+  lazy val popoverTourBuilder: PopoverProgression.Builder = PopoverProgression
+    .Builder()
+    .addNextPopover(
+      attachTo = editorHeader.id,
+      title = "Code editor",
+      text = "With this selector you can choose a ScaFi example and edit it in the editor below")
+    .addNextPopover(
+       attachTo = modeSelectionId,
+      title = "Advanced mode",
+      text =
+        """In basic mode, you can write directly ScaFi code, without worrying about producing valid Scala code.
+          |If you are not a beginner and you want more control on the produced Scala code, enable this toggle."""
+          .stripMargin)
+    .addNextPopover(
+      attachTo = backendConfig.id,
+      title = "Backend configuration",
+      text =
+        """Here you can tune the settings about the network of virtual devices the program is deployed onto,
+          |like spatial deployment and sensors accessible in code.
+          |""".stripMargin,
+      direction = Popover.Right
+    )
   /**
     * Section that contains the controls to manage the visualization, it is support specific.
     */
