@@ -132,7 +132,7 @@ object Index {
     if (!Cookie.get("visited").exists(_.toBoolean)) {
       val modal = welcomeModal
       document.body.appendChild(modal.html)
-      // modal.toggle()
+      modal.toggle()
       SkeletonPage
         .popoverTourBuilder
         .addNextPopover(

@@ -26,10 +26,6 @@ case class Popover(attachTo: String, data: Element, title: String, direction: Di
   def hide(): Unit = $(s"#$attachTo").popover("hide")
 }
 
-
-
-
-
 object Popover {
 
   sealed abstract class Direction(val value: String)
