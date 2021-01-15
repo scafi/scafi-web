@@ -75,7 +75,7 @@ object Service {
   def compileRoot(logic : (ScafiCompiler.type, String) => Try[String], pathMatch : PathMatcher[Unit]) : Route = {
     path(pathMatch) {
       entity[String](as[String]) { code =>
-        val compiled = logic(ScafiCompiler, code)
+        val compiled = this.synchronized { logic(ScafiCompiler, code) }
         compiled match {
           case Success(result) => val id = UUID.randomUUID().toString
             this.synchronized { codeCache = codeCache put (id, (result)) } //fix
