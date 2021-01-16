@@ -14,33 +14,27 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
   import ConfigurationSection._
   import scalatags.JsDom.all._
 
-  val container: Div = div(cls := "pt-1, pb-1").render
-  configuration.appendChild(container)
-  SimpleBar.wrap(configuration)
-  val selectMode: Select = select(cls := "form-control bg-dark text-light", option(Random.toString), option(Grid.toString)).render
-  val loadButton: Button = button(cls := "btn btn-primary btn-sm ml-1 mr-1", `type` := "button", "load config").render
-  val mainDiv: Div = div(
+  private val container: Div = div(cls := "pt-1, pb-1").render
+  private val selectMode: Select = select(cls := "form-control bg-dark text-light", option(Random.toString), option(Grid.toString)).render
+  private val loadButton: Button = button(cls := "btn btn-primary btn-sm ml-1 mr-1", `type` := "button", "load config").render
+  private val mainDiv: Div = div(
     cls := "input-group input-group-sm pt-1",
     div(
       cls := "input-group-prepend",
       span(cls := "input-group-text", "Displacement")),
     selectMode,
     loadButton).render
-  selectMode.onchange = _ => init(getModeFromSelect(selectMode))
-  loadButton.onclick = _ => load(getModeFromSelect(selectMode))
-
   private val (cols, rows, stepX, stepY, tolerance) = (InputText("cols", 10), InputText("rows", 10), InputText("stepX", 60), InputText("stepY", 60), InputText("tolerance", 0))
   private val gridValue = List(cols, rows, stepX, stepY, tolerance)
-
   private val (min, max, howMany) = (InputText("min", 0), InputText("max", 500), InputText("howMany", 100))
   private val randomValue = List(min, max, howMany)
   private val radius = InputText("radius", 70)
-
-  private var sensors = List(
-    new SensorInputText("source", "false"),
-    new SensorInputText("obstacle", "false"),
-    new SensorInputText("target", "false")
-  )
+  private var sensors : List[SensorInputText] = List()
+  private var lastConfiguration : SupportConfiguration = _
+  selectMode.onchange = _ => init(getModeFromSelect(selectMode))
+  loadButton.onclick = _ => load(getModeFromSelect(selectMode))
+  configuration.appendChild(container)
+  SimpleBar.wrap(configuration)
 
   def onRemoveSensor(sensor: SensorInputText): MouseEvent => Unit = _ => {
     sensors = sensors.filterNot(_ == sensor)
@@ -82,8 +76,32 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
     support.evolve(configuration)
     EventBus.publish(configuration)
   }
-
   init(Random)
+  EventBus.listen {
+    case config : SupportConfiguration => {
+      lastConfiguration = config
+      configureFromConfig(config)
+    }
+  }
+  private def configureFromConfig(conf : SupportConfiguration) : Unit = {
+    sensors = conf.deviceShape.sensors.map { case (k, v) => new SensorInputText(k, v.toString) }.toList
+    conf.network match {
+      case GridLikeNetwork(_rows, _cols, _stepX, _stepY, _tollerance) => rows.intValue = _rows
+        cols.intValue = _cols
+        stepX.intValue = _stepX.toInt
+        stepY.intValue = _stepY.toInt
+        tolerance.intValue = _tollerance.toInt
+        selectMode.value = Grid.toString
+      case RandomNetwork(_min, _max, _howMany) => min.intValue = _min.toInt
+        max.intValue = _max.toInt
+        howMany.intValue = _howMany
+        selectMode.value = Random.toString
+    }
+    init(getModeFromSelect(selectMode))
+    conf.neighbour match {
+      case SpatialRadius(range) => radius.intValue = range.toInt
+    }
+  }
 }
 
 object ConfigurationSection {
@@ -124,6 +142,8 @@ object ConfigurationSection {
     private val inputSection = input(`type` := "number", cls := "form-control bg-dark text-light", value := defaultValue).render
 
     def intValue: Int = inputSection.value.toInt
+
+    def intValue_=(value : Int) : Unit = inputSection.value = value.toString
 
     val render: Div = div(
       cls := "input-group input-group-sm mb-2 mt-2",

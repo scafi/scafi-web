@@ -5,7 +5,6 @@ import it.unibo.scafi.js.JsConversion
 import it.unibo.scafi.js.utils.{GlobalStore, JSNumber}
 import it.unibo.scafi.space.Point3D
 
-import javax.xml.bind.JAXBElement.GlobalScope
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
 import scala.util.Try

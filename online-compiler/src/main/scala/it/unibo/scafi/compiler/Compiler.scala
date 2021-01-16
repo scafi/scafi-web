@@ -157,7 +157,7 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
     val libs = extLibs + ExtLib("semantics", "optimized", fullOpt.toString, false)
 
     try {
-      val linker     = createLinker(linkerConfig)
+      val linker     =  LinkerCache.getOrUpdate(libs, createLinker(linkerConfig))
       val allIRFiles = libManager.linkerLibraries(extLibs) ++ userFiles
       ScalaJSCompat.link(linker, allIRFiles, sjsLogger)
     } catch {
