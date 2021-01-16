@@ -1,11 +1,11 @@
 package it.unibo.scafi.js
 
+import it.unibo.scafi.js.code.{BasicExample, HighLevelExample, LibraryExample}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{ScafiInterpreterJs, WebIncarnation}
-import it.unibo.scafi.js.utils.{Cookie, Execution, GlobalStore}
-import it.unibo.scafi.js.view.dynamic.EditorSection.ScalaModeFull
+import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
@@ -14,7 +14,6 @@ import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
-import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 /**
   * Root object, it initialize the simulation, the page and the backend.
@@ -97,6 +96,8 @@ object Index {
     support.invalidate()
     SkeletonPage.visualizationSection.focus()
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
+    val example = Seq(BasicExample(), LibraryExample(), HighLevelExample())
+    val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
   }
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)

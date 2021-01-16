@@ -1,5 +1,6 @@
 package it.unibo.scafi.js.view.dynamic
 
+import it.unibo.scafi.js.code.Example
 import it.unibo.scafi.js.controller.AggregateSystemSupport
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
@@ -8,10 +9,11 @@ import org.scalajs.dom.raw.MouseEvent
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
+import ConfigurationSection._
+import it.unibo.scafi.js.utils.{Debug, Execution}
+import scalatags.JsDom.all._
 
 class ConfigurationSection(configuration : Div, support : AggregateSystemSupport[_, SupportConfiguration, _]) {
-  import ConfigurationSection._
-  import scalatags.JsDom.all._
   private val container : Div = div(cls:= "pt-1, pb-1").render
   private val selectMode = select (cls := "form-control", option(Random.toString), option(Grid.toString)).render
   private val loadButton = button( cls := "btn btn-primary btn-sm ml-1 mr-1",`type` := "button", "load config").render
@@ -21,24 +23,36 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
   private val (min, max, howMany) = (InputText("min", 0), InputText("max", 500), InputText("howMany", 100))
   private val randomValue = List(min, max, howMany)
   private val radius = InputText("radius", 70)
+  private val addSensorButton = button( cls := "btn btn-primary btn-sm",`type` := "button", "add sensor").render
   private var sensors : List[SensorInputText] = List()
   private var lastConfiguration : SupportConfiguration = _
+
   selectMode.onchange = _ => init(getModeFromSelect(selectMode))
   loadButton.onclick = _ => load(getModeFromSelect(selectMode))
   configuration.appendChild(container)
   SimpleBar.wrap(configuration)
-  def onRemoveSensor(sensor : SensorInputText) : MouseEvent => Unit = ev => {
-    sensors = sensors.filterNot(_ == sensor)
-    init(getModeFromSelect(selectMode))
-  }
   sensors.foreach(sensor => sensor.closeButton.onclick = onRemoveSensor(sensor))
-  private val addSensorButton = button( cls := "btn btn-primary btn-sm",`type` := "button", "add sensor").render
-
   addSensorButton.onclick = ev => {
     val newElement = new SensorInputText()
     newElement.closeButton.onclick = onRemoveSensor(newElement)
     sensors = sensors ::: List(newElement)
     container.appendChild(newElement.render)
+  }
+  init(Random)
+  var elements : js.Array[Any] = js.Array()
+  Debug("elments", elements)
+  EventBus.listen {
+    case config : SupportConfiguration => lastConfiguration = config
+      configureFromConfig(config)
+  }
+
+  def updateDeviceShape(shape : DeviceConfiguration) : Unit = {
+    lastConfiguration.copy(deviceShape = shape)
+    evolve(lastConfiguration.copy(deviceShape = shape))
+  }
+  private def onRemoveSensor(sensor : SensorInputText) : MouseEvent => Unit = ev => {
+    sensors = sensors.filterNot(_ == sensor)
+    init(getModeFromSelect(selectMode))
   }
 
   private def init(mode : Mode) : Unit = {
@@ -62,16 +76,9 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
     }
     val sensorMap = js.Dictionary[Any](sensors.map(_.nameAndValue):_*)
     val configuration = SupportConfiguration(netSettings, SpatialRadius(radius.intValue), DeviceConfiguration(sensorMap), SimulationSeeds())
-    support.evolve(configuration)
-    EventBus.publish(configuration)
+    evolve(configuration)
   }
-  init(Random)
-  EventBus.listen {
-    case config : SupportConfiguration => {
-      lastConfiguration = config
-      configureFromConfig(config)
-    }
-  }
+
   private def configureFromConfig(conf : SupportConfiguration) : Unit = {
     sensors = conf.deviceShape.sensors.map { case (k, v) => new SensorInputText(k, v.toString) }.toList
     conf.network match {
@@ -90,6 +97,11 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
     conf.neighbour match {
       case SpatialRadius(range) => radius.intValue = range.toInt
     }
+  }
+
+  private def evolve(config : SupportConfiguration) : Unit = {
+    support.evolve(config)
+    EventBus.publish(config)
   }
 }
 
