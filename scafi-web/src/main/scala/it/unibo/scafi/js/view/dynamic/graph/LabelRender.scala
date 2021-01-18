@@ -41,8 +41,8 @@ object LabelRender {
     val fontSize = 12 //todo put in a global configuration object
     //val textureUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png"
     //val fontUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
-    val textureUrl = window.location.href + "fonts/font.png"
-    val fontUrl = window.location.href + "fonts/font.xml"
+    val textureUrl = "./fonts/font.png"
+    val fontUrl = "./fonts/font.xml"
 
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph, scene: Scene): Output = {
       val result = elements
