@@ -62,7 +62,7 @@ object CarouselModal {
       }
     }
 
-    def listItemFromString(value : String) : LI = li(cls := "list-group-item", value).render
+    def listItemFromString(value : String) : LI = li(cls := "list-group-item bg-secondary", value).render
   }
 }
 
