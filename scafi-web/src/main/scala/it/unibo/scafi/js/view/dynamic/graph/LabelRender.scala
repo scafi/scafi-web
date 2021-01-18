@@ -5,9 +5,11 @@ import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser.Scene
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{GameObject, Shape, Text}
 import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
+import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.{TextMetrics, TextStyle}
 import it.unibo.scafi.js.model.Graph
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import org.scalajs.dom.ext.Color
+import org.scalajs.dom.window
 
 object LabelRender {
   type SensorEntries = Seq[(String, Any)]
@@ -24,10 +26,11 @@ object LabelRender {
       val result = elements
         .map { case (_, value) => normalizeValue(value) }
         .mkString("\n")
+      val style = textCache.headOption.map { case (_, p) => new TextStyle(p.getTextMetrics())}.getOrElse(new TextStyle())
       val gameobject = textCache.get(node.id)
         .map(_.setText(normalizeValue(result)))
         .map(_.setPosition(node.x, node.y))
-        .getOrElse(scene.add.text(node.x, node.y, normalizeValue(result)))
+        .getOrElse(scene.add.text(node.x, node.y, normalizeValue(result), style))
       textCache += node.id -> gameobject
       gameobject.ignoreDestroy = true
       Seq((gameobject, elements.map { case (name, value) => name}))
@@ -35,18 +38,20 @@ object LabelRender {
   }
 
   case class TextifyBitmap() extends LabelRender {
-    val fontSize = 9 //todo put in a global configuration object
-    val textureUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png"
-    val fontUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
+    val fontSize = 12 //todo put in a global configuration object
+    //val textureUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png"
+    //val fontUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
+    val textureUrl = window.location.href + "fonts/font.png"
+    val fontUrl = window.location.href + "fonts/font.xml"
 
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph, scene: Scene): Output = {
       val result = elements
         .map { case (name, value) => normalizeValue(value) }
         .mkString("\n")
-      val gameobject = scene.add.bitmapText(node.x, node.y, "font", normalizeValue(result), fontSize)
+      val gameobject = scene.add.bitmapText(node.x, node.y, "fonts", normalizeValue(result), fontSize)
       Seq((gameobject, elements.map { case (name, value) => name}))
     }
-    override def onInit(scene : Scene) : Unit = scene.load.bitmapFont("font", textureUrl, fontUrl)
+    override def onInit(scene : Scene) : Unit = scene.load.bitmapFont("fonts", textureUrl, fontUrl)
   }
 
   case class BooleanRender() extends LabelRender {

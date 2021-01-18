@@ -10,11 +10,12 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{PathMatcher, Route}
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.StreamConverters
 import it.unibo.scafi.compiler.cache.CodeCache
 import org.slf4j.LoggerFactory
 
 import java.util.UUID
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.ExecutionContextExecutor
 import scala.io.{Codec, Source}
 import scala.util.{Failure, Success, Try}
 
@@ -55,6 +56,7 @@ object Service {
     }
   }
 
+  lazy val resourceLike = Seq(resourcePath("resources"), resourcePath("fonts"), resourcePath("icons"))
   lazy val compilatedPage : Route = get {
     path("compilation" / Segment) { id =>
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, ScalaCompiledPage.html(id)))
@@ -71,6 +73,15 @@ object Service {
 
   lazy val easyCode : Route = post {
     compileRoot((compiler, code) => compiler.compileEasy(code), "code" / "easy")
+  }
+
+  def resourcePath(basePath : PathMatcher[Unit]) : Route = {
+    path(basePath / Segment) {
+      name => {
+        val resource = StreamConverters.fromInputStream(() => getClass.getClassLoader.getResourceAsStream(name))
+        complete(HttpEntity(ContentTypes.`application/octet-stream`, resource))
+      }
+    }
   }
   def compileRoot(logic : (ScafiCompiler.type, String) => Try[String], pathMatch : PathMatcher[Unit]) : Route = {
     path(pathMatch) {
@@ -92,7 +103,8 @@ object Service {
 
   def main(args: Array[String]): Unit = {
     ScafiCompiler.init()
-    val route = concat(index, jsCode, compilatedPage, fullCode, easyCode, pureCodeRequest)
+    val allRoutes = Seq(index, jsCode, compilatedPage, fullCode, easyCode, pureCodeRequest) ++ resourceLike
+    val route = concat(allRoutes:_*)
     val bindingFuture = Http().newServerAt(host, port).bind(route)
   }
 }

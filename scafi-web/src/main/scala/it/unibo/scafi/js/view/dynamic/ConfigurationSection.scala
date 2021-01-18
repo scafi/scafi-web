@@ -1,18 +1,16 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.code.Example
 import it.unibo.scafi.js.controller.AggregateSystemSupport
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
+import it.unibo.scafi.js.utils.Debug
+import it.unibo.scafi.js.view.dynamic.ConfigurationSection._
 import org.scalajs.dom.html.{Button, Div, Select}
 import org.scalajs.dom.raw.MouseEvent
+import scalatags.JsDom.all._
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
-import ConfigurationSection._
-
-  import it.unibo.scafi.js.utils.{Debug, Execution}
-  import scalatags.JsDom.all._
 class ConfigurationSection(configuration : Div, support : AggregateSystemSupport[_, SupportConfiguration, _]) {
   private val container: Div = div(cls := "pt-1, pb-1").render
   private val selectMode: Select = select(cls := "form-control bg-dark text-light", option(Random.toString), option(Grid.toString)).render
