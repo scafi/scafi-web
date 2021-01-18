@@ -73,9 +73,10 @@ object SkeletonPage {
       cls := "navbar-brand",
       h1(cls := "text-light", "Scafi")
     ),
-    span(
-      cls := "navbar-text",
-      "Discover the power of the collective"
+    form(cls := "form-inline",
+      button(cls := "btn btn-outline-light mr-2 my-sm-0", "FAQ"),
+      button(cls := "btn btn-outline-light my-2 my-sm-0", "Repo"),
+      span(cls := "navbar-text ml-2", "Discover the power of the collective")
     )
   )
 
