@@ -1,5 +1,6 @@
 package it.unibo.scafi.js.view.dynamic.graph
 
+import it.unibo.scafi.js.controller.local.{GridLikeNetwork, RandomNetwork, SupportConfiguration}
 import it.unibo.scafi.js.facade.phaser.Phaser._
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, GameObject}
 import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes
@@ -7,15 +8,14 @@ import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.{Graph, Node}
-import it.unibo.scafi.js.utils.{Debug, JSNumber}
+import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
-import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
+import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.{Bound, ForceRepaint}
 import it.unibo.scafi.js.view.dynamic.{EventBus, VisualizationSettingsSection}
 import org.scalajs.dom.ext.Color
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSExportTopLevel
 class PhaserGraphSection(paneSection : HTMLElement,
                          interaction : ((Scene, NodeDescriptionPopup, Container) => Unit),
                          settings: VisualizationSettingsSection,
@@ -25,9 +25,11 @@ class PhaserGraphSection(paneSection : HTMLElement,
   import it.unibo.scafi.js.facade.phaser.Implicits._
   private var model : (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val size = 5 //TODO put in configuration
+  private var newBound : Option[Bound] = None
   private val nodeColor : Int = Color(187, 134, 252) //TODO put in configuration
   private val lineColor : Int = Color(125, 125, 125) //TODO put in configuration
-
+  private val cameraSlack = - 0.1
+  private val noSlack = 0.0
   private val config = new GameConfig(
     parent = paneSection,
     scene = sceneHandler,
@@ -62,11 +64,10 @@ class PhaserGraphSection(paneSection : HTMLElement,
       scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (_ : js.Any, _ : js.Any, _ : js.Any, _ : JSNumber, dy : JSNumber, _ : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
-      import it.unibo.scafi.js.utils._
-      val key = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.SEVEN)
-
     },
     update = scene => {
+      newBound.foreach(bound => adjustScene(bound, scene))
+      newBound = None
       model match {
         case (Some(graph), true) => onNewGraph(graph, scene)
         case (Some(graph), false) => onSameGraph(graph, scene)
@@ -74,10 +75,27 @@ class PhaserGraphSection(paneSection : HTMLElement,
       }
     }
   )
-
   override def apply(v1: Graph): Unit = model = (Some(v1), true)
+  EventBus.listen {
+    case ForceRepaint => model = model.copy(_2 = true)
+    case SupportConfiguration(_ @ RandomNetwork(min, max, _), _, _, _, _) => newBound = Some(Bound(min, min, max, max))
+    case SupportConfiguration(_ @ GridLikeNetwork(row, col, stepX, stepY, _), _, _, _, _) =>
+      newBound = Some(Bound(0, 0, (row - 1) * stepX, (col - 1) * stepY))
+  }
 
-  EventBus.listen { case ForceRepaint => model = model.copy(_2 = true) }
+  private def adjustScene(bound : Bound, scene : Scene) : Unit = {
+    mainContainer.setPosition(0, 0)
+    val Bound(minX, minY, maxX, maxY) = bound
+    val (width, height) = (maxX - minX, maxY - minY)
+    val (halfWidth, halfHeight) = (width / 2, height / 2)
+    val (centerX, centerY) = (halfWidth + minX, halfHeight + minY)
+    val (gameCenterX, gameCenterY) = (game.canvas.width / 2.0, game.canvas.height / 2.0)
+    scene.cameras.main.scrollX = - (gameCenterX - centerX)
+    scene.cameras.main.scrollY = - (gameCenterY - centerY)
+    val zoomFactor = (game.canvas.height / height)
+    val slack = if (zoomFactor > 1) cameraSlack else noSlack
+    scene.cameras.main.zoom = (game.canvas.height / height) + slack
+  }
 
   private def onSameGraph(graph : Graph, scene : Phaser.Scene) : Unit = ()
 
@@ -145,4 +163,9 @@ object PhaserGraphSection {
     * repaint the graph even if it is not changed.
     */
   object ForceRepaint
+  //TODO here we need to use coordinate mapping to do the right job
+  /**
+    * bound of a new configuration
+   */
+  case class Bound(minX : Double, minY : Double, maxX : Double, maxY : Double)
 }
