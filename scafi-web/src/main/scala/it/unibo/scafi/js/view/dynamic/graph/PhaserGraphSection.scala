@@ -17,7 +17,7 @@ import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 class PhaserGraphSection(paneSection : HTMLElement,
-                         interaction : ((Scene, NodeDescriptionPopup, Container) => Unit),
+                         interaction : Interaction.PhaserInteraction,
                          settings: VisualizationSettingsSection,
                          labelRenders : Seq[LabelRender]) extends (Graph => Unit) {
   import NodeRepresentation._
@@ -29,6 +29,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
   private val nodeColor : Int = Color(187, 134, 252) //TODO put in configuration
   private val lineColor : Int = Color(125, 125, 125) //TODO put in configuration
   private val cameraSlack = - 0.1
+  private val keyboardBindings = new KeyboardBindings(interaction)
   private val noSlack = 0.0
   private val config = new GameConfig(
     parent = paneSection,
@@ -53,18 +54,18 @@ class PhaserGraphSection(paneSection : HTMLElement,
     create = (scene, _) => {
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
-
       vertexContainer = scene.add.container(0, 0)
       labelContainer = scene.add.container(0, 0)
       nodeContainer = scene.add.container(0, 0)
       mainContainer = scene.add.container(0, 0, js.Array(vertexContainer, nodeContainer, labelContainer))
       popup = NodeDescriptionPopup(mainContainer, scene)
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
-      interaction(scene, popup, mainContainer)
+      interaction.onPhaserLoaded(scene, popup, mainContainer)
+      keyboardBindings.init(scene) //TODO to remove..
+      //interaction(scene, popup, mainContainer)
       scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (_ : js.Any, _ : js.Any, _ : js.Any, _ : JSNumber, dy : JSNumber, _ : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
-      new Interaction.PhaserInteraction(null).onPhaserLoaded(scene, popup, mainContainer)
     },
     update = scene => {
       newBound.foreach(bound => adjustScene(bound, scene))
