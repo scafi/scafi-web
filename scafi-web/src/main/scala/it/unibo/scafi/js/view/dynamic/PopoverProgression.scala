@@ -42,7 +42,7 @@ object PopoverProgression {
         nextBtn.onclick = _ => popoverTour.stepForward()
         popoverTour.popovers = popoverTour.popovers :+ Popover(attachTo, data = div(
           p(text),
-          nextBtn
+          div(cls := "text-center", nextBtn)
         ).render, title, direction)
         this
       }

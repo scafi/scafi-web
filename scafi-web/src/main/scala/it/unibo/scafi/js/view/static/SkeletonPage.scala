@@ -6,7 +6,7 @@ import org.scalajs.dom.html.{Div, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalacss.ScalatagsCss._
 import scalatags.JsDom.TypedTag
-import scalatags.JsDom.all.{a, _}
+import scalatags.JsDom.all._
 
 /**
   * The skeleton page of this web site.
@@ -88,6 +88,78 @@ object SkeletonPage {
     * Section in which is rendered the graph that represent the aggregate system.
     */
   lazy val visualizationSection: Div = div(id := "visualization-pane", cls := "border border-secondary", tabindex := 0).render
+
+  // button group
+  /*lazy val panMoveMode: Div = div(
+    cls := "btn-toolbar",
+    role := "toolbar",
+    aria.label := "Change control mode",
+    div(
+      cls := "btn-group",
+      role := "group",
+      button(
+        id := "move-toggle",
+        `type` := "button",
+        `class` := "btn btn-primary",
+        i(cls := "fas fa-mouse-pointer fa-lg", aria.hidden := true),
+      ),
+      button(
+        id := "pan-toggle",
+        `type` := "button",
+        `class` := "btn btn-primary",
+        i(cls := "fas fa-hand-paper fa-lg", aria.hidden := true),
+      )
+    )
+  ).render*/
+
+  // toggle as button group
+  lazy val panMoveMode: Div = div(
+    cls := "btn-floating-group text-center pt-2",
+    div(
+      cls := "btn-group btn-group-toggle",
+      aria.label := "Change control mode",
+      label(
+        `class` := "btn btn-primary active",
+        input(`type` := "radio", name := "control-mode", id := "move-mode", autocomplete := "off", checked),
+        i(id := "move-toggle", cls := "fas fa-mouse-pointer fa-lg", aria.hidden := true),
+      ),
+      label(
+        `class` := "btn btn-primary",
+        input(`type` := "radio", name := "control-mode", id := "pan-mode", autocomplete := "off"),
+        i(id := "pan-toggle", cls := "fas fa-hand-paper fa-lg", aria.hidden := true),
+      )
+    )
+  ).render
+
+  // toggle as button group
+  /*lazy val panMoveMode: Div =
+    div(
+      cls := "btn-group-fab",
+      role := "group",
+      aria.label := "Change control mode",
+      button(
+        `type` := "button",
+        `class` := "btn btn-main btn-primary has-tooltip",
+        data("placement") := "left",
+        title := "Menu",
+        i(`class` := "fa fa-bars")
+      ),
+      button(
+        `type` := "button",
+        `class` := "btn btn-sub btn-info has-tooltip",
+        data("placement") := "left",
+        title := "Pan",
+        i(`class` := "fa-hand-paper")
+      ),
+      button(
+        `type` := "button",
+        `class` := "btn btn-sub btn-info has-tooltip",
+        data("placement") := "left",
+        title := "Move",
+        i(`class` := "fas fa-mouse-pointer")
+      )
+    ).render*/
+
   /**
     * Section used to configure the backend (it is support specific)
     */
@@ -116,8 +188,7 @@ object SkeletonPage {
     cls := "navbar navbar-dark flex-shrink-0 bg-secondary",
     span(
       cls := "navbar-brand",
-      h1(cls := "text-light", "Scafi"),
-      //      span(cls := "navbar-text ml-2", "Discover the power of the collective")
+      h1(cls := "text-light", "Scafi")
     ),
     span(cls := "navbar-text ml-2", "Discover the power of the collective"),
     /*
@@ -163,6 +234,7 @@ object SkeletonPage {
     id := "visualization-section",
     controlsDiv,
     visualizationOptionDiv,
-    visualizationSection
+    visualizationSection,
+    panMoveMode
   )
 }

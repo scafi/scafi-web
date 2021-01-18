@@ -7,11 +7,11 @@ import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarn
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
-import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
 import monix.execution.Scheduler
+import org.querki.jquery.$
 import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
@@ -92,7 +92,7 @@ object Index {
 
   def contentOnly(): Unit = {
     // page injection
-    document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withoutNav).render)
+    document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withoutNav()).render)
     document.body.appendChild(SkeletonPage.contentOnly.render)
   }
 
