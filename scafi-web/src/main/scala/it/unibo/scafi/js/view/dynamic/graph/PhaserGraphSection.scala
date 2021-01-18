@@ -64,6 +64,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
       scene.input.on(Phaser.Input.Events.POINTER_WHEEL, (_ : js.Any, _ : js.Any, _ : js.Any, _ : JSNumber, dy : JSNumber, _ : JSNumber) => {
         mainCamera.zoom -= (dy / 1000)
       })
+      new Interaction.PhaserInteraction(null).onPhaserLoaded(scene, popup, mainContainer)
     },
     update = scene => {
       newBound.foreach(bound => adjustScene(bound, scene))
