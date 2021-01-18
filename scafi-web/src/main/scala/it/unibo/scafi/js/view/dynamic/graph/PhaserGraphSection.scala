@@ -47,7 +47,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
   private var nodeContainer : GameObjects.Container = _
   private var labelContainer : GameObjects.Container = _
   private lazy val sceneHandler : types.scenes.CreateSceneFromObjectConfig =  types.scenes.callbacks(
-    preload = (scene) => labelRenders.foreach(_.onInit(scene)),
+    preload = scene => labelRenders.foreach(_.onInit(scene)),
     create = (scene, _) => {
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1

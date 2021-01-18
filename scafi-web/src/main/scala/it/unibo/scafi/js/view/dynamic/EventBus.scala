@@ -9,28 +9,30 @@ import scala.concurrent.Future
 
 
 /**
-  * A very minimalistic event bus used to intercomunication between dynamic section part.
+  * A very minimalistic event bus used to intercommunication between dynamic section part.
   * It used Monix subject to create this event bus. It is like actor in akka platform.
   */
 object EventBus {
   type Handler = PartialFunction[Any, Unit]
-  private[EventBus] val bus : PublishSubject[Any] = PublishSubject()
-  private[EventBus] val busObservable : Observable[Any] = bus.share(Execution.timeoutBasedScheduler)
+  private[EventBus] val bus: PublishSubject[Any] = PublishSubject()
+  private[EventBus] val busObservable: Observable[Any] = bus.share(Execution.timeoutBasedScheduler)
 
   /**
     * A functional way to manage events emits by some source
+    *
     * @param handler the handler called for each event
     * @return the cancellable future that can be used to stop listen aciton
     */
-  def listen(handler : Handler) : CancelableFuture[Unit] = {
+  def listen(handler: Handler): CancelableFuture[Unit] = {
     busObservable.filter(handler.isDefinedAt).foreach(handler)(Execution.timeoutBasedScheduler)
   }
 
   /**
     * Publish an event on the event bus
+    *
     * @param event the event published
     * @return a Future that is completed when the publish is done
     */
-  def publish(event : Any) : Future[Ack] = bus.onNext(event)
+  def publish(event: Any): Future[Ack] = bus.onNext(event)
 }
 

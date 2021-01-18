@@ -5,23 +5,23 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 resolvers += Resolver.typesafeRepo("releases")
 
 // Constants
-val scalaVersionsForCrossCompilation = Seq(/*"2.11.12",*/"2.12.2","2.13.1") //drop support for 2.11?
+val scalaVersionsForCrossCompilation = Seq(/*"2.11.12",*/ "2.12.2", "2.13.1") //drop support for 2.11?
 val akkaVersion = "2.5.32" // NOTE: Akka 2.4.0 REQUIRES Java 8! TODO check if it create conflicts
 val scalaTestVersion = "3.1.1"
 // Managed dependencies
-val akkaActor  = "com.typesafe.akka" %% "akka-actor"  % akkaVersion
+val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaHttp = "com.typesafe.akka" %% "akka-http" % "10.2.2"
 val akkaRemote = "com.typesafe.akka" %% "akka-remote" % akkaVersion
 val akkaStream = "com.typesafe.akka" %% "akka-stream" % akkaVersion
-val akkaLogging = "com.typesafe.akka" %% "akka-slf4j"  % akkaVersion
-val bcel       = "org.apache.bcel"   % "bcel"         % "6.4.1"
-val scalaLogging  = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
-val scalatest  = "org.scalatest"     %% "scalatest"   % scalaTestVersion % "test"
-val scopt      = "com.github.scopt"  %% "scopt"       % "4.0.0-RC2"
-val shapeless  = "com.chuusai"       %% "shapeless"   % "2.3.3"
-val playJson   = "com.typesafe.play" %% "play-json"   % "2.8.1"
+val akkaLogging = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
+val bcel = "org.apache.bcel" % "bcel" % "6.4.1"
+val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
+val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+val scopt = "com.github.scopt" %% "scopt" % "4.0.0-RC2"
+val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
+val playJson = "com.typesafe.play" %% "play-json" % "2.8.1"
 val scalafx = "org.scalafx" %% "scalafx" % "12.0.2-R18"
-val slf4jlog4  = "org.slf4j" % "slf4j-log4j12" % "1.7.26"
+val slf4jlog4 = "org.slf4j" % "slf4j-log4j12" % "1.7.26"
 val log4 = "log4j" % "log4j" % "1.2.17"
 
 // Determine OS version of JavaFX binaries
@@ -34,14 +34,14 @@ lazy val osName = System.getProperty("os.name") match {
 
 // JavaFX dependencies (Java 11)
 lazy val javaFXModules = Seq("base", "controls", "graphics", "media", "swing", "web")
-lazy val javaFX = if(scala.util.Try(jdkVersion.toInt).getOrElse(0) >= 11) {
-  javaFXModules.map(m => "org.openjfx" % s"javafx-$m" % (jdkVersion+".0.2") classifier osName)
+lazy val javaFX = if (scala.util.Try(jdkVersion.toInt).getOrElse(0) >= 11) {
+  javaFXModules.map(m => "org.openjfx" % s"javafx-$m" % (jdkVersion + ".0.2") classifier osName)
 } else {
   Seq()
 }
 
 lazy val javaVersion = System.getProperty("java.version").stripPrefix("openjdk")
-lazy val jdkVersion = javaVersion.split('.').headOption.getOrElse(if(javaVersion.isEmpty) "11" else javaVersion)
+lazy val jdkVersion = javaVersion.split('.').headOption.getOrElse(if (javaVersion.isEmpty) "11" else javaVersion)
 
 /*
  * - Leverage SONATYPE_USERNAME and SONATYPE_PASSWORD for authentication in Sonatype
@@ -61,8 +61,8 @@ inThisBuild(List(
     )
   ),
   developers := List(
-    Developer(id="metaphori", name="Roberto Casadei", email="roby.casadei@unibo.it", url=url("http://robertocasadei.apice.unibo.it")),
-    Developer(id="mviroli", name="Mirko Viroli", email="mirko.viroli@unibo.it", url=url("http://mirkoviroli.apice.unibo.it"))
+    Developer(id = "metaphori", name = "Roberto Casadei", email = "roby.casadei@unibo.it", url = url("http://robertocasadei.apice.unibo.it")),
+    Developer(id = "mviroli", name = "Mirko Viroli", email = "mirko.viroli@unibo.it", url = url("http://mirkoviroli.apice.unibo.it"))
   ),
   releaseEarlyWith := SonatypePublisher,
   //releaseEarlyEnableLocalReleases := true,
@@ -75,7 +75,7 @@ inThisBuild(List(
   pgpPublicRing := file("./.travis/local.pubring.asc"),
   pgpSecretRing := file("./.travis/local.secring.asc"),
   crossScalaVersions := scalaVersionsForCrossCompilation, // "2.13.0-M1"
-  scalaVersion :=  crossScalaVersions.value.head, // default version
+  scalaVersion := crossScalaVersions.value.head, // default version
 ))
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
@@ -93,22 +93,22 @@ lazy val commonSettings = Seq(
 )
 
 lazy val noPublishSettings = Seq(
-    publishArtifact := false,
-    publish := { },
-    publishLocal := { }
-  )
+  publishArtifact := false,
+  publish := {},
+  publishLocal := {}
+)
 
 lazy val scafi = project.in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .aggregate(core, commons, spala, distributed, simulator, `simulator-gui`, `renderer-3d`, `stdlib-ext`, `tests`, `demos`,
-   `simulator-gui-new`, `demos-new`, `demos-distributed`, `online-compiler`)
-  .settings(commonSettings:_*)
-  .settings(noPublishSettings:_*)
+    `simulator-gui-new`, `demos-new`, `demos-distributed`, `online-compiler`)
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings: _*)
   .settings(
     // Prevents aggregated project (root) to be published
     packagedArtifacts := Map.empty,
     crossScalaVersions := Nil, // NB: Nil to prevent double publishing!
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(tests,demos,`demos-new`,`demos-distributed`)
+    unidocProjectFilter in(ScalaUnidoc, unidoc) := inAnyProject -- inProjects(tests, demos, `demos-new`, `demos-distributed`)
   )
 
 lazy val commonsCross = crossProject(JSPlatform, JVMPlatform).in(file("commons"))
@@ -159,7 +159,7 @@ lazy val `simulator-gui` = project
   .settings(
     name := "scafi-simulator-gui",
     libraryDependencies ++= Seq(scopt),
-    compileScalastyle := { }
+    compileScalastyle := {}
   )
 
 lazy val `renderer-3d` = project
@@ -183,9 +183,9 @@ lazy val spala = project
     //crossScalaVersions := scalaVersionsForCrossCompilation.filter(!_.startsWith("2.13")),
     libraryDependencies ++= Seq(akkaActor, akkaRemote, bcel, scopt,
       scalaBinaryVersion.value match {
-        case "2.11" => "com.typesafe.play" %% "play-json"   % "2.6.9"
-        case "2.12" => "com.typesafe.play" %% "play-json"   % "2.8.1"
-        case "2.13" => "com.typesafe.play" %% "play-json"   % "2.8.1"
+        case "2.11" => "com.typesafe.play" %% "play-json" % "2.6.9"
+        case "2.12" => "com.typesafe.play" %% "play-json" % "2.8.1"
+        case "2.13" => "com.typesafe.play" %% "play-json" % "2.8.1"
       }
       , slf4jlog4, log4)
   )
@@ -214,7 +214,7 @@ lazy val demos = project
   .settings(noPublishSettings: _*)
   .settings(
     name := "scafi-demos",
-    compileScalastyle := { }
+    compileScalastyle := {}
   )
 
 lazy val `demos-distributed` = project
@@ -224,22 +224,22 @@ lazy val `demos-distributed` = project
   .settings(
     name := "scafi-demos-distributed",
     //crossScalaVersions := scalaVersionsForCrossCompilation.filter(!_.startsWith("2.13")),
-    compileScalastyle := { }
+    compileScalastyle := {}
   )
 
 lazy val `simulator-gui-new` = project
-  .dependsOn(core,simulator,distributed)
+  .dependsOn(core, simulator, distributed)
   .settings(commonSettings: _*)
   .settings(
     name := "simulator-gui-new",
     //crossScalaVersions := scalaVersionsForCrossCompilation.filter(!_.startsWith("2.13")),
-    libraryDependencies ++= Seq(scopt,scalatest,
+    libraryDependencies ++= Seq(scopt, scalatest,
       scalaBinaryVersion.value match {
         case "2.13" => "org.scalafx" %% "scalafx" % "12.0.2-R18"
         case _ => "org.scalafx" %% "scalafx" % "8.0.144-R12"
       }
     ) ++ javaFX,
-    compileScalastyle := { }
+    compileScalastyle := {}
   )
 
 lazy val `demos-new` = project
@@ -249,49 +249,50 @@ lazy val `demos-new` = project
   .settings(
     name := "scafi-demos-new",
     //crossScalaVersions := scalaVersionsForCrossCompilation.filter(!_.startsWith("2.13")),
-    compileScalastyle := { }
+    compileScalastyle := {}
   )
 lazy val `scafi-web` = project
-    .enablePlugins(ScalaJSBundlerPlugin)
-    .dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
-    .settings(
-      name := "scafi-web" ,
-      scalaJSUseMainModuleInitializer := true,
-      libraryDependencies ++= Seq(
-        "org.scala-js" %%% "scalajs-dom" % "1.0.0",
-        "org.scalatest"  %%% "scalatest"    % "3.2.0" % "test",
-        "com.lihaoyi" %%% "scalatags" % "0.9.1",
-        "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
-        "io.monix" %%% "monix-reactive" % "3.2.2",
-        "org.querki" %%% "jquery-facade" % "2.0"
-      ),
-      version in installJsdom := "12.0.0",
-      requireJsDomEnv in Test := true,
-      webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
-      npmDependencies in Compile ++= Seq(
-        "codemirror" -> "5.32.0",
-        "jquery" -> "3.5.1",
-        "bootstrap" -> "4.5.2",
-        "phaser" -> "3.24.1",
-        "simplebar" -> "6.0.0-beta.3"
-      ),
-      //webpack dependencies
-      npmDevDependencies in Compile ++= Seq(
-        "webpack-merge" -> "4.1.2",
-        "imports-loader" -> "0.8.0",
-        "expose-loader" -> "0.7.5",
-        "css-loader" -> "4.2.1",
-        "style-loader" -> "1.2.1"
-      ),
-      webpackConfigFile := Some(baseDirectory.value / "src" /"main" / "resources" / "dev.webpack.config.js"),
-      webpackConfigFile in Test := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),
-    )
+  .enablePlugins(ScalaJSBundlerPlugin)
+  .dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
+  .settings(
+    name := "scafi-web",
+    scalaJSUseMainModuleInitializer := true,
+    libraryDependencies ++= Seq(
+      "org.scala-js" %%% "scalajs-dom" % "1.0.0",
+      "org.scalatest" %%% "scalatest" % "3.2.0" % "test",
+      "com.lihaoyi" %%% "scalatags" % "0.9.1",
+      "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
+      "io.monix" %%% "monix-reactive" % "3.2.2",
+      "org.querki" %%% "jquery-facade" % "2.0"
+    ),
+    version in installJsdom := "12.0.0",
+    requireJsDomEnv in Test := true,
+    webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
+    npmDependencies in Compile ++= Seq(
+      "bootstrap" -> "4.5.2",
+      "codemirror" -> "5.32.0",
+      "@fortawesome/fontawesome-free" -> "5.15.2",
+      "jquery" -> "3.5.1",
+      "phaser" -> "3.24.1",
+      "simplebar" -> "6.0.0-beta.3"
+    ),
+    //webpack dependencies
+    npmDevDependencies in Compile ++= Seq(
+      "webpack-merge" -> "4.1.2",
+      "imports-loader" -> "0.8.0",
+      "expose-loader" -> "0.7.5",
+      "css-loader" -> "4.2.1",
+      "style-loader" -> "1.2.1"
+    ),
+    webpackConfigFile := Some(baseDirectory.value / "src" / "main" / "resources" / "dev.webpack.config.js"),
+    webpackConfigFile in Test := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),
+  )
 //allow to load the dependecies
 def runtimeProject(p: Project, scalaJSVersion: String): Project = {
   p.dependsOn(`scafi-web`).settings(
     libraryDependencies ++= Seq(
-      "org.scala-js"   %% "scalajs-library" % scalaJSVersion,
-      "org.scala-lang" % "scala-reflect"    % scalaVersion.value
+      "org.scala-js" %% "scalajs-library" % scalaJSVersion,
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
     ),
     crossScalaVersions := scalaVersionsForCrossCompilation
   )
@@ -308,15 +309,15 @@ lazy val `online-compiler` = project.
       case "reference.conf" => MergeStrategy.concat
       case y => MergeStrategy.first
     },
-    libraryDependencies ++= Seq("org.scala-js"   %% "scalajs-library" % scalaJSVersion,
-      "org.scala-js"   % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
-      "org.scala-js"   %% "scalajs-linker" % scalaJSVersion,
+    libraryDependencies ++= Seq("org.scala-js" %% "scalajs-library" % scalaJSVersion,
+      "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
+      "org.scala-js" %% "scalajs-linker" % scalaJSVersion,
       "io.get-coursier" %% "coursier" % "1.0.3",
       "com.lihaoyi" %% "upickle" % "0.4.4",
-      "io.get-coursier"   %% "coursier-cache"  % "1.0.3",
-      "org.apache.maven"  % "maven-artifact"   % "3.3.9",
-      "org.xerial.snappy" % "snappy-java"      % "1.1.2.6",
-      "org.xerial.larray" %% "larray"          % "0.4.0",
+      "io.get-coursier" %% "coursier-cache" % "1.0.3",
+      "org.apache.maven" % "maven-artifact" % "3.3.9",
+      "org.xerial.snappy" % "snappy-java" % "1.1.2.6",
+      "org.xerial.larray" %% "larray" % "0.4.0",
       "net.logstash.logback" % "logstash-logback-encoder" % "5.0", //logging
       "ch.qos.logback" % "logback-classic" % "1.2.3", //logging
       akkaLogging, akkaHttp, akkaActor, akkaStream
@@ -338,13 +339,13 @@ lazy val `online-compiler` = project.
            |""".stripMargin
       IO.write(file, contents)
       Seq(file)
-    } dependsOn(Compile / compile)).taskValue,
+    } dependsOn (Compile / compile)).taskValue,
     Compile / resourceGenerators += (Def.task {
       val major = scalaVersion.value.take(4) //works only for scala version > 10
       IO.listFiles(
         (LocalProject("scafi-web") / Compile / target).value / s"scala-${major}" / "scalajs-bundler" / "main"
       ).toSeq.filter(file => file.getName.contains("scafi-web-opt-bundle"))
-    } dependsOn(Compile / compile)).taskValue,
+    } dependsOn (Compile / compile)).taskValue,
     (Compile / compile) := ((compile in Compile) dependsOn (`scafi-web` / Compile / fullOptJS / webpack)).value,
     (Compile / resources) ++= Seq(
       (LocalProject("scafi-web") / Compile / packageBin).value,
