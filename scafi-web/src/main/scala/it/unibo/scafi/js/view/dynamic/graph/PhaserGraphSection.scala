@@ -49,7 +49,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
   private var nodeContainer : GameObjects.Container = _
   private var labelContainer : GameObjects.Container = _
   private lazy val sceneHandler : types.scenes.CreateSceneFromObjectConfig =  types.scenes.callbacks(
-    preload = (scene) => labelRenders.foreach(_.onInit(scene)),
+    preload = scene => labelRenders.foreach(_.onInit(scene)),
     create = (scene, _) => {
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
@@ -163,9 +163,11 @@ object PhaserGraphSection {
     * repaint the graph even if it is not changed.
     */
   object ForceRepaint
+
   //TODO here we need to use coordinate mapping to do the right job
   /**
     * bound of a new configuration
    */
   case class Bound(minX : Double, minY : Double, maxX : Double, maxY : Double)
 }
+
