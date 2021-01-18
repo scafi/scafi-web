@@ -131,13 +131,13 @@ object SkeletonPage {
       a(
         cls := "btn btn-outline-light mr-2 my-sm-0",
         href := "https://scafi.github.io/",
-//        i(cls := "bi bi-globe pr-2", aria.hidden := true),
+        i(cls := "fas fa-globe fa-lg pr-2", aria.hidden := true),
         "Website"
       ),
       a(
         cls := "btn btn-outline-light my-2 my-sm-0",
         href := "https://github.com/scafi/scafi",
-//        i(cls := "bi bi-github pr-2", aria.hidden := true),
+        i(cls := "fab fa-github fa-lg pr-2", aria.hidden := true),
         "Repository"
       )
     )

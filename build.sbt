@@ -269,9 +269,10 @@ lazy val `scafi-web` = project
     requireJsDomEnv in Test := true,
     webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
     npmDependencies in Compile ++= Seq(
-      "codemirror" -> "5.32.0",
-      "jquery" -> "3.5.1",
       "bootstrap" -> "4.5.2",
+      "codemirror" -> "5.32.0",
+      "@fortawesome/fontawesome-free" -> "5.15.2",
+      "jquery" -> "3.5.1",
       "phaser" -> "3.24.1",
       "simplebar" -> "6.0.0-beta.3"
     ),
