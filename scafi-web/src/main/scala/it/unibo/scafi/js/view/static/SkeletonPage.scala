@@ -116,8 +116,10 @@ object SkeletonPage {
     cls := "navbar navbar-dark flex-shrink-0 bg-secondary",
     span(
       cls := "navbar-brand",
-      h1(cls := "text-light", "Scafi")
+      h1(cls := "text-light", "Scafi"),
+      //      span(cls := "navbar-text ml-2", "Discover the power of the collective")
     ),
+    span(cls := "navbar-text ml-2", "Discover the power of the collective"),
     /*
     a(
       cls := "navbar-right nav-item btn btn-secondary",
@@ -126,9 +128,18 @@ object SkeletonPage {
     )
      */
     form(cls := "form-inline",
-      button(cls := "btn btn-outline-light mr-2 my-sm-0", "FAQ"),
-      button(cls := "btn btn-outline-light my-2 my-sm-0", "Repo"),
-      span(cls := "navbar-text ml-2", "Discover the power of the collective")
+      a(
+        cls := "btn btn-outline-light mr-2 my-sm-0",
+        href := "https://scafi.github.io/",
+//        i(cls := "bi bi-globe pr-2", aria.hidden := true),
+        "Website"
+      ),
+      a(
+        cls := "btn btn-outline-light my-2 my-sm-0",
+        href := "https://github.com/scafi/scafi",
+//        i(cls := "bi bi-github pr-2", aria.hidden := true),
+        "Repository"
+      )
     )
   )
 

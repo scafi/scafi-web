@@ -38,12 +38,6 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
   configuration.appendChild(container)
   SimpleBar.wrap(configuration)
 
-  def onRemoveSensor(sensor: SensorInputText): MouseEvent => Unit = _ => {
-    sensors = sensors.filterNot(_ == sensor)
-    init(getModeFromSelect(selectMode))
-  }
-
-
   sensors.foreach(sensor => sensor.closeButton.onclick = onRemoveSensor(sensor))
 
   addSensorButton.onclick = _ => {
@@ -64,7 +58,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
     lastConfiguration.copy(deviceShape = shape)
     evolve(lastConfiguration.copy(deviceShape = shape))
   }
-  private def onRemoveSensor(sensor : SensorInputText) : MouseEvent => Unit = ev => {
+  private def onRemoveSensor(sensor : SensorInputText) : MouseEvent => Unit = _ => {
     sensors = sensors.filterNot(_ == sensor)
     init(getModeFromSelect(selectMode))
   }
