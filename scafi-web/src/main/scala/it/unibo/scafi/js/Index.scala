@@ -1,11 +1,13 @@
 package it.unibo.scafi.js
 
+import it.unibo.scafi.js.code.{BasicExample, HighLevelExample, LibraryExample}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
+import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
@@ -130,7 +132,7 @@ object Index {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
+    val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ Textify())
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
@@ -152,6 +154,9 @@ object Index {
       }
       modal.show()
     }
+    EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
+    val example = Seq(BasicExample(), LibraryExample(), HighLevelExample())
+    val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
   }
 
   @JSExportTopLevel("ScafiBackend")

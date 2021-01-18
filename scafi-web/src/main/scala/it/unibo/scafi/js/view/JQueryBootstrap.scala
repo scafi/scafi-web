@@ -10,8 +10,12 @@ trait JQueryBootstrap extends JQuery {
   def modal(option: String): js.Any = js.native
 
   def popover(data: js.Object | String): js.Any = js.native
+
+  def selectpicker() : js.Any = js.native
 }
 
 object JQueryBootstrap {
+  import scala.language.implicitConversions
+
   implicit def fromJquery($: JQuery): JQueryBootstrap = $.asInstanceOf[JQueryBootstrap]
 }

@@ -1,17 +1,15 @@
 package it.unibo.scafi.js.view.dynamic
 
+import it.unibo.scafi.js.code.Example
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.{Javascript, Scala, ScalaEasy}
 import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Editor, EditorConfiguration}
 import it.unibo.scafi.js.facade.simplebar.SimpleBarConfig.ForceX
 import it.unibo.scafi.js.facade.simplebar.{SimpleBar, SimpleBarConfig}
-import it.unibo.scafi.js.utils.Execution
 import it.unibo.scafi.js.view.dynamic.EditorSection.Mode
 import org.querki.jquery.{$, JQuery, JQueryEventObject}
-import org.scalajs.dom.{document, html}
-import org.scalajs.dom.html.{Input, TextArea}
-
-import scala.scalajs.js
+import org.scalajs.dom.html
+import org.scalajs.dom.html.TextArea
 
 trait EditorSection {
   def setCode(code : String, mode : Mode)
@@ -67,7 +65,6 @@ object EditorSection {
 
   private class EditorSectionImpl(textArea : TextArea, examples: html.Select, codeExample : Map[String, String])
     extends EditorSection {
-    import scalatags.JsDom.all._
     var mode: Mode = ScalaModeEasy
     private val modeSelection = new ModeSelection("modeSelection")
     private lazy val popup : Modal = Modal.okCancel("Warning!", "The mode change will erase all your code, are you sure?",
@@ -85,7 +82,6 @@ object EditorSection {
     val editorConfiguration = new EditorConfiguration(mode.codeMirrorMode, "native", true, "material")
     private lazy val editor : Editor = CodeMirror.fromTextArea(textArea, editorConfiguration)
     new SimpleBar(textArea, new SimpleBarConfig(forceVisible = ForceX)).recalculate()
-    private val optionInSelect = codeExample.keys.map(key => option(value := key, key).render).toList
 
     this.setCode("", ScalaModeEasy)
     modeSelection.onClick(() => {
@@ -97,19 +93,7 @@ object EditorSection {
         popup.show()
       }
     })
-
-    optionInSelect.headOption.foreach( option => {
-      option.selected = true
-      editor.setValue(codeExample(option.value))
-    })
-
-    examples.onchange = _ => {
-      val option = optionInSelect(examples.selectedIndex)
-      editor.setValue(codeExample(option.value))
-    }
-
-    optionInSelect.foreach(option => examples.appendChild(option))
-
+    EventBus.listen { case Example(_, code, _) => this.setCode(code, ScalaModeEasy) }
     override def setCode(code: String, mode: Mode): Unit = {
       mode match {
         case ScalaModeEasy => modeSelection.off()
