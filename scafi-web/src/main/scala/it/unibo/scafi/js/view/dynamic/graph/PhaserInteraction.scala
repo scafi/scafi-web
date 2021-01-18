@@ -15,17 +15,17 @@ import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespac
 import it.unibo.scafi.js.facade.phaser.namespaces.input.KeyboardNamespace.{Key, KeyCodes}
 import it.unibo.scafi.js.utils._
 import it.unibo.scafi.js.view.dynamic.EventBus
+import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import it.unibo.scafi.js.view.static.Cursor
 import it.unibo.scafi.js.view.static.Cursor.Implicits._
 import org.scalajs.dom.ext.Color
-import NodeRepresentation._
-import NodeRepresentation._
+
 import scala.scalajs.js
 
 class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result])
   extends ((Scene, NodeDescriptionPopup, Container) => Unit) {
-  import KeyCodes._
   import InteractionState._
+  import KeyCodes._
   private var state : InteractionState = Idle
   private var rectangleSelection : Rectangle = _
   private var selectionContainer : Container = _
