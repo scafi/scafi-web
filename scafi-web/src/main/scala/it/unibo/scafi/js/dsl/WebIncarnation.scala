@@ -87,6 +87,7 @@ trait BasicWebIncarnation extends Incarnation
                             seeds: Seeds): NETWORK = {
         superReference.gridLike(gsettings, rng, lsnsMap, nsnsMap, seeds)
       }
+
     }
   }
 }
