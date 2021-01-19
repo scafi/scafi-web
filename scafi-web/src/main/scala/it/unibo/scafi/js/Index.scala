@@ -10,12 +10,13 @@ import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
-import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
+import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
 import monix.execution.Scheduler
 import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 /** Root object, it initialize the simulation, the page and the backend. */
@@ -156,6 +157,8 @@ object Index {
     }
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
     val example = Seq(BasicExample(), LibraryExample(), HighLevelExample())
+    //PageStructure.static()
+    PageStructure.resizable()
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
   }
 
