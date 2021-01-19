@@ -92,9 +92,11 @@ class PhaserGraphSection(paneSection : HTMLElement,
     val (gameCenterX, gameCenterY) = (game.canvas.width / 2.0, game.canvas.height / 2.0)
     scene.cameras.main.scrollX = - (gameCenterX - centerX)
     scene.cameras.main.scrollY = - (gameCenterY - centerY)
-    val zoomFactor = (game.canvas.height / height)
+    val zoomFactorHeight = (game.canvas.height / height)
+    val zoomFactorWidth = (game.canvas.width / width)
+    val zoomFactor = if(zoomFactorWidth < zoomFactorHeight) zoomFactorWidth else zoomFactorHeight
     val slack = if (zoomFactor > 1) cameraSlack else noSlack
-    scene.cameras.main.zoom = (game.canvas.height / height) + slack
+    scene.cameras.main.zoom = zoomFactor + slack
   }
 
   private def onSameGraph(graph : Graph, scene : Phaser.Scene) : Unit = ()
