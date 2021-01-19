@@ -49,6 +49,15 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   ".carousel-control" - (filter := "invert(1);")
 
+  ".gutter" -(
+    backgroundRepeat.noRepeat,
+    backgroundPosition := "50%"
+  )
+  ".gutter.gutter-horizontal" -(
+    height(contentHeight),
+    backgroundImage := "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=')"
+  )
+
   ".btn-floating-group" - (
 
   )

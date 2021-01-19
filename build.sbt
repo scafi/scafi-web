@@ -275,7 +275,8 @@ lazy val `scafi-web` = project
       "jquery" -> "3.5.1",
       "jquery-resizable-dom" -> "0.35.0",
       "phaser" -> "3.24.1",
-      "simplebar" -> "6.0.0-beta.3"
+      "simplebar" -> "6.0.0-beta.3",
+      "split.js" -> "1.6.2"
     ),
     //webpack dependencies
     npmDevDependencies in Compile ++= Seq(
