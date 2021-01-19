@@ -104,7 +104,6 @@ object Index {
     .andFinally(() => Cookie.store("visited", "true"))
 
   def scafiInitialization(): Unit = {
-
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)

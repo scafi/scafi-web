@@ -9,18 +9,15 @@ class ExampleChooser(examples: html.Select, exampleGroups : Seq[ExampleGroup], c
   private val optionGroups = exampleGroups.map(group => group.groupName -> optionInSelect(group.examples))
   private val options = optionGroups.flatMap(_._2)
   private def optionInSelect(examples : Seq[Example]) : List[html.Option] = examples.map(example => option(value := example.name, example.name).render).toList
-  optionGroups.headOption.flatMap { case (group, examples) => examples.headOption } foreach {
-    option => {
-      option.selected = true
-      loadExample(option.value)
-    }
-  }
+
+  examples.appendChild(option(value := "", selected, disabled, hidden, "Choose an example..").render)
   optionGroups.map { case (groupName, examples) => optgroup(attr("label") := groupName, examples).render }
     .foreach(group => examples.appendChild(group))
   examples.onchange = _ => {
-    val option = options(examples.selectedIndex)
+    val option = options(examples.selectedIndex - 1) //due the first option
     loadExample(option.value)
   }
+
   private def loadExample(name : String) : Unit = codeExample.find(_.name == name) match {
     case Some(code) => editor.setCode(code.body, ScalaModeEasy)
       config.updateDeviceShape(code.devices)
