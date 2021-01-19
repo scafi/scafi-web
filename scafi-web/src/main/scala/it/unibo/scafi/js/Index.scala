@@ -7,11 +7,10 @@ import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarn
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
-import it.unibo.scafi.js.view.dynamic.graph.{Interaction, PhaserGraphSection, PhaserInteraction}
+import it.unibo.scafi.js.view.dynamic.graph.{Interaction, PhaserGraphSection}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
 import monix.execution.Scheduler
-import org.querki.jquery.$
 import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
