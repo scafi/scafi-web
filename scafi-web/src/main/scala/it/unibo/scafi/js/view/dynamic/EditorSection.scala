@@ -63,7 +63,7 @@ object EditorSection {
     case JavascriptMode.lang => JavascriptMode
   }
 
-  private class EditorSectionImpl(textArea : TextArea, examples: html.Select, codeExample : Map[String, String])
+  private class EditorSectionImpl(textArea : TextArea)
     extends EditorSection {
     var mode: Mode = ScalaModeEasy
     private val modeSelection = new ModeSelection("modeSelection")
@@ -114,8 +114,8 @@ object EditorSection {
     override def getRaw(): String = editor.getValue()
   }
 
-  def apply(textArea : TextArea, examples: html.Select, codeExample : Map[String, String]) : EditorSection = {
-    new EditorSectionImpl(textArea, examples, codeExample)
+  def apply(textArea : TextArea) : EditorSection = {
+    new EditorSectionImpl(textArea)
   }
 
   class ModeSelection(id : String) {

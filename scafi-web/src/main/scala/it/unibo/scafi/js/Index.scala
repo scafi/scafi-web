@@ -3,12 +3,11 @@ package it.unibo.scafi.js
 import it.unibo.scafi.js.code.{BasicExample, HighLevelExample, LibraryExample}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.dsl.semantics._
+import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
-import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
 import monix.execution.Scheduler
 import org.querki.jquery.$
@@ -49,8 +48,7 @@ object Index {
     with SimulationExecutionPlatform
     with SimulationCommandInterpreter
 
-  lazy val editor: EditorSection =
-    EditorSection(SkeletonPage.editorSection, SkeletonPage.selectionProgram, programs)
+  lazy val editor: EditorSection = EditorSection(SkeletonPage.editorSection)
 
   @JSExport
   def main(args: Array[String]): Unit = {
@@ -62,28 +60,6 @@ object Index {
     }
     scafiInitialization()
   }
-
-  lazy val programs = Map(
-    "round counter" -> "rep(0)(_ + 1)",
-    "hello scafi" -> "\"hello scafi\"",
-    "gradient" ->
-      """// using StandardSensors
-        |rep(Double.PositiveInfinity) {
-        |  d => {
-        |    mux(sense[Boolean]("source")) { 0.0 } {
-        |    	foldhoodPlus(d)(Math.min)(nbr(d) + nbrRange())
-        |    }
-        |  }
-        |}
-        |""".stripMargin,
-    "channel" ->
-      """//using BlockG, StandardSensors
-        |def channel(source : Boolean, target : Boolean, width : Double) : Boolean = {
-        |  val threshold : Double = distanceBetween(source, target, nbrRange) + width
-        |  distanceTo(source, nbrRange) + distanceTo(target, nbrRange) < threshold
-        |}
-        |return channel(sense("source"), sense("obstacle"), 1)""".stripMargin
-  )
 
   def spaPage(): Unit = {
     document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withNav()).render)
