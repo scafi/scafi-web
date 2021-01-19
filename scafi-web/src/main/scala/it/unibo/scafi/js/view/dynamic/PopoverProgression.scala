@@ -38,7 +38,7 @@ object PopoverProgression {
 
       /** @inheritdoc */
       override def addNextPopover(attachTo: String, title: String, text: String, direction: Direction = Popover.Bottom): Builder = {
-        val nextBtn = button(cls := "btn btn-primary btn-sm ml-1 mr-1", `type` := "button", "OK").render
+        lazy val nextBtn = button(cls := "btn btn-primary btn-sm ml-1 mr-1", `type` := "button", "OK").render
         nextBtn.onclick = _ => popoverTour.stepForward()
         popoverTour.popovers = popoverTour.popovers :+ Popover(attachTo, data = div(
           p(text),

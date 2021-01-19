@@ -1,10 +1,13 @@
 package it.unibo.scafi.js.view.static
 
 import it.unibo.scafi.js.view.dynamic.{Popover, PopoverProgression}
+import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar
+import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar.{MoveModeFormValue, PanModeFormValue, PanMoveModeFormName}
 import it.unibo.scafi.js.view.static.CssSettings._
-import org.scalajs.dom.html.{Div, Select, TextArea}
+import org.scalajs.dom.html.{Div, Label, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalacss.ScalatagsCss._
+import scalatags.JsDom
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
@@ -87,78 +90,11 @@ object SkeletonPage {
   /**
     * Section in which is rendered the graph that represent the aggregate system.
     */
-  lazy val visualizationSection: Div = div(id := "visualization-pane", cls := "border border-secondary", tabindex := 0).render
-
-  // button group
-  /*lazy val panMoveMode: Div = div(
-    cls := "btn-toolbar",
-    role := "toolbar",
-    aria.label := "Change control mode",
-    div(
-      cls := "btn-group",
-      role := "group",
-      button(
-        id := "move-toggle",
-        `type` := "button",
-        `class` := "btn btn-primary",
-        i(cls := "fas fa-mouse-pointer fa-lg", aria.hidden := true),
-      ),
-      button(
-        id := "pan-toggle",
-        `type` := "button",
-        `class` := "btn btn-primary",
-        i(cls := "fas fa-hand-paper fa-lg", aria.hidden := true),
-      )
-    )
-  ).render*/
-
-  // toggle as button group
-  lazy val panMoveMode: Div = div(
-    cls := "btn-floating-group text-center pt-2",
-    div(
-      cls := "btn-group btn-group-toggle",
-      aria.label := "Change control mode",
-      label(
-        `class` := "btn btn-primary active",
-        input(`type` := "radio", name := "control-mode", id := "move-mode", autocomplete := "off", checked),
-        i(id := "move-toggle", cls := "fas fa-mouse-pointer fa-lg", aria.hidden := true),
-      ),
-      label(
-        `class` := "btn btn-primary",
-        input(`type` := "radio", name := "control-mode", id := "pan-mode", autocomplete := "off"),
-        i(id := "pan-toggle", cls := "fas fa-hand-paper fa-lg", aria.hidden := true),
-      )
-    )
+  lazy val visualizationSection: Div = div(
+    id := "visualization-pane",
+    cls := "border border-secondary",
+    tabindex := 0
   ).render
-
-  // toggle as button group
-  /*lazy val panMoveMode: Div =
-    div(
-      cls := "btn-group-fab",
-      role := "group",
-      aria.label := "Change control mode",
-      button(
-        `type` := "button",
-        `class` := "btn btn-main btn-primary has-tooltip",
-        data("placement") := "left",
-        title := "Menu",
-        i(`class` := "fa fa-bars")
-      ),
-      button(
-        `type` := "button",
-        `class` := "btn btn-sub btn-info has-tooltip",
-        data("placement") := "left",
-        title := "Pan",
-        i(`class` := "fa-hand-paper")
-      ),
-      button(
-        `type` := "button",
-        `class` := "btn btn-sub btn-info has-tooltip",
-        data("placement") := "left",
-        title := "Move",
-        i(`class` := "fas fa-mouse-pointer")
-      )
-    ).render*/
 
   /**
     * Section used to configure the backend (it is support specific)
@@ -191,13 +127,6 @@ object SkeletonPage {
       h1(cls := "text-light", "Scafi")
     ),
     span(cls := "navbar-text ml-2", "Discover the power of the collective"),
-    /*
-    a(
-      cls := "navbar-right nav-item btn btn-secondary",
-      href := "https://scafi.github.io/",
-      "Learn ScaFi on its website"
-    )
-     */
     form(cls := "form-inline",
       a(
         cls := "btn btn-outline-light mr-2 my-sm-0",
@@ -235,6 +164,45 @@ object SkeletonPage {
     controlsDiv,
     visualizationOptionDiv,
     visualizationSection,
-    panMoveMode
+    panMoveMode // todo
   )
+
+  lazy val selectModeButton: Label = label(
+//    `class` := "btn btn-secondary active",
+    `class` := "btn btn-secondary",
+    input(
+      `type` := "radio",
+      name := PanMoveModeFormName,
+      id := MoveModeFormValue,
+      value := MoveModeFormValue,
+//      checked := true
+    ),
+    i(id := "move-toggle", cls := "fas fa-mouse-pointer fa-lg", aria.hidden := true),
+  ).render
+
+  lazy val panModeButton: Label = label(
+    `class` := "btn btn-secondary active",
+//    `class` := "btn btn-secondary",
+    input(
+      `type` := "radio",
+      name := PanMoveModeFormName,
+      id := PanModeFormValue,
+      value := PanModeFormValue,
+      checked := true
+    ),
+    i(id := "pan-toggle", cls := "fas fa-hand-paper fa-lg", aria.hidden := true),
+  ).render
+
+  // toggle as button group
+  lazy val panMoveMode: Div = div(
+    cls := "btn-floating-group text-center pt-2",
+    div(
+      cls := "btn-group btn-group-toggle",
+      id := PanMoveModeFormName,
+      data("toggle") := "buttons",
+      aria.label := "Change control mode",
+      panModeButton,
+      selectModeButton
+    )
+  ).render
 }

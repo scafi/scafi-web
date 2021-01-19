@@ -7,7 +7,7 @@ import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarn
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
-import it.unibo.scafi.js.view.dynamic.graph.{Interaction, PhaserGraphSection}
+import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
 import monix.execution.Scheduler
@@ -127,13 +127,21 @@ object Index {
     .andFinally(() => Cookie.store("visited", "true"))
 
   def scafiInitialization(): Unit = {
-
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
+
     // dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
     val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
-    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection,
-      new Interaction.PhaserInteraction(support), visualizationSettingsSection, renders)
+    val interaction = new Interaction.PhaserInteraction(support)
+    val phaserRender = new PhaserGraphSection(
+      paneSection = SkeletonPage.visualizationSection,
+      interaction = interaction,
+      settings = visualizationSettingsSection,
+      labelRenders = renders
+    )
+    val viewControls = new InteractionBoundButtonBar(interaction)
+//    viewControls.render(SkeletonPage.panMoveMode)
+    viewControls.render(SkeletonPage.panModeButton, SkeletonPage.selectModeButton)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
     controls.render(support, editor, SkeletonPage.controlsDiv)
