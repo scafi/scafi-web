@@ -49,6 +49,15 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
   ".simplebar-scrollbar::before" - (backgroundColor(gray))
 
   ".carousel-control" - (filter := "invert(1);")
+
+  ".gutter" -(
+    backgroundRepeat.noRepeat,
+    backgroundPosition := "50%"
+  )
+  ".gutter.gutter-horizontal" -(
+    height(contentHeight),
+    backgroundImage := s"${StringIcon.horizontalDivider}"
+  )
 }
 
 object RootStyle extends StyleSheet.Standalone {

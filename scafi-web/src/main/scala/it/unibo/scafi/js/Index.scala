@@ -7,9 +7,9 @@ import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
-import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
-import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
+import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
+import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
 import monix.execution.Scheduler
 import org.scalajs.dom.experimental.URLSearchParams
 
@@ -131,6 +131,8 @@ object Index {
     }
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
     val example = Seq(BasicExample(), LibraryExample(), HighLevelExample())
+    //PageStructure.static()
+    PageStructure.resizable()
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
   }
 

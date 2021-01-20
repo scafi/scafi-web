@@ -1,5 +1,6 @@
 package it.unibo.scafi.js.view
 
+import it.unibo.scafi.js.utils.{Debug, GlobalStore}
 import scalacss.defaults.Exports
 import scalacss.internal.mutable.Settings
 
@@ -95,4 +96,13 @@ package object static {
   object JQueryResizable extends js.Any
 
   JQueryResizable
+
+  // Phaser lib
+  @js.native
+  @JSImport("split.js", JSImport.Namespace)
+  object Split extends Module {
+    override def default: js.Dynamic = js.native
+  }
+
+  Split
 }
