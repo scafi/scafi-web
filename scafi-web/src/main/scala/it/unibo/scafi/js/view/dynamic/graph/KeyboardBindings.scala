@@ -29,10 +29,11 @@ class KeyboardBindings(interaction: Interaction) {
 
   def init(scene: Scene): Unit = {
     this.scene = scene
-    val altKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
-    val ctrlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
-    altKey.on(DOWN, (_: Any, _: Any) => interaction.changeTo(Selection))
-    ctrlKey.on(DOWN, (_: Any, _: Any) => interaction.changeTo(Pan))
+    // todo remove
+//    val altKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
+//    val ctrlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
+//    altKey.on(DOWN, (_: Any, _: Any) => interaction.changeTo(Selection))
+//    ctrlKey.on(DOWN, (_: Any, _: Any) => interaction.changeTo(Pan))
     initSensorKeys()
   }
 

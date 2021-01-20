@@ -58,8 +58,8 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     onPointerUp()
     onMainContainerDrag()
     onMainContainerDrag()
-    controlKeyEvents()
-    altKeyEvents()
+//    controlKeyEvents() // todo remove
+//    altKeyEvents() // todo remove
     onToggle()
     onGameInOut()
   }
