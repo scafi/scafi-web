@@ -17,8 +17,19 @@ trait Editor extends js.Object {
   def getValue() : String = js.native
   def setValue(s : String) : js.Any = js.native
   def setOption(key : String, value : String) : js.Any = js.native
+  def doc : Doc
   /*TODO*/
 }
+
+@js.native
+trait Doc extends js.Object {
+  def getHistory() : History
+  def setHistory(history : History) : Unit
+  /*TODO*/
+}
+
+@js.native
+trait History extends js.Object { /* TODO */ }
 /*TODO enrich with more options*/
 class EditorConfiguration(val mode : String, val scrollbarStyle : String, val lineNumbers : Boolean, val theme : String) extends js.Object
 

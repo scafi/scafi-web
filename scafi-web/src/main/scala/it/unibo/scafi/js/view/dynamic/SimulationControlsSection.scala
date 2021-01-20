@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased}
-import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecutionPlatform}
+import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecutionPlatform, SupportConfiguration}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import monix.execution.Scheduler
@@ -24,19 +24,14 @@ class SimulationControlsSection {
   val tick: Button = button("tick", buttonClass, id := "tick-button").render
   var simulation : Option[SimulationExecution] = None
 
-  stopButton.onclick = _ => simulation match {
-    case Some(daemon: Daemon) => simulation = Some(daemon.stop().withBatchSize(rangeBatch.intValue))
-      stopButton.disabled = true
-      (tick :: startButton :: loadButton :: Nil) foreach { el => el.disabled = false }
-      (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = false }
-  }
+  stopButton.onclick = _ => stopCurrentSimulation()
 
   startButton.onclick = _ => simulation match {
     case Some(ticker : TickBased) =>
       val daemon = ticker.toDaemon(rangeDelta.intValue, rangeBatch.intValue)
       daemon.failed.onComplete {
         case Failure(exc) =>
-          ErrorModal.showError(exc.getMessage)
+          ErrorModal.showError(exc.toString)
           stopButton.click()
         case _ =>
       }
@@ -48,7 +43,7 @@ class SimulationControlsSection {
 
   tick.onclick = _ => simulation match {
     case Some(ticker: TickBased) => ticker.withBatchSize(rangeBatch.intValue).tick() onComplete {
-      case Failure(exc) => ErrorModal.showError(exc.getMessage)
+      case Failure(exc) => ErrorModal.showError(exc.toString)
       case _ =>
     }
     case _ =>
@@ -62,6 +57,7 @@ class SimulationControlsSection {
     (tick :: stopButton :: startButton :: Nil) foreach { el => el.disabled = true }
     EventBus.listen {
       case code@ScaFi(_) => loadScript(code)
+      case config : SupportConfiguration => stopCurrentSimulation()
     }
     loadButton.onclick = event => loadScript(editor.getScript())
 
@@ -70,20 +66,27 @@ class SimulationControlsSection {
       execution.loadScript(script).onComplete(result => {
         loader.loaded()
         result match {
-      case Success(ticker: TickBased) =>
-        simulation foreach clearSimulationExecution
-        simulation = Some(ticker)
-        (tick :: startButton :: Nil) foreach { el => el.disabled = false }
-      case Failure(e : AjaxException) if(e.xhr.status == 404) => ErrorModal.showError(s"Compilation service not found...")
+        case Success(ticker: TickBased) =>
+          simulation foreach clearSimulationExecution
+          simulation = Some(ticker)
+         (tick :: startButton :: Nil) foreach { el => el.disabled = false }
+        case Failure(e : AjaxException) if(e.xhr.status == 404) => ErrorModal.showError(s"Compilation service not found...")
         case Failure(e : AjaxException) => ErrorModal.showError(s"request error, code : ${e.xhr.status }\n${e.xhr.responseText}")
         case Failure(exception) => ErrorModal.showError(exception.toString)
       }})
     }
   }
 
-  private def clearSimulationExecution(execution: SimulationExecution) = execution match {
-    case ex: Daemon => ex.stop()
-    case _ =>
+  private def stopCurrentSimulation() : Unit = {
+    simulation = simulation.map(clearSimulationExecution)
+    stopButton.disabled = true
+    (tick :: startButton :: loadButton :: Nil) foreach { el => el.disabled = false }
+    (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = false }
+  }
+
+  private def clearSimulationExecution(execution: SimulationExecution) : SimulationExecution = execution match {
+    case ex: Daemon => ex.stop().withBatchSize(rangeBatch.intValue)
+    case a => a
   }
 
   private implicit class RichInput(input: Input) {

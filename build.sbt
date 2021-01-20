@@ -273,6 +273,7 @@ lazy val `scafi-web` = project
       "codemirror" -> "5.32.0",
       "@fortawesome/fontawesome-free" -> "5.15.2",
       "jquery" -> "3.5.1",
+      "jquery-resizable-dom" -> "0.35.0",
       "phaser" -> "3.24.1",
       "simplebar" -> "6.0.0-beta.3"
     ),
