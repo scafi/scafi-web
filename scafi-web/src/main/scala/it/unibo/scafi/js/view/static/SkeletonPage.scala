@@ -1,13 +1,11 @@
 package it.unibo.scafi.js.view.static
 
 import it.unibo.scafi.js.view.dynamic.{Popover, PopoverProgression}
-import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar
 import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar.{MoveModeFormValue, PanModeFormValue, PanMoveModeFormName}
 import it.unibo.scafi.js.view.static.CssSettings._
 import org.scalajs.dom.html.{Div, Label, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalacss.ScalatagsCss._
-import scalatags.JsDom
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
