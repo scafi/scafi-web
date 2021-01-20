@@ -39,23 +39,23 @@ trait Modal extends HtmlRenderable[Element] {
   def headerStyle: String = ""
 
   var onClose: MouseEvent => Unit = e => hide()
-
+  lazy val modalDialog : Element = div(
+    style := s"min-width: ${minBound}px",
+    cls := "modal-dialog",
+    role := "document",
+    div(
+      cls := "modal-content bg-secondary text-light",
+      div(cls := "modal-header", style := headerStyle, title, closeButton),
+      div(cls := "modal-body", style := bodyStyle, body),
+      div(cls := "modal-footer", style := footerStyle, footer)
+    )
+  ).render
   override lazy val html: Element = div(
     role := "dialog",
     cls := "modal",
     tabindex := "-1",
     id := this.modalId,
-    div(
-      style := s"min-width: ${minBound}px",
-      cls := "modal-dialog",
-      role := "document",
-      div(
-        cls := "modal-content bg-secondary text-light",
-        div(cls := "modal-header", style := headerStyle, title, closeButton),
-        div(cls := "modal-body", style := bodyStyle, body),
-        div(cls := "modal-footer", style := footerStyle, footer)
-      )
-    )
+    modalDialog
   ).render
 
   def appendOnRoot(): Unit = document.body.appendChild(html)

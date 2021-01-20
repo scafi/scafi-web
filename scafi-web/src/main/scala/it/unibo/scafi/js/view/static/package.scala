@@ -86,5 +86,13 @@ package object static {
   @js.native
   @JSImport("phaser", JSImport.Namespace)
   object PhaserGlobal extends js.Any //global import phaser
+
   PhaserGlobal
+
+  // Jquery Resizable
+  @js.native
+  @JSImport("jquery-resizable-dom/dist/jquery-resizable.min.js", JSImport.Namespace)
+  object JQueryResizable extends js.Any
+
+  JQueryResizable
 }
