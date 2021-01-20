@@ -12,20 +12,26 @@ case class CarouselModal(carousel: CarouselContent, minBound: Double, innerHeigh
   override val title = h6(cls := "modal-tile").render
   val resizeId: String = modalId + "icon"
   val carouselId: String = "controls-modal"
+  val carouselInnerId : String = "inner-carousel"
   private val carouselInner = div(
     cls := "carousel-inner overflow-auto",
+    id := carouselInnerId,
     style := s"height : ${innerHeight}px",
     carousel.contents.map(_.html)
   ).render
+
+  private lazy val resizableIcon: Div = div(
+    id := resizeId,
+  ).render
+
   private val carouselSection: Div = div(
     attr("data-interval") := "false",
     cls := "carousel slide",
     id := carouselId,
-    carouselInner
+    carouselInner,
+    resizableIcon
   ).render
-  private val resizableIcon: Div = div(
-    id := resizeId,
-  ).render
+
 
   resizableIcon.style =
     s"""cursor: nwse-resize;
@@ -47,7 +53,7 @@ case class CarouselModal(carousel: CarouselContent, minBound: Double, innerHeigh
   private val prevSlide = a(cls := "carousel-control", href := s"#${carouselId}", role := "button", attr("data-slide") := "prev",
     span(cls := "carousel-control-prev-icon")
   )
-  private val innerModal = ZeroPaddingModal(title, Seq(carouselSection, resizableIcon), Seq(prevSlide.render, nextSlide.render), minBound)
+  private val innerModal = ZeroPaddingModal(title, Seq(carouselSection), Seq(prevSlide.render, nextSlide.render), minBound)
   override lazy val modalDialog: Element = innerModal.modalDialog
   override lazy val html: Element = innerModal.html
 

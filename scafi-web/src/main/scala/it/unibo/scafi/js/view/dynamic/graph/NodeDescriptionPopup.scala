@@ -51,7 +51,7 @@ object NodeDescriptionPopup {
       selectedId = None
     }
 
-    $(s"#${modal.carouselId}").resizable(js.Dynamic.literal(
+    $(s"#${modal.carouselInnerId}").resizable(js.Dynamic.literal(
       "handleSelector" -> s"#${modal.resizeId}",
       "onDrag" -> this.onDragHandler
     ))
