@@ -4,34 +4,51 @@ import it.unibo.scafi.js.facade.simplebar.SimpleBar
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.dynamic.CarouselModal._
 import it.unibo.scafi.js.view.dynamic.Modal.ZeroPaddingModal
+import it.unibo.scafi.js.view.static.StringIcon
 import org.scalajs.dom.html.{Div, Element, LI, UList}
 import scalatags.JsDom.all._
 
-case class CarouselModal(carousel: CarouselContent, minBound : Double, innerHeight : Int) extends Modal {
+case class CarouselModal(carousel: CarouselContent, minBound: Double, innerHeight: Int) extends Modal {
   override val title = h6(cls := "modal-tile").render
+  val resizeId: String = modalId + "icon"
+  val carouselId: String = "controls-modal"
   private val carouselInner = div(
     cls := "carousel-inner overflow-auto",
     style := s"height : ${innerHeight}px",
     carousel.contents.map(_.html)
   ).render
-  private val carouselSection : Div = div(
+  private val carouselSection: Div = div(
     attr("data-interval") := "false",
     cls := "carousel slide",
-    id := "carouselPopup",
+    id := carouselId,
     carouselInner
   ).render
+  private val resizableIcon: Div = div(
+    id := resizeId,
+  ).render
+
+  resizableIcon.style =
+    s"""cursor: nwse-resize;
+       |touch-action: none;
+       |height: 10px;
+       |position: relative;
+       |margin-right: 5px;
+       |float: right;
+       |background-repeat: no-repeat;
+       |width: 20px;
+       |background-image: ${StringIcon.verticalDivider}
+       |""".stripMargin
 
   private val nextSlide = a(
-    cls := "carousel-control",href := "#carouselPopup", role := "button", attr("data-slide") := "next",
-    span( cls := "carousel-control-next-icon")
+    cls := "carousel-control", href := s"#${carouselId}", role := "button", attr("data-slide") := "next",
+    span(cls := "carousel-control-next-icon")
   )
 
-  private val prevSlide = a(cls := "carousel-control", href := "#carouselPopup", role := "button", attr("data-slide") := "prev",
-    span( cls := "carousel-control-prev-icon")
+  private val prevSlide = a(cls := "carousel-control", href := s"#${carouselId}", role := "button", attr("data-slide") := "prev",
+    span(cls := "carousel-control-prev-icon")
   )
-
-  private val innerModal = ZeroPaddingModal(title, Seq(carouselSection), Seq(prevSlide.render, nextSlide.render), minBound)
-
+  private val innerModal = ZeroPaddingModal(title, Seq(carouselSection, resizableIcon), Seq(prevSlide.render, nextSlide.render), minBound)
+  override lazy val modalDialog: Element = innerModal.modalDialog
   override lazy val html: Element = innerModal.html
 
   innerModal.onClose = (e => this.onClose(e))
