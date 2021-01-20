@@ -1,6 +1,7 @@
 package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
+import it.unibo.scafi.js.utils.Tree
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.dynamic.CarouselModal._
 import it.unibo.scafi.js.view.dynamic.Modal.ZeroPaddingModal
@@ -86,6 +87,26 @@ object CarouselModal {
     }
 
     def listItemFromString(value : String) : LI = li(cls := "list-group-item bg-secondary", value).render
+  }
+
+  case class ContentTree() extends HtmlRenderable[UList] {
+    private val listContent =  ul(cls :="tree-list", style := "white-space : nowrap").render
+    override def html: UList = listContent
+
+    def refreshContents(contents : Tree[String, String]) : Unit = {
+      listContent.innerHTML = ""
+      append(contents, listContent)
+    }
+
+    private def append(node : Tree[String, String], ul : UList) : Unit = {
+      ul.appendChild(listItemFromString(s"${node.key} -> ${node.data}"))
+      val childrenUl = node.children.map(child => child -> createUl())
+      childrenUl.foreach { case (tree, ul) => append(tree, ul) }
+      childrenUl.foreach { case (_, childUl) => ul.appendChild(childUl)}
+    }
+    def listItemFromString(value : String) : LI = li(value).render
+
+    private def createUl() : UList = ul(cls :="nested", style := "white-space : nowrap").render
   }
 }
 
