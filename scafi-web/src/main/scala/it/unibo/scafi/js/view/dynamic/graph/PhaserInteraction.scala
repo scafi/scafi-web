@@ -112,15 +112,15 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
         case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grabbing
         case _ =>
       })
-      mainContainer.on(DRAG, dragMoveworldFunction)
-      mainContainer.on(DRAG_END, (_: Any, pointer: Pointer) => state match {
+      mainContainer.on(DRAG, dragMoveWorldFunction)
+      mainContainer.on(DRAG_END, (_: Any, _: Pointer) => state match {
         case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grab
         case _ =>
       })
     case _ =>
   }
 
-  private val dragMoveworldFunction: Handler4[Transform] = (obj: Transform, pointer: Pointer, dragX: JSNumber, dragY: JSNumber, _: Any) => state match {
+  private val dragMoveWorldFunction: Handler4[Transform] = (obj: Transform, pointer: Pointer, dragX: JSNumber, dragY: JSNumber, _: Any) => state match {
     case MoveWorld => obj.setPosition(dragX, dragY)
     case OnSelection =>
       rectangleSelection.setSize(pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)

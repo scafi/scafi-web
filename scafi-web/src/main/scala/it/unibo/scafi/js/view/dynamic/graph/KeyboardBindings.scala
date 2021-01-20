@@ -40,8 +40,9 @@ class KeyboardBindings(interaction: Interaction) {
   private def initSensorKeys(): Unit = {
     this.scene.foreach(scene => {
       keys.foreach(scene.input.keyboard.get.removeKey(_, destroy = true))
-      keys.zip(sensors).
-        map { case (key, name) => name -> scene.input.keyboard.get.addKey(key) }
+      keys
+        .zip(sensors)
+        .map { case (key, name) => name -> scene.input.keyboard.get.addKey(key) }
         .foreach { case (sensor, key) => key.on(DOWN, onClickDown(sensor)) }
     })
   }
