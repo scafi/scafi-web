@@ -7,10 +7,10 @@ import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
-import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
+import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection, PhaserInteraction}
+import it.unibo.scafi.js.view.dynamic.graph.LabelRender.{BooleanExport, BooleanRender, LabelRender, TextifyBitmap}
 import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
 import monix.execution.Scheduler
-import org.querki.jquery.$
 import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
@@ -105,10 +105,20 @@ object Index {
 
   def scafiInitialization(): Unit = {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
+
     // dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
     val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
-    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
+    val interaction = new Interaction.PhaserInteraction(support)
+    val phaserRender = new PhaserGraphSection(
+      paneSection = SkeletonPage.visualizationSection,
+      interaction = interaction,
+      settings = visualizationSettingsSection,
+      labelRenders = renders
+    )
+    val viewControls = new InteractionBoundButtonBar(interaction)
+//    viewControls.render(SkeletonPage.panMoveMode)
+    viewControls.render(SkeletonPage.panModeButton, SkeletonPage.selectModeButton)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
     controls.render(support, editor, SkeletonPage.controlsDiv)
