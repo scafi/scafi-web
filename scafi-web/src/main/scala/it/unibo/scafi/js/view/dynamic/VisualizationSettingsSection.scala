@@ -4,8 +4,8 @@ import it.unibo.scafi.js.controller.local.{SimulationSupport, SupportConfigurati
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
-import org.scalajs.dom.html.Div
-import scalatags.JsDom.all._
+import org.scalajs.dom.html.{Anchor, Div, Span}
+import scalatags.JsDom.all.{cls, _}
 
 import scala.scalajs.js
 
@@ -20,16 +20,21 @@ trait VisualizationSettingsSection {
 }
 
 object VisualizationSettingsSection {
-  def apply(settingDiv: Div): VisualizationSettingsSection = new VisualizationSettingsSectionImpl(settingDiv)
 
-  private class VisualizationSettingsSectionImpl(settingDiv: Div) extends VisualizationSettingsSection {
-    private val sensorSpan = span(cls := "collapse", id := "sensorsSpan").render
-    private val sensorButton = a(
-      cls := "btn btn-primary btn-sm mr-2 mt-1",
-      attr("data-toggle") := "collapse",
-      href := "#sensorsSpan",
-      "sensors"
-    )
+  def apply(settingDiv: Div,
+            sensorSpan: Span = span(cls := "collapse", id := "sensorsSpan").render,
+            sensorButton: Anchor = a(
+              cls := "btn btn-primary btn-sm mr-2 mt-1",
+              attr("data-toggle") := "collapse",
+              href := "#sensorsSpan",
+              "sensors"
+            ).render): VisualizationSettingsSection =
+    new VisualizationSettingsSectionImpl(settingDiv, sensorSpan, sensorButton)
+
+  private class VisualizationSettingsSectionImpl(settingDiv: Div,
+                                                 private val sensorSpan: Span,
+                                                 private val sensorButton: Anchor)
+    extends VisualizationSettingsSection {
     private var sensors: js.Dictionary[CheckBox] = js.Dictionary()
     private val idEnabledSection = CheckBox("id")
     private val neighbourhoodSection = CheckBox("neighborhood")
