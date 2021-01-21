@@ -34,8 +34,8 @@ object VisualizationSettingsSection {
     def neighbourhoodEnabled: Boolean = neighbourhoodSection.enabled
 
     def anyLabelEnabled: Boolean = sensors.exists { case (_, checkBox) => checkBox.enabled } || idEnabled
-
-    def sensorEnabled(name: String): Boolean = sensors.get(name).fold(false)(_.enabled)
+    //TODO FIX
+    def sensorEnabled(name: String): Boolean = name == "matrix" || sensors.get(name).fold(false)(_.enabled)
 
     EventBus.listen {
       case SupportConfiguration(_, _, device, _, _) => sensorSpan.textContent = ""

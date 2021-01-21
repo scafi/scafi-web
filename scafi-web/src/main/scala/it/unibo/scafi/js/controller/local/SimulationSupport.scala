@@ -9,6 +9,8 @@ import it.unibo.scafi.space.Point3D
 import monix.execution.Cancelable
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
+import org.scalajs.dom.ext.Color
+
 import scala.concurrent.Future
 //TODO make support more general
 /**
@@ -48,7 +50,7 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)
       case _ => throw new IllegalArgumentException("configuration not supported")
     }
     config.deviceShape.sensors.foreach { case (sensorName, value) => backend.addSensor(sensorName, value) }
-
+    backend.addSensor("matrix", MatrixLed.fill(4, Color.Black)) //todo move away from here
     for ((id, sensorValues) <- config.deviceShape.initialValues) {
       for ((sensorName, sensorValue) <- sensorValues) {
         backend.chgSensorValue(sensorName, Set(id), sensorValue)

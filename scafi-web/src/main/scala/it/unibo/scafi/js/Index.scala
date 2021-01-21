@@ -3,6 +3,7 @@ package it.unibo.scafi.js
 import it.unibo.scafi.js.code.{BasicExample, HighLevelExample, LibraryExample}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
+import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.{Cookie, Execution}
@@ -107,7 +108,7 @@ object Index {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
+    val renders: Seq[LabelRender] = Seq(MatrixLedRender(), TextifyBitmap())
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
@@ -134,8 +135,18 @@ object Index {
     //PageStructure.static()
     PageStructure.resizable()
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
+    EventBus.publish(ScaFi(new incarnation.AggregateProgram with incarnation.BlockG  with incarnation.StandardSensors {
+      override def main(): Any = {
+        def source : Boolean = sense("source")
+        def target : Boolean = sense("target")
+        def channel(source: Boolean, target: Boolean, width: Double): Boolean = {
+          distanceTo(source) + distanceTo(target) <= distanceBetween(source, target) + width
+        }
+        val channelWidth = 1
+        channel(source, target, channelWidth)
+      }
+    }))
   }
-
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)
 }

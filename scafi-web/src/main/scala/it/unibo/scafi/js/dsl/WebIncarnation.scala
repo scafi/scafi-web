@@ -6,7 +6,6 @@ import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.lib.StandardLibrary
 import it.unibo.scafi.simulation.SpatialSimulation
 import it.unibo.scafi.space.Point2D
-import it.unibo.scafi.time.BasicTimeAbstraction
 import it.unibo.utils.{Interop, Linearizable}
 
 import scala.collection.mutable
@@ -14,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 trait BasicWebIncarnation extends Incarnation
-  with SpatialSimulation with StandardLibrary {
+  with SpatialSimulation with StandardLibrary with ActuationLib {
   import Builtins.Bounded
   override implicit val idBounded: Bounded[ID] = Builtins.Bounded.of_s
   override type LSNS = String
