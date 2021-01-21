@@ -18,7 +18,7 @@ class Loader(element : Element) {
   loader.style.position = "absolute"
   loader.style.top = "40%"
   loader.style.right = "50%"
-  loader.style.zIndex = "1" //over the background
+  loader.style.zIndex = "100" //over the background
   element.appendChild(loader)
   element.appendChild(backgroundLoader)
   loaded()

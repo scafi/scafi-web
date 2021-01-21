@@ -8,7 +8,7 @@ import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.model.{Graph, Node}
-import it.unibo.scafi.js.utils.JSNumber
+import it.unibo.scafi.js.utils.{Debug, JSNumber}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.{Bound, ForceRepaint}
 import it.unibo.scafi.js.view.dynamic.{EventBus, VisualizationSettingsSection}
@@ -53,7 +53,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
     create = (scene, _) => {
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
-
+      Debug("scene", scene)
       vertexContainer = scene.add.container(0, 0)
       labelContainer = scene.add.container(0, 0)
       nodeContainer = scene.add.container(0, 0)
@@ -89,7 +89,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
     val (width, height) = (maxX - minX, maxY - minY)
     val (halfWidth, halfHeight) = (width / 2, height / 2)
     val (centerX, centerY) = (halfWidth + minX, halfHeight + minY)
-    val (gameCenterX, gameCenterY) = (game.canvas.width / 2.0, game.canvas.height / 2.0)
+    val (gameCenterX, gameCenterY) = (game.canvas.parentElement.offsetWidth / 2.0, game.canvas.parentElement.offsetHeight / 2.0)
     scene.cameras.main.scrollX = - (gameCenterX - centerX)
     scene.cameras.main.scrollY = - (gameCenterY - centerY)
     val zoomFactorHeight = (game.canvas.height / height)
