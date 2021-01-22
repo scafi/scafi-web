@@ -3,19 +3,18 @@ package it.unibo.scafi.js
 import it.unibo.scafi.js.code.{BasicExample, HighLevelExample, LibraryExample}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
+import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
-import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.{BooleanExport, BooleanRender, LabelRender, TextifyBitmap}
+import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection}
 import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
 import monix.execution.Scheduler
 import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
-import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 /** Root object, it initialize the simulation, the page and the backend. */

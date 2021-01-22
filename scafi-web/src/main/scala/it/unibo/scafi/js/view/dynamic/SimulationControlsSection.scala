@@ -80,7 +80,10 @@ class SimulationControlsSection {
   private def stopCurrentSimulation() : Unit = {
     simulation = simulation.map(clearSimulationExecution)
     stopButton.disabled = true
-    (tick :: startButton :: loadButton :: Nil) foreach { el => el.disabled = false }
+    if(simulation.nonEmpty) {
+      startButton.disabled = false
+    }
+    (tick :: loadButton :: Nil) foreach { el => el.disabled = false }
     (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = false }
   }
 

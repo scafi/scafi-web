@@ -5,15 +5,15 @@ import it.unibo.scafi.js.facade.phaser.Phaser.{Input, Scene}
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, GameObject}
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace.Transform
 import it.unibo.scafi.js.model.Node
-import it.unibo.scafi.js.view.dynamic.CarouselModal.{CarouselContent, CarouselItem, ContentList}
+import it.unibo.scafi.js.view.dynamic.CarouselModal.{CarouselContent, CarouselItem, ContentList, ContentTree}
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
 import it.unibo.scafi.js.view.dynamic.{CarouselModal, EventBus}
 import org.scalajs.dom.raw.MouseEvent
 import NodeRepresentation._
 import it.unibo.scafi.js.facade.phaser.namespaces.input.InputEventsNamespace.{DRAG, POINTER_DOWN}
-import it.unibo.scafi.js.utils.Debug
+import it.unibo.scafi.js.utils.{Debug, Tree}
 import it.unibo.scafi.js.view.JQueryBootstrap.fromJquery
-import org.querki.jquery.$
+import org.querki.jquery.{$, JQuery}
 import scalatags.JsDom.all.s
 
 import scala.scalajs.js
@@ -30,12 +30,14 @@ object NodeDescriptionPopup {
   def apply(container: Container, scene : Scene) : NodeDescriptionPopup = new NodeDescriptionPopupImpl(container, scene)
 
   private class NodeDescriptionPopupImpl(container: Container, scene : Scene) extends NodeDescriptionPopup {
+    type Path = BasicWebIncarnation#Path
+    type Export = BasicWebIncarnation#EXPORT
     private val width = 200
     private val heigth = 150
     var selectedId : Option[String] = None
     private val sensorList = ContentList()
-    private val exportList = ContentList()
-    private val carouselContent = CarouselContent(CarouselItem(sensorList, true), CarouselItem(exportList))
+    private val exportTree = ContentTree()
+    private val carouselContent = CarouselContent(CarouselItem(sensorList, true), CarouselItem(exportTree))
     private val modal = CarouselModal(carouselContent, width, heigth)
     modal.html.removeAttribute("class") //otherwise, it isn't visible in phase
     modal.html.setAttribute("width", width.toString) //otherwise doesn't work the horizontal scroll
@@ -61,14 +63,21 @@ object NodeDescriptionPopup {
       val sensorsContent = node.labels
         .map { case (name, value) => name -> LabelRender.normalizeValue(value) }
         .map { case (name, value) => s"$name : $value"}
-      val exportsContent = node.labels.collect { case (name, value : BasicWebIncarnation#EXPORT) => value }
-        .flatMap(value => value.paths.toSeq.sortBy(_._1.toString))
-        .map { case (path, value) => s"${path.toString} -> $value"}
 
+      val exports =  node.labels.collect { case (name, value : Export) => value }
+        .flatMap(value => value.paths.toSeq)
+
+      val exportsTreeMap = exports
+        .filter(! _._1.isRoot)
+        .map { case (path, value) => path.pull() -> (path, value) }
+        .groupBy(_._1)
+        .mapValues(paths => paths.map(_._2))
+
+      val root = exports.find(_._1.isRoot)
+
+      exportTree.refreshContents(buildTreeFrom(root, exportsTreeMap))
       sensorList.refreshContents(sensorsContent)
-      exportList.refreshContents(exportsContent)
     }
-
     def focusOn(node : Transform with GameObject) : Unit = {
       gameElement.x = node.x
       gameElement.y = node.y
@@ -79,15 +88,24 @@ object NodeDescriptionPopup {
 
     private def updateTitle(title : String) = modal.title.innerHTML = title
 
-    lazy val onDragHandler = (e : Any, el : JQueryElement, newWidth : Double, newHeight : Double, opt : Any) =>  {
+    lazy val onDragHandler = (e : Any, el : JQuery, newWidth : Double, newHeight : Double, opt : Any) =>  {
       el.width(if (newWidth < width) width else newWidth)
       el.height(if(newHeight < heigth) heigth else newHeight)
       false
     }
 
-    trait JQueryElement extends js.Any {
-      def width(value : Double)
-      def height(value : Double)
+    private def buildTreeFrom(root : Option[(Path, Any)],
+                              map : Map[Path, Iterable[(Path, Any)]]) : Tree[String, String] = root match {
+      case Some(node) =>
+        Tree.fromMap[Path, Any](node, map)
+          .map[String, String] { case (k, v) => pathToString(k) -> v.toString }
+      case None => Tree[String, String]("root", "no data", Seq.empty)
+    }
+
+    private def pathToString(path : Path) : String = if(path.isRoot) {
+      "P:/"
+    } else {
+      path.head.toString + "/"
     }
   }
 }

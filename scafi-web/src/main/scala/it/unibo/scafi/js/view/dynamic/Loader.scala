@@ -14,11 +14,12 @@ class Loader(element : Element) {
   backgroundLoader.style.position = "absolute"
   backgroundLoader.style.top = "0%"
   backgroundLoader.style.right = "0%"
+  backgroundLoader.style.zIndex = "10"
 
+  loader.style.zIndex = "100" //over the background
   loader.style.position = "absolute"
   loader.style.top = "40%"
   loader.style.right = "50%"
-  loader.style.zIndex = "1" //over the background
   element.appendChild(loader)
   element.appendChild(backgroundLoader)
   loaded()

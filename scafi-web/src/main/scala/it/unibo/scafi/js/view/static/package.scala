@@ -105,4 +105,13 @@ package object static {
   object JQueryResizable extends js.Any
 
   JQueryResizable
+
+  // Phaser lib
+  @js.native
+  @JSImport("split.js", JSImport.Namespace)
+  object Split extends Module {
+    override def default: js.Dynamic = js.native
+  }
+
+  Split
 }

@@ -49,19 +49,14 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   ".carousel-control" - (filter := "invert(1);")
 
-  ".gutter" - (
+  ".gutter" -(
     backgroundRepeat.noRepeat,
     backgroundPosition := "50%"
   )
-
-  ".gutter.gutter-horizontal" - (
+  ".gutter.gutter-horizontal" -(
     height(contentHeight),
-    backgroundImage := "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==')"
+    backgroundImage := s"${StringIcon.horizontalDivider}"
   )
-
-//  ".dropdown-menu" - (
-//    backgroundColor(gray)
-//  )
 }
 
 object RootStyle extends StyleSheet.Standalone {
@@ -82,9 +77,9 @@ object RootStyle extends StyleSheet.Standalone {
     val measure = Measure(
       navHeight = nav vh,
       pageContentHeight = (maxVh - nav) vh,
-      contentHeight = 86 vh,
-      visualizationHeight = (76 - bottomBar) vh,
-      editorHeight = 81 vh,
+      contentHeight = 88 vh,
+      visualizationHeight = (78 - bottomBar) vh,
+      editorHeight = 83 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
     )
@@ -95,9 +90,9 @@ object RootStyle extends StyleSheet.Standalone {
     val measure = Measure(
       navHeight = 0 vh,
       pageContentHeight = maxVh vh,
-      contentHeight = 96 vh,
-      visualizationHeight = (86 - bottomBar) vh,
-      editorHeight = 91 vh,
+      contentHeight = 98 vh,
+      visualizationHeight = (88 - bottomBar) vh,
+      editorHeight = 93 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
     )
