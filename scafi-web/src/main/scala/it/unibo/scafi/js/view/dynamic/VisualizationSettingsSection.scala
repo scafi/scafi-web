@@ -1,7 +1,5 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.facade.simplebar.SimpleBar
-import org.querki.jquery.$
 import org.scalajs.dom.html.Div
 
 trait VisualizationSettingsSection {
@@ -21,8 +19,8 @@ object VisualizationSettingsSection {
 
   private class VisualizationSettingsSectionImpl(settingDiv: Div, override val sensorsMenu: SensorsMenu)
     extends VisualizationSettingsSection {
-    private val idEnabledSection = CheckBox("id")
-    private val neighbourhoodSection = CheckBox("neighborhood")
+    private val idEnabledSection = new CheckBox("id")
+    private val neighbourhoodSection = new CheckBox("neighborhood")
 
     override def idEnabled: Boolean = idEnabledSection.enabled
 
@@ -35,7 +33,10 @@ object VisualizationSettingsSection {
     settingDiv.appendChild(idEnabledSection.html)
     settingDiv.appendChild(neighbourhoodSection.html)
     settingDiv.appendChild(sensorsMenu.html)
-    new SimpleBar(settingDiv)
-    $(s"#${settingDiv.id} .simplebar-content").addClass("form-inline")
+//    new SimpleBar(settingDiv)
+//    if (!$(s"#${settingDiv.id} .simplebar-content").hasClass("form-inline")) {
+//      $(s"#${settingDiv.id} .simplebar-content").addClass("form-inline")
+//    }
   }
+
 }

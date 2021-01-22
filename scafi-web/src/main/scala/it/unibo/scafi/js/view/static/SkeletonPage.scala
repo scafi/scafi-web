@@ -84,7 +84,7 @@ object SkeletonPage {
   /**
     * Section that contains the controls to manage the visualization, it is support specific.
     */
-  lazy val visualizationOptionDiv: Div = div(id := "visualization-option").render
+  lazy val visualizationOptionDiv: Div = div(id := "visualization-option", `class` := "form-inline").render
   /**
     * Section in which is rendered the graph that represent the aggregate system.
     */

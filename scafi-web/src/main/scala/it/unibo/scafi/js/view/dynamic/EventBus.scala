@@ -7,7 +7,6 @@ import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.Future
 
-
 /**
   * A very minimalistic event bus used to intercommunication between dynamic section part.
   * It used Monix subject to create this event bus. It is like actor in akka platform.

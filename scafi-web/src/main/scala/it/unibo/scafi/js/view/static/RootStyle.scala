@@ -49,77 +49,19 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   ".carousel-control" - (filter := "invert(1);")
 
-  ".gutter" -(
+  ".gutter" - (
     backgroundRepeat.noRepeat,
     backgroundPosition := "50%"
   )
-  ".gutter.gutter-horizontal" -(
+
+  ".gutter.gutter-horizontal" - (
     height(contentHeight),
     backgroundImage := "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==')"
   )
 
-  ".btn-floating-group" - (
-
-  )
-
-  /*".btn-group-fab" - (
-    position.fixed,
-    width(50 px),
-    height.auto,
-    right(20 px),
-    bottom(20 px)
-  )
-
-  ".btn-group-fab div" - (
-    position.relative,
-    width(100 %%),
-    height.auto
-  )
-
-  ".btn-group-fab .btn" - (
-    position.absolute,
-    bottom(0 px),
-    borderRadius(50 %%),
-    display.block,
-    marginBottom(4 px),
-    width(40 px),
-    height(40 px),
-    marginTop(4 px),
-    marginBottom(4 px),
-    marginLeft.auto,
-    marginRight.auto
-  )
-
-  ".btn-group-fab .btn-main" - (
-    width(50 px),
-    height(50 px),
-    right(50 %%),
-    marginRight(-25 px),
-    zIndex(9)
-  )
-
-  ".btn-group-fab .btn-sub" - (
-    bottom(0 px),
-    zIndex(8),
-    right(50 %%),
-    transition := "all 0.5s",
-  )
-
-  ".btn-group-fab.active .btn-sub:nth-child(2)" - (
-    bottom(60 px)
-  )
-
-  ".btn-group-fab.active .btn-sub:nth-child(3)" - (
-    bottom(110 px)
-  )
-
-  ".btn-group-fab.active .btn-sub:nth-child(4)" - (
-    bottom(160 px)
-  )
-
-  ".btn-group-fab .btn-sub:nth-child(5)" - (
-    bottom(210 px)
-  )*/
+//  ".dropdown-menu" - (
+//    backgroundColor(gray)
+//  )
 }
 
 object RootStyle extends StyleSheet.Standalone {

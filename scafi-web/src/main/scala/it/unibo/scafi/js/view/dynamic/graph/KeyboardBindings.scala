@@ -18,7 +18,8 @@ class KeyboardBindings(interaction: Interaction) {
   private val keys = List(ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE)
   var scene: Nullable[Scene] = _
   EventBus.listen {
-    case SupportConfiguration(_, _, deviceShape, _, _) => sensors = deviceShape.sensors
+    case SupportConfiguration(_, _, deviceShape, _, _) => sensors = deviceShape
+      .sensors
       .filter {
         case (_, _: Boolean) => true
         case _ => false
