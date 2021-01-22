@@ -98,7 +98,7 @@ object SkeletonPage {
     * Section used to configure the backend (it is support specific)
     */
   lazy val backendConfig: Div = div(
-    cls := "col-2 bg-dark",
+    cls := "bg-dark",
     id := "backend-config-section",
     h3(cls := "text-light", "Backend configuration")
   ).render
@@ -150,14 +150,14 @@ object SkeletonPage {
   )
 
   private def editor: TypedTag[Div] = div(
-    cls := "col-4 bg-dark",
+    cls := "bg-dark",
     id := "editor-section",
     editorHeader,
     editorSection
   )
 
   private def visualization: TypedTag[Div] = div(
-    cls := "col-6 bg-dark",
+    cls := "bg-dark",
     id := "visualization-section",
     controlsDiv,
     visualizationOptionDiv,
