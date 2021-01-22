@@ -84,7 +84,7 @@ object SkeletonPage {
   /**
     * Section that contains the controls to manage the visualization, it is support specific.
     */
-  lazy val visualizationOptionDiv: Div = div(id := "visualization-option").render
+  lazy val visualizationOptionDiv: Div = div(id := "visualization-option", `class` := "form-inline").render
   /**
     * Section in which is rendered the graph that represent the aggregate system.
     */
@@ -129,12 +129,16 @@ object SkeletonPage {
       a(
         cls := "btn btn-outline-light mr-2 my-sm-0",
         href := "https://scafi.github.io/",
+        target := "_blank",
+        rel :="noopener noreferrer",
         i(cls := "fas fa-globe fa-lg pr-2", aria.hidden := true),
         "Website"
       ),
       a(
         cls := "btn btn-outline-light my-2 my-sm-0",
         href := "https://github.com/scafi/scafi",
+        target := "_blank",
+        rel :="noopener noreferrer",
         i(cls := "fab fa-github fa-lg pr-2", aria.hidden := true),
         "Repository"
       )
@@ -167,7 +171,7 @@ object SkeletonPage {
 
   lazy val selectModeButton: Label = label(
 //    `class` := "btn btn-secondary active",
-    `class` := "btn btn-secondary",
+    `class` := "btn btn-primary",
     input(
       `type` := "radio",
       name := PanMoveModeFormName,
@@ -179,7 +183,7 @@ object SkeletonPage {
   ).render
 
   lazy val panModeButton: Label = label(
-    `class` := "btn btn-secondary active",
+    `class` := "btn btn-primary active",
 //    `class` := "btn btn-secondary",
     input(
       `type` := "radio",

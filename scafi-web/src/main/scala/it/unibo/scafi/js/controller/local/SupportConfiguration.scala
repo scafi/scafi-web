@@ -25,7 +25,7 @@ case class SupportConfiguration(network: NetworkConfiguration,
                                 deviceShape: DeviceConfiguration,
                                 seed: SimulationSeeds,
                                 coordinateMapping: CoordinateMapping = Identity) extends JsConversion {
-  override def toJs(): js.Object = { //very fragile... need some alternatives
+  override def toJs(): js.Object = { // very fragile... need some alternatives
     js.Dynamic.literal(
       "network" -> network.toJs(),
       "neighbour" -> neighbour.toJs(),
@@ -177,15 +177,12 @@ case class SimulationSeeds(@JSExport configSeed: JSNumber = System.currentTimeMi
   )
 }
 
-/**
-  * a logic using to alter the coordinate between frontend space and backed space.
-  *
-  * @param toWeb     alter a backend position in the frontend space.
-  * @param toBackend alter the front position in the backend space.
-  */
+/** a logic using to alter the coordinate between frontend space and backed space. */
 sealed trait CoordinateMapping extends JsConversion {
+  /** alter a backend position in the frontend space. */
   def toWeb(point: Point3D): Point3D
 
+  /** alter the front position in the backend space. */
   def toBackend(point: Point3D): Point3D
 }
 

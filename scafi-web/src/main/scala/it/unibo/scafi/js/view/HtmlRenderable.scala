@@ -2,6 +2,8 @@ package it.unibo.scafi.js.view
 
 import org.scalajs.dom.Element
 
+import scala.language.implicitConversions
+
 /**
  * Describe a general that has a html representation.
  *

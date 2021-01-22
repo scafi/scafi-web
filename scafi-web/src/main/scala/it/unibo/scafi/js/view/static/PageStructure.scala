@@ -2,12 +2,13 @@ package it.unibo.scafi.js.view.static
 
 import it.unibo.scafi.js.utils.{Debug, GlobalStore}
 import org.querki.jquery.$
-import org.scalajs.dom.Element
-import org.scalajs.dom.html.Div
+import org.scalajs.dom.html.{Div, Element}
 import scalatags.JsDom.all.div
 
 import scala.scalajs.js
 import scala.util.Success
+
+trait PageStructure
 
 object PageStructure {
   def static(): Unit = {
@@ -31,7 +32,7 @@ object PageStructure {
     private val visualizationSection = SplitSection(visualizationPortion, minVisualizationPortion, "#visualization-section")
     private var split : js.Dynamic = Split.default
     private val gutterCreator : js.Any = (index : Int, direction : Any, pairElement : Element) => {
-      val gutter : Div = div().render
+      val gutter: Div = div().render
       gutter.className = s"gutter gutter-${direction}"
       if(index == firstSection) {
         gutter.ondblclick = doubleClickEvent

@@ -91,7 +91,7 @@ object RootStyle extends StyleSheet.Standalone {
       navHeight = 0 vh,
       pageContentHeight = maxVh vh,
       contentHeight = 98 vh,
-      visualizationHeight = (86 - bottomBar) vh,
+      visualizationHeight = (88 - bottomBar) vh,
       editorHeight = 93 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh

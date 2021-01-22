@@ -1,13 +1,7 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.controller.local.{SimulationSupport, SupportConfiguration}
-import it.unibo.scafi.js.facade.simplebar.SimpleBar
-import it.unibo.scafi.js.view.HtmlRenderable
-import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
+import it.unibo.scafi.js.view.dynamic.Toggle.CheckBox
 import org.scalajs.dom.html.Div
-import scalatags.JsDom.all._
-
-import scala.scalajs.js
 
 trait VisualizationSettingsSection {
   def idEnabled: Boolean
@@ -16,59 +10,34 @@ trait VisualizationSettingsSection {
 
   def anyLabelEnabled: Boolean
 
-  def sensorEnabled(name: String): Boolean
+  def sensorsMenu: SensorsMenu
 }
 
 object VisualizationSettingsSection {
-  def apply(settingDiv: Div): VisualizationSettingsSection = new VisualizationSettingsSectionImpl(settingDiv)
 
-  private class VisualizationSettingsSectionImpl(settingDiv: Div) extends VisualizationSettingsSection {
-    private val sensorSpan = span(cls := "collapse", id := "sensorsSpan").render
-    private val sensorButton = a(cls := "btn btn-primary btn-sm mr-2 mt-1", attr("data-toggle") := "collapse", href := "#sensorsSpan", "sensors")
-    private var sensors: js.Dictionary[CheckBox] = js.Dictionary()
-    private val idEnabledSection = CheckBox("id")
-    private val neighbourhoodSection = CheckBox("neighborhood")
+  def apply(settingDiv: Div, sensorsMenu: SensorsMenu = SensorsMenu()): VisualizationSettingsSection =
+    new VisualizationSettingsSectionImpl(settingDiv, sensorsMenu)
 
-    def idEnabled: Boolean = idEnabledSection.enabled
+  private class VisualizationSettingsSectionImpl(settingDiv: Div, override val sensorsMenu: SensorsMenu)
+    extends VisualizationSettingsSection {
+    private val idEnabledSection = new CheckBox("id")
+    private val neighbourhoodSection = new CheckBox("neighborhood")
 
-    def neighbourhoodEnabled: Boolean = neighbourhoodSection.enabled
+    override def idEnabled: Boolean = idEnabledSection.enabled
 
-    def anyLabelEnabled: Boolean = sensors.exists { case (_, checkBox) => checkBox.enabled } || idEnabled
+    override def neighbourhoodEnabled: Boolean = neighbourhoodSection.enabled
 
-    def sensorEnabled(name: String): Boolean = sensors.get(name).fold(false)(_.enabled)
+    override def anyLabelEnabled: Boolean = sensorsMenu.sensorsEnabled || idEnabled
 
-    EventBus.listen {
-      case SupportConfiguration(_, _, device, _, _) => sensorSpan.textContent = ""
-        sensors = device.sensors.map { case (name, _) => name -> CheckBox(name) }
-        val exportCheckbox = CheckBox(SimulationSupport.EXPORT_LABEL)
-        exportCheckbox.check
-        sensors.put(SimulationSupport.EXPORT_LABEL, exportCheckbox)
-        sensors.foreach(checkbox => sensorSpan.appendChild(checkbox._2.html))
-    }
-    idEnabledSection.check
-    neighbourhoodSection.check
+    idEnabledSection.check()
+    neighbourhoodSection.check()
     settingDiv.appendChild(idEnabledSection.html)
-    settingDiv.appendChild(sensorButton.render)
-    settingDiv.appendChild(sensorSpan)
     settingDiv.appendChild(neighbourhoodSection.html)
-    new SimpleBar(settingDiv)
-  }
-
-  private case class CheckBox(labelValue: String) extends HtmlRenderable[Div] {
-    private val inputPart = input(cls := "form-check-input", tpe := "checkbox", id := labelValue).render
-    inputPart.onclick = _ => EventBus.publish(ForceRepaint)
-
-    def enabled: Boolean = inputPart.checked
-
-    def check: Unit = inputPart.checked = true
-
-    def uncheck: Unit = inputPart.checked = false
-
-    val html = div(
-      cls := "form-check form-check-inline",
-      inputPart,
-      label(cls := "form-check-label text-light", `for` := labelValue, labelValue)
-    ).render
+    settingDiv.appendChild(sensorsMenu.html)
+//    new SimpleBar(settingDiv)
+//    if (!$(s"#${settingDiv.id} .simplebar-content").hasClass("form-inline")) {
+//      $(s"#${settingDiv.id} .simplebar-content").addClass("form-inline")
+//    }
   }
 
 }

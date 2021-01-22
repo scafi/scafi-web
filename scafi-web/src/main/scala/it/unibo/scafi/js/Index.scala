@@ -9,7 +9,7 @@ import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.{BooleanExport, BooleanRender, LabelRender, TextifyBitmap}
-import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
+import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
 import monix.execution.Scheduler
 import org.scalajs.dom.experimental.URLSearchParams
 
@@ -117,7 +117,7 @@ object Index {
       labelRenders = renders
     )
     val viewControls = new InteractionBoundButtonBar(interaction)
-//    viewControls.render(SkeletonPage.panMoveMode)
+    //    viewControls.render(SkeletonPage.panMoveMode)
     viewControls.render(SkeletonPage.panModeButton, SkeletonPage.selectModeButton)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()

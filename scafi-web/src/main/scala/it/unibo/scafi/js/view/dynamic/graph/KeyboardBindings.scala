@@ -18,7 +18,8 @@ class KeyboardBindings(interaction: Interaction) {
   private val keys = List(ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE)
   var scene: Nullable[Scene] = _
   EventBus.listen {
-    case SupportConfiguration(_, _, deviceShape, _, _) => sensors = deviceShape.sensors
+    case SupportConfiguration(_, _, deviceShape, _, _) => sensors = deviceShape
+      .sensors
       .filter {
         case (_, _: Boolean) => true
         case _ => false
@@ -29,18 +30,20 @@ class KeyboardBindings(interaction: Interaction) {
 
   def init(scene: Scene): Unit = {
     this.scene = scene
-    val altKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
-    val ctrlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
-    altKey.on(DOWN, (_: Any, _: Any) => interaction.changeTo(Selection))
-    ctrlKey.on(DOWN, (_: Any, _: Any) => interaction.changeTo(Pan))
+    // todo remove
+//    val altKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.ALT)
+//    val ctrlKey = scene.input.keyboard.get.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
+//    altKey.on(DOWN, (_: Any, _: Any) => interaction.changeTo(Selection))
+//    ctrlKey.on(DOWN, (_: Any, _: Any) => interaction.changeTo(Pan))
     initSensorKeys()
   }
 
   private def initSensorKeys(): Unit = {
     this.scene.foreach(scene => {
       keys.foreach(scene.input.keyboard.get.removeKey(_, destroy = true))
-      keys.zip(sensors).
-        map { case (key, name) => name -> scene.input.keyboard.get.addKey(key) }
+      keys
+        .zip(sensors)
+        .map { case (key, name) => name -> scene.input.keyboard.get.addKey(key) }
         .foreach { case (sensor, key) => key.on(DOWN, onClickDown(sensor)) }
     })
   }

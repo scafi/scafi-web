@@ -159,9 +159,9 @@ class PhaserGraphSection(paneSection: HTMLElement,
     }
 
     nodes.map { case (node, gameobject) => gameobject -> node.labels }
-      .map { case (node, labels) => node -> labels.filter(label => settings.sensorEnabled(label._1)) }
+      .map { case (node, labels) => node -> labels.filter(label => settings.sensorsMenu.sensorEnabled(label._1)) }
       .map { case (node, labels) => node -> labels.toList }
-      .map { case (node, labels) => node -> (if (settings.idEnabled) (("id" -> node.id) :: labels) else labels) }
+      .map { case (node, labels) => node -> (if (settings.idEnabled) ("id" -> node.id) :: labels else labels) }
       .flatMap { case (node, labels) => renderNodeLabels(node, labels) }
       .foreach(labelContainer.add(_))
   }
