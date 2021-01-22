@@ -18,6 +18,9 @@ object ColorNamespace extends js.Object {
   @js.native
   trait Color extends js.Object {
     val alpha : JSNumber = js.native
+    val r : Int = js.native
+    val g : Int = js.native
+    val b : Int = js.native
     val color : Int = js.native
     val color32 : Int = js.native
   }

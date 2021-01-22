@@ -11,6 +11,7 @@ import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
 import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
+import it.unibo.scafi.space.Point2D
 import monix.execution.Scheduler
 import org.scalajs.dom.experimental.URLSearchParams
 
@@ -135,8 +136,13 @@ object Index {
     //PageStructure.static()
     PageStructure.resizable()
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
-    EventBus.publish(ScaFi(new incarnation.AggregateProgram with incarnation.Actuation with incarnation.StandardSensors {
-      override def main(): Any = Seq(led(0, 0) to "white", led(0, 1) to "red", velocity set Cartesian(1, 1))
+    EventBus.publish(ScaFi(new incarnation.AggregateProgram with incarnation.Actuation with incarnation.StandardSensors with incarnation.FlockLib {
+      override def main(): Any = (FlockBehaviour(
+        attractionForce = 0.001,
+        alignmentForce = 0.1,
+        repulsionForce = 0.5,
+        separationDistance = 10.0,
+      ).run(), ledAll to "white")
     }))
   }
   @JSExportTopLevel("ScafiBackend")

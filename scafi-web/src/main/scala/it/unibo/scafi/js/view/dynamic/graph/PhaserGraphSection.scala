@@ -114,6 +114,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
     val nodes = graph.nodes.map(node => {
       val circle = scene.add.circle(node.position.x, node.position.y, size, nodeColor)
       circle.id = node.id
+      circle.alpha = 0
       node -> circle
     })
     val gameobjectNodes = nodes.map { case (_, circle) => circle }

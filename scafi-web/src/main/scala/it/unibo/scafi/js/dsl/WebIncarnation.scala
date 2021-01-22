@@ -2,6 +2,7 @@ package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.incarnations.Incarnation
+import it.unibo.scafi.js.lib.MovementLibrary
 import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.lib.StandardLibrary
 import it.unibo.scafi.simulation.SpatialSimulation
@@ -13,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 trait BasicWebIncarnation extends Incarnation
-  with SpatialSimulation with StandardLibrary with ActuationLib {
+  with SpatialSimulation with StandardLibrary with ActuationLib with MovementLibrary {
   import Builtins.Bounded
   override implicit val idBounded: Bounded[ID] = Builtins.Bounded.of_s
   override type LSNS = String

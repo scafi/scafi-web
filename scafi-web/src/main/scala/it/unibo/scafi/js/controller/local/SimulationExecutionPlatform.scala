@@ -6,20 +6,18 @@ import it.unibo.scafi.js.controller.local.SimulationSideEffect.SideEffects
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.{Javascript, ScaFi, Scala, ScalaEasy}
 import it.unibo.scafi.js.dsl.JF1
-import it.unibo.scafi.simulation.SpatialSimulation
-
-import scala.concurrent.{Future, Promise}
-import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
-import org.scalajs.dom
-import dom.ext.{Ajax, AjaxException}
 import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
 import it.unibo.scafi.js.model.{ActuationData, MatrixLed, MatrixOps, Movement}
-import it.unibo.scafi.js.utils.GlobalStore
+import it.unibo.scafi.simulation.SpatialSimulation
 import it.unibo.scafi.space.Point2D
+import org.scalajs.dom
 import org.scalajs.dom.document
+import org.scalajs.dom.ext.Ajax
 
+import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
+import scala.scalajs.js
+import scala.util.{Success, Try}
 
 /**
   * the execution platform of a local simulation in web browser.
@@ -29,10 +27,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   self : SimulationSupport with SideEffects =>
   import incarnation._
   //TODO add better support
-  import scala.concurrent
-    .ExecutionContext
-    .Implicits
-    .global
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   val location = document.location
   val server = s"${location.protocol}//${location.host}"
@@ -91,13 +86,15 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     }}
 
     updates.foreach { case (id, matrix) => backend.chgSensorValue("matrix", Set(id), matrix )}
-    sideEffectsStream.onNext(Invalidated) //Todo, use change sensor
+
+    sideEffectsStream.onNext( SensorChanged(updates.map { case (id, matrix) => (id) -> Map("matrix"-> matrix)})) //Todo, use change sensor
   }
 
   private def handleMove(exports : Seq[(ID, Iterable[Any])]) : Unit = {
     val movement = exports.map { case (id, values) => id -> values.collect { case (a : Movement) => a } }.toMap
     movement.foreach( { case (id, movements) => movements.foreach(movement => act(id, movement))})
-    sideEffectsStream.onNext(Invalidated)
+    val effect = PositionChanged(movement.map { case (id, _) => id -> backend.space.getLocation(id) })
+    sideEffectsStream.onNext(effect)
   }
 
   private def act(id : ID, movement: Movement) : Unit = {
@@ -106,7 +103,6 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
       case VectorMovement(dx, dy) => val oldPos = backend.space.getLocation(id)
         val context = backend.context(id)
         val delta = context.sense[FiniteDuration](LSNS_DELTA_TIME).get.toMillis
-        println(delta)
         Point2D(dx * delta + oldPos.x, dy * delta + oldPos.y)
     }
     backend.setPosition(id, position)

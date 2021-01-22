@@ -3,7 +3,7 @@ package it.unibo.scafi.js.view.dynamic.graph
 import it.unibo.scafi.js.dsl.BasicWebIncarnation
 import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser.Scene
-import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{BitmapText, GameObject, Rectangle, Shape, Text}
+import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Arc, BitmapText, GameObject, Rectangle, Shape, Text}
 import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
 import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.{TextMetrics, TextStyle}
 import it.unibo.scafi.js.model.{ActuationData, Graph, MatrixLed}
@@ -126,7 +126,7 @@ object LabelRender {
     val elemSize = 3
     //todo try here with cache
 
-    private val cache = new mutable.HashMap[String, Seq[(Int, Int, Rectangle)]]()
+    private val cache = new mutable.HashMap[String, Seq[(Int, Int, Shape)]]()
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph,  scene: Scene): Output = {
       def delta(index : Int) : Double =  index * elemSize + elemSize / 2
       val result = elements.collectFirst { case (label, e: MatrixLed) => (label, e) }
@@ -140,7 +140,8 @@ object LabelRender {
               i <- 0 until matrix.dimension
               j <- 0 until matrix.dimension
             } yield ({
-              val result = (i, j, scene.add.rectangle(0, 0, elemSize, elemSize, Color.White))
+              //val result = (i, j, scene.add.rectangle(0, 0, elemSize, elemSize, Color.White))
+              val result : (Int, Int, Arc) = (i, j, scene.add.circle(0, 0, elemSize / 2, Color.White))
               result._3.ignoreDestroy = true
               result
             })
@@ -175,6 +176,6 @@ object LabelRender {
       case e : Iterable[_] => e
       case e : Any => Seq(e)
     }
-    dataFlatten.filterNot(_.isInstanceOf[ActuationData]).mkString("(", ",", ")")
+    dataFlatten.filterNot(_.isInstanceOf[ActuationData]).mkString(",")
   }
 }

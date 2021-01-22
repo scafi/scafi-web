@@ -1,6 +1,7 @@
 package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.incarnations.Incarnation
+import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
 import it.unibo.scafi.js.model.{MatrixOps, Movement}
 import it.unibo.scafi.js.model.MatrixOps._
 import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
@@ -14,11 +15,16 @@ trait ActuationLib {
     sealed trait LedMode
     case object off extends LedMode
     case object on extends LedMode
-
+    def rgb(r : Int, g : Int, b : Int) : Color = Color.apply(r, g, b)
+    def hsl(h : Double, s : Double, l : Double) : Color = {
+      val phaserColor = ColorNamespace.HSLToColor(h, s, l)
+      Color.apply(phaserColor.r, phaserColor.g, phaserColor.b)
+    }
+    def hue(h : Double) : Color = hsl(h, 0.5, 0.5)
     case class LedSelect(cell : LedGroup) {
       def to(color: Color): MatrixOps = MatrixOps(color, cell)
       def to(color: String): MatrixOps = MatrixOps(getColorFrom(color), cell)
-      def off(ledMode: LedMode) : MatrixOps = ledMode match {
+      def to(ledMode: LedMode) : MatrixOps = ledMode match {
         case off => MatrixOps(Color.Black, cell)
         case _ => MatrixOps(Color.White, cell)
       }
