@@ -4,7 +4,7 @@ import it.unibo.scafi.js.model.MatrixOps.LedGroup
 import org.scalajs.dom.ext.Color
 
 //TODO doc
-case class MatrixOps(color : Color, cells : LedGroup)
+case class MatrixOps(color : Color, cells : LedGroup) extends ActuationData
 
 object MatrixOps {
   sealed trait LedGroup
@@ -34,6 +34,7 @@ object MatrixOps {
       case Ring => matrix // TODO
       case Combine(head :: other) => val newMatrix = this.apply(action.copy(cells = head), matrix)
         this.apply(action.copy(cells = Combine(other)), newMatrix)
+      case Combine(List()) => matrix
     }
   }
 }

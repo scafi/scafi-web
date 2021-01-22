@@ -3,13 +3,15 @@ package it.unibo.scafi.js.view.dynamic.graph
 import it.unibo.scafi.js.dsl.BasicWebIncarnation
 import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser.Scene
-import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{GameObject, Rectangle, Shape, Text}
+import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{BitmapText, GameObject, Rectangle, Shape, Text}
 import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
 import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.{TextMetrics, TextStyle}
-import it.unibo.scafi.js.model.{Graph, MatrixLed}
+import it.unibo.scafi.js.model.{ActuationData, Graph, MatrixLed}
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import org.scalajs.dom.ext.Color
 import org.scalajs.dom.window
+
+import scala.collection.mutable
 
 object LabelRender {
   type SensorEntries = Seq[(String, Any)]
@@ -43,14 +45,18 @@ object LabelRender {
     //val fontUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
     val textureUrl = "./fonts/font.png"
     val fontUrl = "./fonts/font.xml"
-
+    private val cache : mutable.Map[String, BitmapText] = new mutable.HashMap()
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph, scene: Scene): Output = {
-      val result = elements
+      val textLabel = elements
         .filterNot { case (name, _) => except.contains(name) }
+      val result = textLabel
         .map { case (name, value) => normalizeValue(value) }
         .mkString("\n")
-      val gameobject = scene.add.bitmapText(node.x + node.width / 2, node.y, "fonts", normalizeValue(result), fontSize)
-      Seq((gameobject, elements.map { case (name, value) => name}))
+      val text = cache.getOrElseUpdate(node.id, scene.add.bitmapText(node.x + node.width / 2, node.y, "fonts", normalizeValue(result), fontSize))
+      text.ignoreDestroy = true
+      text.setPosition(node.x + node.width / 2, node.y)
+      text.setText(normalizeValue(result))
+      Seq((text, textLabel.map { case (name, value) => name}))
     }
     override def onInit(scene : Scene) : Unit = scene.load.bitmapFont("fonts", textureUrl, fontUrl)
   }
@@ -117,22 +123,33 @@ object LabelRender {
   }
 
   case class MatrixLedRender() extends LabelRender {
-    val size = 4
     val elemSize = 3
+    //todo try here with cache
+
+    private val cache = new mutable.HashMap[String, Seq[(Int, Int, Rectangle)]]()
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph,  scene: Scene): Output = {
       def delta(index : Int) : Double =  index * elemSize + elemSize / 2
-      val matrixSize = (size * elemSize) / 2
-      val center = (node.x - matrixSize, node.y - matrixSize)
       val result = elements.collectFirst { case (label, e: MatrixLed) => (label, e) }
+
       result match {
-        case Some((label, matrix)) => var elems : Seq[GameObject] = Seq.empty
-          for(i <- 0 until size) {
-            for(j <- 0 until size) {
-              val color = matrix.get(i, j).get
-              val rect : Rectangle = scene.add.rectangle(center._1 + delta(i), center._2 + delta(j), elemSize, elemSize, color)
-              elems = elems :+ (rect)
-            }
-          }
+        case Some((label, matrix)) =>
+          val matrixSize = (matrix.dimension * elemSize) / 2
+          val center = (node.x - matrixSize, node.y - matrixSize)
+          val matrixObjs = cache.getOrElseUpdate(node.id, {
+            for {
+              i <- 0 until matrix.dimension
+              j <- 0 until matrix.dimension
+            } yield ({
+              val result = (i, j, scene.add.rectangle(0, 0, elemSize, elemSize, Color.White))
+              result._3.ignoreDestroy = true
+              result
+            })
+          })
+          matrixObjs.foreach { case (i, j, rect) => {
+            rect.fillColor = matrix.get(i, j).get
+            rect.setPosition(center._1 + delta(i), center._2 + delta(j))
+          }}
+          val elems = matrixObjs.map(_._3)
           elems.map(_ -> Seq(label))
         case None => Seq.empty
       }
@@ -141,7 +158,7 @@ object LabelRender {
 
   def normalizeValue(any : Any) : String = {
     val realValue = any match {
-      case e : BasicWebIncarnation#EXPORT => e.root[Any]()
+      case e : BasicWebIncarnation#EXPORT => removeActuationFrom(e.root[Any]())
       case other => other
     }
     realValue match {
@@ -149,5 +166,15 @@ object LabelRender {
       case value : Int => value.toString
       case other => other.toString
     }
+  }
+
+  private def removeActuationFrom(e : Any) : String = {
+    val dataFlatten = e match {
+      case e : ActuationData => Seq()
+      case e : Product => e.productIterator.toList.filter(_.isInstanceOf[ActuationData])
+      case e : Iterable[_] => e
+      case e : Any => Seq(e)
+    }
+    dataFlatten.filterNot(_.isInstanceOf[ActuationData]).mkString("(", ",", ")")
   }
 }

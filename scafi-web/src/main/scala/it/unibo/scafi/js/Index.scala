@@ -108,7 +108,7 @@ object Index {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders: Seq[LabelRender] = Seq(MatrixLedRender(), TextifyBitmap())
+    val renders: Seq[LabelRender] = Seq(MatrixLedRender(),TextifyBitmap())
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
@@ -135,16 +135,8 @@ object Index {
     //PageStructure.static()
     PageStructure.resizable()
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
-    EventBus.publish(ScaFi(new incarnation.AggregateProgram with incarnation.BlockG  with incarnation.StandardSensors {
-      override def main(): Any = {
-        def source : Boolean = sense("source")
-        def target : Boolean = sense("target")
-        def channel(source: Boolean, target: Boolean, width: Double): Boolean = {
-          distanceTo(source) + distanceTo(target) <= distanceBetween(source, target) + width
-        }
-        val channelWidth = 1
-        channel(source, target, channelWidth)
-      }
+    EventBus.publish(ScaFi(new incarnation.AggregateProgram with incarnation.Actuation with incarnation.StandardSensors {
+      override def main(): Any = Seq(led(0, 0) to "white", led(0, 1) to "red", velocity set Cartesian(1, 1))
     }))
   }
   @JSExportTopLevel("ScafiBackend")

@@ -1,8 +1,9 @@
 package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.incarnations.Incarnation
-import it.unibo.scafi.js.model.MatrixOps
+import it.unibo.scafi.js.model.{MatrixOps, Movement}
 import it.unibo.scafi.js.model.MatrixOps._
+import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
 import org.scalajs.dom.ext.Color
 
 trait ActuationLib {
@@ -42,5 +43,21 @@ trait ActuationLib {
       case "magenta" => Color.Magenta
       case hex => Color.apply(hex)
     }
+
+    sealed trait VelocityComponent
+    case class Polar(module : Double, angle : Double) extends VelocityComponent
+    case class Cartesian(dx : Double, dy : Double) extends VelocityComponent
+
+    case object VelocitySelect {
+      def set(polar : Polar) : Movement = VectorMovement(polar.module * Math.sin(polar.angle), polar.module * Math.cos(polar.angle))
+      def set(cartesian: Cartesian) : Movement = VectorMovement(cartesian.dx, cartesian.dy)
+    }
+
+    case object PositionSelect {
+      def set(position : (Double, Double)) : Movement = AbsoluteMovement(position._1, position._2)
+    }
+
+    def velocity : VelocitySelect.type = VelocitySelect
+    def position : PositionSelect.type = PositionSelect
   }
 }

@@ -13,9 +13,13 @@ import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 import org.scalajs.dom
 import dom.ext.{Ajax, AjaxException}
-import it.unibo.scafi.js.model.{MatrixLed, MatrixOps}
+import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
+import it.unibo.scafi.js.model.{ActuationData, MatrixLed, MatrixOps, Movement}
 import it.unibo.scafi.js.utils.GlobalStore
+import it.unibo.scafi.space.Point2D
 import org.scalajs.dom.document
+
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * the execution platform of a local simulation in web browser.
@@ -53,6 +57,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
         val exports = (0 until batchSize).map(_ => backend.exec(program))
         val valueMap = toExportMap(exports)
         handleMatrixChanges(valueMap)
+        handleMove(valueMap)
         sideEffectsStream.onNext(ExportProduced(exports))
       })
       execution
@@ -61,16 +66,20 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     sideEffectsStream.onNext(Invalidated) //invalid old graph value
     TickBased(exec = execution)
   }
+
   private def toExportMap(exports : Seq[(ID, EXPORT)]) : Seq[(ID, Iterable[Any])] = {
     exports.map { case (id, e) => id -> e.root[Any]() }
       .collect {
-        case (id, a : Product) => (id, a.productIterator.toSeq)
+        case (id, a : ActuationData) => (id, Seq(a))
         case (id, a : Iterable[_]) => (id, a)
+        case (id, a : Product) => (id, a.productIterator.toSeq)
         case (id, a : Any) => (id, Seq(a))
       }
   }
+
   private def handleMatrixChanges(exports : Seq[(ID, Iterable[Any])]) : Unit = {
     val matrixLed = exports.map { case (id, values) => id -> values.collect { case (a : MatrixOps) => a } }.toMap
+
     val matrices : Map[ID, MatrixLed] = matrixLed.filter(_._2.nonEmpty)
       .map { case (id, _) => id -> Try { backend.localSensor[MatrixLed]("matrix")(id) } }
       .collect { case (id, Success(matrix)) => id -> matrix }
@@ -85,7 +94,23 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     sideEffectsStream.onNext(Invalidated) //Todo, use change sensor
   }
 
-  private def handleMove(exports : Seq[(ID, EXPORT)]) : Unit = { }
+  private def handleMove(exports : Seq[(ID, Iterable[Any])]) : Unit = {
+    val movement = exports.map { case (id, values) => id -> values.collect { case (a : Movement) => a } }.toMap
+    movement.foreach( { case (id, movements) => movements.foreach(movement => act(id, movement))})
+    sideEffectsStream.onNext(Invalidated)
+  }
+
+  private def act(id : ID, movement: Movement) : Unit = {
+    val position = movement match {
+      case AbsoluteMovement(x, y) => Point2D(x, y)
+      case VectorMovement(dx, dy) => val oldPos = backend.space.getLocation(id)
+        val context = backend.context(id)
+        val delta = context.sense[FiniteDuration](LSNS_DELTA_TIME).get.toMillis
+        println(delta)
+        Point2D(dx * delta + oldPos.x, dy * delta + oldPos.y)
+    }
+    backend.setPosition(id, position)
+  }
   private def remoteRequest(code : String, path : String) : Future[SimulationExecution] = {
     SupportConfiguration.storeGlobal(this.systemConfig)
     Ajax.post(path, Ajax.InputData.str2ajax(code))
