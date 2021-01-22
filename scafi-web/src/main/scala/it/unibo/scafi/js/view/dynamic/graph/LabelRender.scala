@@ -140,8 +140,8 @@ object LabelRender {
               i <- 0 until matrix.dimension
               j <- 0 until matrix.dimension
             } yield ({
-              //val result = (i, j, scene.add.rectangle(0, 0, elemSize, elemSize, Color.White))
-              val result : (Int, Int, Arc) = (i, j, scene.add.circle(0, 0, elemSize / 2, Color.White))
+              val result = (i, j, scene.add.rectangle(0, 0, elemSize, elemSize, Color.White))
+              //val result : (Int, Int, Arc) = (i, j, scene.add.circle(0, 0, elemSize / 2, Color.White))
               result._3.ignoreDestroy = true
               result
             })
