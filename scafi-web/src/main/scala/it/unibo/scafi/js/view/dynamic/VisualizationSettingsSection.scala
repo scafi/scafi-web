@@ -1,5 +1,6 @@
 package it.unibo.scafi.js.view.dynamic
 
+import it.unibo.scafi.js.view.dynamic.Toggle.CheckBox
 import org.scalajs.dom.html.Div
 
 trait VisualizationSettingsSection {

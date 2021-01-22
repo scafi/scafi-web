@@ -90,7 +90,7 @@ package object static {
 
   PhaserGlobal
 
-  // Phaser lib
+  // Split.js
   @js.native
   @JSImport("split.js", JSImport.Namespace)
   object Split extends Module {
@@ -99,19 +99,10 @@ package object static {
 
   Split
 
-  // Jquery Resizable
+  // jQuery Resizable
   @js.native
   @JSImport("jquery-resizable-dom/dist/jquery-resizable.min.js", JSImport.Namespace)
   object JQueryResizable extends js.Any
 
   JQueryResizable
-
-  // Phaser lib
-  @js.native
-  @JSImport("split.js", JSImport.Namespace)
-  object Split extends Module {
-    override def default: js.Dynamic = js.native
-  }
-
-  Split
 }

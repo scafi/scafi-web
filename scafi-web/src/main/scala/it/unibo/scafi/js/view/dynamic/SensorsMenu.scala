@@ -2,9 +2,9 @@ package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.controller.local.{SimulationSupport, SupportConfiguration}
 import it.unibo.scafi.js.view.HtmlRenderable
+import it.unibo.scafi.js.view.dynamic.Toggle.{CheckBox, ToggleFormRow}
 import org.scalajs.dom.html.{Anchor, Div, Span}
 import scalatags.JsDom.all.{button, div, _}
-import scalatags.JsDom.TypedTag
 
 import scala.scalajs.js
 
@@ -26,14 +26,18 @@ object SensorsMenu {
       href := s"#${sensorSpan.id}",
       "sensors"
     ).render
-    private var sensors: js.Dictionary[CheckBox] = js.Dictionary()
+    private var sensors: js.Dictionary[Toggle] = js.Dictionary()
 
     EventBus.listen {
       case SupportConfiguration(_, _, device, _, _) =>
         sensorSpan.textContent = ""
-        sensors = device.sensors.map { case (name, _) => name -> new CheckBox(name) }
-        val exportCheckbox = new CheckBox(SimulationSupport.EXPORT_LABEL, check = true)
-        sensors.put(SimulationSupport.EXPORT_LABEL, exportCheckbox)
+//        sensors = device.sensors.map { case (name, _) => name -> new CheckBox(name) }
+//        val exportCheckbox = new CheckBox(SimulationSupport.EXPORT_LABEL, check = true)
+//        sensors.put(SimulationSupport.EXPORT_LABEL, exportCheckbox)
+        sensors = device
+          .sensors
+          .map { case (name, _) => name -> Toggle(name) }
+          .+= (SimulationSupport.EXPORT_LABEL -> Toggle(SimulationSupport.EXPORT_LABEL))
         sensors.foreach(checkbox => sensorSpan.appendChild(checkbox._2.html))
     }
 
@@ -48,13 +52,13 @@ object SensorsMenu {
   }
 
   private sealed class DropdownSensorsMenu extends SensorsMenu {
-    private var sensors: js.Dictionary[CheckBox] = js.Dictionary()
+    private var sensors: js.Dictionary[Toggle] = js.Dictionary()
 
     private lazy val dropdown: Div = div(
       cls := "dropdown",
       dropdownButton,
       form(
-        cls := "dropdown-menu bg-dark p-4",
+        cls := "dropdown-menu bg-dark p-2",
         sensorsForm
       ),
     ).render
@@ -80,9 +84,13 @@ object SensorsMenu {
     EventBus.listen {
       case SupportConfiguration(_, _, device, _, _) =>
         sensorsForm.textContent = ""
-        sensors = device.sensors.map { case (name, _) => name -> new CheckBox(name, inline = false) }
-        val exportCheckbox = new CheckBox(SimulationSupport.EXPORT_LABEL, check = true, inline = false)
-        sensors.put(SimulationSupport.EXPORT_LABEL, exportCheckbox)
+//        sensors = device.sensors.map { case (name, _) => name -> new CheckBox(name, inline = false) }
+//        val exportCheckbox = new CheckBox(SimulationSupport.EXPORT_LABEL, check = true, inline = false)
+//        sensors.put(SimulationSupport.EXPORT_LABEL, exportCheckbox)
+        sensors = device
+          .sensors
+          .map { case (name, _) => name -> Toggle(name) }
+          .+= (SimulationSupport.EXPORT_LABEL -> Toggle(SimulationSupport.EXPORT_LABEL))
         sensors.foreach(checkbox => sensorsForm.appendChild(checkbox._2.html))
     }
   }
