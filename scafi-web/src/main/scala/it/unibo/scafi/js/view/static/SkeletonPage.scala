@@ -144,7 +144,7 @@ object SkeletonPage {
   )
 
   private def pageContainer: TypedTag[Div] = div(
-    cls := "row flex-grow-1 m-0 bg-dark pt-3",
+    cls := "row m-0 bg-dark pt-3",
     id := "page-container",
     backendConfig,
     editor,

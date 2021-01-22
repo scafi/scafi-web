@@ -25,7 +25,7 @@ object PageStructure {
     private val visualizationPortion = 49
     private val minControlPortion = 300
     private val minEditorPortion = 300
-    private val minVisualizationPortion = 800 //put in css?? verify..
+    private val minVisualizationPortion = 400 //put in css?? verify..
     private val configSection = SplitSection(configPortion, minControlPortion, "#backend-config-section")
     private val editorSection = SplitSection(editorPortion, minEditorPortion, "#editor-section")
     private val visualizationSection = SplitSection(visualizationPortion, minVisualizationPortion, "#visualization-section")
@@ -81,7 +81,8 @@ object PageStructure {
         js.Dynamic.literal(
           "sizes" -> sizes,
           "minSize" -> minSizes,
-          "gutter" -> handler
+          "gutter" -> handler,
+          "expandToMin" -> true
         )
       )
     }
