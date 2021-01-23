@@ -109,9 +109,9 @@ object Index {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
 
     // dynamic part configuration
-    val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
     val interaction = new Interaction.PhaserInteraction(support)
+    val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv, SensorsMenu(interaction))
+    val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
     val phaserRender = new PhaserGraphSection(
       paneSection = SkeletonPage.visualizationSection,
       interaction = interaction,

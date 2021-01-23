@@ -15,7 +15,7 @@ trait VisualizationSettingsSection {
 
 object VisualizationSettingsSection {
 
-  def apply(settingDiv: Div, sensorsMenu: SensorsMenu = SensorsMenu()): VisualizationSettingsSection =
+  def apply(settingDiv: Div, sensorsMenu: SensorsMenu /*= SensorsMenu()*/): VisualizationSettingsSection =
     new VisualizationSettingsSectionImpl(settingDiv, sensorsMenu)
 
   private class VisualizationSettingsSectionImpl(settingDiv: Div, override val sensorsMenu: SensorsMenu)
