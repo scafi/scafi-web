@@ -23,7 +23,7 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 object Index {
 
   import org.scalajs.dom._
-
+  private val matrixSize = 7 //put in a global config? How to change it in the view?
   implicit val incarnation: BasicWebIncarnation = WebIncarnation // incarnation chosen
 
   /** Interpreter chosen. */
@@ -109,7 +109,7 @@ object Index {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
     val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders: Seq[LabelRender] = Seq(MatrixLedRender(),TextifyBitmap())
+    val renders: Seq[LabelRender] = Seq(TextifyBitmap(Set("matrix")), MatrixLedRender(matrixSize))
     val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
@@ -136,13 +136,8 @@ object Index {
     //PageStructure.static()
     PageStructure.resizable()
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
-    EventBus.publish(ScaFi(new incarnation.AggregateProgram with incarnation.Actuation with incarnation.StandardSensors with incarnation.FlockLib {
-      override def main(): Any = (FlockBehaviour(
-        attractionForce = 0.001,
-        alignmentForce = 0.1,
-        repulsionForce = 0.5,
-        separationDistance = 10.0,
-      ).run(), ledAll to "white")
+    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
+      override def main(): Boolean = sense[Boolean]("source")
     }))
   }
   @JSExportTopLevel("ScafiBackend")

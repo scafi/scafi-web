@@ -7,6 +7,8 @@ import it.unibo.scafi.js.model.MatrixOps._
 import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
 import org.scalajs.dom.ext.Color
 
+import scala.scalajs.js.|
+
 trait ActuationLib {
   self :  Incarnation =>
 
@@ -22,11 +24,11 @@ trait ActuationLib {
     }
     def hue(h : Double) : Color = hsl(h, 0.5, 0.5)
     case class LedSelect(cell : LedGroup) {
-      def to(color: Color): MatrixOps = MatrixOps(color, cell)
-      def to(color: String): MatrixOps = MatrixOps(getColorFrom(color), cell)
-      def to(ledMode: LedMode) : MatrixOps = ledMode match {
+      def to(color: Color | String | LedMode): MatrixOps = (color : Any) match {
+        case s : String => MatrixOps(getColorFrom(s), cell)
+        case c : Color => MatrixOps(c, cell)
         case off => MatrixOps(Color.Black, cell)
-        case _ => MatrixOps(Color.White, cell)
+        case on => MatrixOps(Color.White, cell)
       }
     }
 

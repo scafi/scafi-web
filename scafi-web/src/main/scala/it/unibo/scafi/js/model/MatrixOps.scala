@@ -1,10 +1,14 @@
 package it.unibo.scafi.js.model
 
+import it.unibo.scafi.js.model.MatrixLed.Led
 import it.unibo.scafi.js.model.MatrixOps.LedGroup
 import org.scalajs.dom.ext.Color
-
+import scalajs.js
+import js.JSConverters._
 //TODO doc
-case class MatrixOps(color : Color, cells : LedGroup) extends ActuationData
+case class MatrixOps(color : Color, cells : LedGroup) extends ActuationData {
+  override def toString: String = "ledAct"
+}
 
 object MatrixOps {
   sealed trait LedGroup
@@ -19,17 +23,17 @@ object MatrixOps {
 
   def apply(action : MatrixOps, matrix : MatrixLed) : MatrixLed = {
     action.cells match {
-      case One(i, j) => matrix.set(i, j, action.color).getOrElse(matrix)
-      case Row(i) => val led = (0 until matrix.dimension).map((i, _, action.color))
+      case One(i, j) => matrix.set(new Led(i, j, action.color.toHex)).getOrElse(matrix)
+      case Column(i) => val led = (0 until matrix.dimension).map(new Led(i, _, action.color.toHex)).toJSArray
         matrix.setBulk(led).getOrElse(matrix)
-      case Column(j) => val led = (0 until matrix.dimension).map((_, j, action.color))
+      case Row(j) => val led = (0 until matrix.dimension).map(new Led(_, j, action.color.toHex)).toJSArray
         matrix.setBulk(led).getOrElse(matrix)
-      case All => matrix.all(action.color)
+      case All => matrix.all(action.color.toHex)
       case Diagonal => val cells = 0 until matrix.dimension
-        val diagonal = cells.zip(cells).map { case (i, j) => (i, j, action.color)}
+        val diagonal = cells.zip(cells).map { case (i, j) => new Led(i, j, action.color.toHex)}.toJSArray
         matrix.setBulk(diagonal).getOrElse(matrix)
       case AntiDiagonal => val cells = 0 until matrix.dimension
-        val antidigonal = cells.zip(cells.reverse).map { case (i, j) => (i, j,action.color)}
+        val antidigonal = cells.zip(cells.reverse).map { case (i, j) => new Led(i, j,action.color.toHex)}.toJSArray
         matrix.setBulk(antidigonal).getOrElse(matrix)
       case Ring => matrix // TODO
       case Combine(head :: other) => val newMatrix = this.apply(action.copy(cells = head), matrix)

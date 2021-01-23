@@ -3,15 +3,16 @@ package it.unibo.scafi.js.view.dynamic.graph
 import it.unibo.scafi.js.dsl.BasicWebIncarnation
 import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser.Scene
-import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Arc, BitmapText, GameObject, Rectangle, Shape, Text}
+import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{BitmapText, GameObject, Shape, Text}
 import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
-import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.{TextMetrics, TextStyle}
+import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.TextStyle
 import it.unibo.scafi.js.model.{ActuationData, Graph, MatrixLed}
+import it.unibo.scafi.js.utils.Debug
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import org.scalajs.dom.ext.Color
-import org.scalajs.dom.window
 
 import scala.collection.mutable
+import scala.scalajs.js
 
 object LabelRender {
   type SensorEntries = Seq[(String, Any)]
@@ -122,36 +123,26 @@ object LabelRender {
     }
   }
 
-  case class MatrixLedRender() extends LabelRender {
-    val elemSize = 3
-    //todo try here with cache
-
-    private val cache = new mutable.HashMap[String, Seq[(Int, Int, Shape)]]()
+  case class MatrixLedRender(fullMatrix : Double) extends LabelRender {
+    private val cache = new mutable.HashMap[String, js.Dynamic]()
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph,  scene: Scene): Output = {
-      def delta(index : Int) : Double =  index * elemSize + elemSize / 2
-      val result = elements.collectFirst { case (label, e: MatrixLed) => (label, e) }
-
+      val result = elements.collectFirst { case ("matrix", MatrixLed(m)) => ("matrix", m) }
       result match {
         case Some((label, matrix)) =>
-          val matrixSize = (matrix.dimension * elemSize) / 2
+          val matrixSize = (fullMatrix) / 2
+          val elemSize = fullMatrix / matrix.dimension
+          def delta(index : Int) : Double =  index * elemSize
+          val result = cache.getOrElseUpdate(node.id, scene.add.asInstanceOf[js.Dynamic].graphics(0, 0))
+          result.ignoreDestroy = true
+          result.clear()
           val center = (node.x - matrixSize, node.y - matrixSize)
-          val matrixObjs = cache.getOrElseUpdate(node.id, {
-            for {
-              i <- 0 until matrix.dimension
-              j <- 0 until matrix.dimension
-            } yield ({
-              val result = (i, j, scene.add.rectangle(0, 0, elemSize, elemSize, Color.White))
-              //val result : (Int, Int, Arc) = (i, j, scene.add.circle(0, 0, elemSize / 2, Color.White))
-              result._3.ignoreDestroy = true
-              result
-            })
-          })
-          matrixObjs.foreach { case (i, j, rect) => {
-            rect.fillColor = matrix.get(i, j).get
-            rect.setPosition(center._1 + delta(i), center._2 + delta(j))
-          }}
-          val elems = matrixObjs.map(_._3)
-          elems.map(_ -> Seq(label))
+          for(i <- 0 until matrix.dimension;
+            j <- 0 until matrix.dimension) {
+            val toPhaser = matrix.get(i, j).get.tail
+            result.fillStyle(s"0x$toPhaser", 1)
+            result.fillRect(center._1 + delta(i), center._2 + delta(j), elemSize, elemSize)
+          }
+          Seq(result.asInstanceOf[GameObject] -> Seq(label))
         case None => Seq.empty
       }
     }

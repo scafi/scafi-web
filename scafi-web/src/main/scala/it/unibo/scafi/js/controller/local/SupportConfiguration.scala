@@ -2,8 +2,10 @@
 
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.js.JsConversion
+import it.unibo.scafi.js.model.MatrixLed
 import it.unibo.scafi.js.utils.{GlobalStore, JSNumber}
 import it.unibo.scafi.space.Point3D
+import org.scalajs.dom.ext.Color
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
@@ -121,7 +123,7 @@ trait NeighbourConfiguration extends JsConversion
 @JSExportTopLevel("SpatialRadius")
 @JSExportAll
 case class SpatialRadius(range : Double) extends NeighbourConfiguration {
-    override def toJs(): js.Object = js.Dynamic.literal("radius" -> range)
+  override def toJs(): js.Object = js.Dynamic.literal("radius" -> range)
 }
 
 /**
@@ -139,18 +141,21 @@ case class DeviceConfiguration(sensors : js.Dictionary[Any], initialValues : js.
   )
 }
 
-  @JSExportTopLevel("DeviceConfigurationObject")
+@JSExportTopLevel("DeviceConfigurationObject")
 @JSExportAll
 object DeviceConfiguration {
+  val standardDimension = 3
+  val standardColor = Color("#bb86fc")
+  val standardMatrix = MatrixLed.fill(standardDimension, standardColor.toHex)
   /**
     * @return a configuration in which exist the sensor "source" and "obstacle".
     */
-  def standard: DeviceConfiguration = DeviceConfiguration(js.Dictionary("source" -> false, "obstacle" -> false, "target" -> false))
+  def standard: DeviceConfiguration = DeviceConfiguration(js.Dictionary("matrix" -> standardMatrix, "source" -> false, "obstacle" -> false, "target" -> false))
 
   /**
     * @return a configuration without any sensor.
     */
-  def none: DeviceConfiguration = DeviceConfiguration(js.Dictionary())
+  def none: DeviceConfiguration = DeviceConfiguration(js.Dictionary("matrix" -> standardMatrix))
 }
 
 /**

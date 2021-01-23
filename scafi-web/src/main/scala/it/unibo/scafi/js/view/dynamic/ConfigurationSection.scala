@@ -3,8 +3,10 @@ package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.js.controller.AggregateSystemSupport
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
+import it.unibo.scafi.js.model.MatrixLed
 import it.unibo.scafi.js.utils.Debug
 import it.unibo.scafi.js.view.dynamic.ConfigurationSection._
+import org.scalajs.dom.ext.Color
 import org.scalajs.dom.html.{Button, Div, Select}
 import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
@@ -28,6 +30,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
   private val randomValue = List(min, max, howMany)
   private val radius = InputText("radius", 70)
   private val addSensorButton = button( cls := "btn btn-primary btn-sm",`type` := "button", "add sensor").render
+  private var matrix = MatrixInput(3, DeviceConfiguration.standardColor.toHex)
   private var sensors : List[SensorInputText] = List()
   private var lastConfiguration : SupportConfiguration = _
 
@@ -46,7 +49,6 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
   }
   init(Random)
   var elements : js.Array[Any] = js.Array()
-  Debug("elments", elements)
   EventBus.listen {
     case config : SupportConfiguration => lastConfiguration = config
       configureFromConfig(config)
@@ -71,6 +73,8 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
 
     elements foreach { input => container.appendChild(input.render) }
     container.appendChild(radius.render)
+    container.appendChild(h3(cls := "text-light", "Led matrix configuration").render)
+    container.appendChild(matrix.render)
     container.appendChild(h3(cls := "text-light", "Sensors configuration").render)
     container.appendChild(addSensorButton)
     sensors foreach { input => container.appendChild(input.render) }
@@ -82,12 +86,17 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
       case Random => RandomNetwork(min.intValue, max.intValue, howMany.intValue)
     }
     val sensorMap = js.Dictionary[Any](sensors.map(_.nameAndValue): _*)
+    sensorMap.put("matrix", matrix.getMatrix())
     val configuration = SupportConfiguration(netSettings, SpatialRadius(radius.intValue), DeviceConfiguration(sensorMap), SimulationSeeds())
     evolve(configuration)
   }
 
   private def configureFromConfig(conf : SupportConfiguration) : Unit = {
-    sensors = conf.deviceShape.sensors.map { case (k, v) => new SensorInputText(k, v.toString) }.toList
+    val newMatrix = conf.deviceShape.sensors.collectFirst { case (label, MatrixLed(m)) => label -> m }
+    val matrixLabel = newMatrix.map(_._1).getOrElse("")
+    sensors = conf.deviceShape.sensors
+      .filterNot { case (a, b) => a == matrixLabel }
+      .map { case (k, v) => new SensorInputText(k, v.toString) }.toList
     conf.network match {
       case GridLikeNetwork(_rows, _cols, _stepX, _stepY, _tollerance) => rows.intValue = _rows
         cols.intValue = _cols
@@ -99,6 +108,10 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
         max.intValue = _max.toInt
         howMany.intValue = _howMany
         selectMode.value = Random.toString
+    }
+    matrix = newMatrix match {
+      case Some((_, m)) => MatrixInput(m.dimension, m.get(0, 0).getOrElse(DeviceConfiguration.standardColor.toHex))
+      case None => matrix
     }
     init(getModeFromSelect(selectMode))
     conf.neighbour match {
@@ -158,6 +171,21 @@ object ConfigurationSection {
       div(cls := "input-group-prepend", span(cls := "input-group-text", label)),
       inputSection
     ).render
+  }
+
+  private case class MatrixInput(dimension : Int, color : String) {
+    private val dimensionTag = input(`type` := "text", placeholder := "dimension", cls := "form-control mr-1 bg-dark text-light", value := dimension).render
+    private val colorTag = input(`type` := "text", placeholder := "color", cls := "form-control bg-dark text-light", value := color ).render
+
+    val render: Div = div(
+      cls := "input-group-sm mb-2 mt-2",
+      div(cls := "input-group-prepend mb-2 pr-1", span(cls := "input-group-text mr-1 w-50", "color"), span(cls := "input-group-text w-50", "dimension")),
+      div(cls := "input-group-prepend", colorTag, dimensionTag),
+    ).render
+
+    def getMatrix() : MatrixLed = {
+      MatrixLed.fill(dimensionTag.value.toInt, colorTag.value)
+    }
   }
 
   private trait Mode

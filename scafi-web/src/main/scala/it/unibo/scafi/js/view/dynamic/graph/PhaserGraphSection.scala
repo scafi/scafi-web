@@ -58,6 +58,7 @@ class PhaserGraphSection(paneSection : HTMLElement,
       labelContainer = scene.add.container(0, 0)
       nodeContainer = scene.add.container(0, 0)
       mainContainer = scene.add.container(0, 0, js.Array(vertexContainer, nodeContainer, labelContainer))
+      mainContainer.name = "main" //allow to take from scene
       popup = NodeDescriptionPopup(mainContainer, scene)
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
       interaction(scene, popup, mainContainer)

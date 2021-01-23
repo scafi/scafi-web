@@ -1,55 +1,65 @@
 package it.unibo.scafi.js.model
 
-import org.scalajs.dom.ext.Color
+import it.unibo.scafi.js.model.MatrixLed.Led
+
+import scala.scalajs.js
 
 //TODO doc
-trait MatrixLed {
+
+
+trait MatrixLed extends js.Object {
+  val matrixMatch : Unit //used only for pattern matching, fragile
   def dimension : Int
-  def set(i : Int, j : Int, color : Color) : Option[MatrixLed]
-  def setBulk(elems : Seq[(Int, Int, Color)]) : Option[MatrixLed]
-  def all(color: Color) : MatrixLed
-  def get(i : Int, j : Int) : Option[Color]
-  def leds : Seq[(Int, Seq[(Int, Color)])]
+  def set(led : Led) : js.UndefOr[MatrixLed]
+  def setBulk(elems : js.Array[Led]) : js.UndefOr[MatrixLed]
+  def all(color: String) : MatrixLed
+  def get(i : Int, j : Int) : js.UndefOr[String]
 }
 
 object MatrixLed {
-  def fill(dimension : Int, color : Color) : MatrixLed = {
+  def unapply(a : js.Object) : Option[MatrixLed] = {
+    if (a.hasOwnProperty("matrixMatch")) {
+      Some(a.asInstanceOf[MatrixLed])
+    } else {
+      None
+    }
+  }
+  def label : String = "matrix"
+
+  class Led(val i : Int, val j : Int, val color : String) extends js.Object
+  def fill(dimension : Int, color : String) : MatrixLed = {
     val internalMap = (0 until dimension).flatMap(i => (0 until dimension).map(i -> _))
       .map { case (i,j) => (i, j) -> color }
       .toMap
     new MatrixImpl(dimension, internalMap)
   }
 
-  private class MatrixImpl(val dimension : Int, map : Map[(Int, Int), Color]) extends MatrixLed {
-    override def set(i: Int, j: Int, color : Color): Option[MatrixLed] = inBound[MatrixLed](i, j) {
-      (i, j) => new MatrixImpl(dimension, map + ((i, j) -> color))
+  private class MatrixImpl(val dimension : Int, map : Map[(Int, Int), String]) extends MatrixLed {
+    override def set(led : Led): js.UndefOr[MatrixLed] = inBound[MatrixLed](led.i, led.j) {
+      (i, j) => new MatrixImpl(dimension, map + ((i, j) -> led.color))
     }
 
-    override def get(i: Int, j: Int): Option[Color] = inBound(i, j) {
-      (i, j) => map(i, j)
-    }
+    override def get(i: Int, j: Int): js.UndefOr[String] = inBound(i, j) { (i, j) => map(i, j) }
 
-    override def leds: Seq[(Int, Seq[(Int, Color)])] = map.groupBy { case ((row, _), _) => row }
-      .mapValues(values => values.map { case ((row, col), color) => col -> color} )
-      .mapValues(_.toSeq)
-      .toSeq
-
-    private def inBound[A](i : Int, j : Int)(op : (Int, Int) => A) : Option[A] = if (i < dimension && j < dimension) {
-      Some(op(i, j))
+    private def inBound[A](i : Int, j : Int)(op : (Int, Int) => A) : js.UndefOr[A] = if (i < dimension && j < dimension) {
+      op(i, j)
     } else {
-      None
+      js.undefined
     }
 
-    override def setBulk(elems: Seq[(Int, Int, Color)]): Option[MatrixLed] = {
-      val invalidCoords = elems.map { case (row, col, _) => inBound[Unit](row, col) { (a, b) => {} } }.exists(_.isEmpty)
+    override def setBulk(elems: js.Array[Led]): js.UndefOr[MatrixLed] = {
+      val invalidCoords = elems.map { led => inBound[Int](led.i, led.j) { (a, b) => a } }.exists(_.isEmpty)
+
       if(invalidCoords) {
-        None
+        js.undefined
       } else {
-        val newRep = elems.map { case (row, col, color) => (row, col) -> color }.toMap
-        Some(new MatrixImpl(dimension, map ++ newRep))
+        val newRep = elems.map { led => (led.i, led.j) -> led.color }.toMap
+        new MatrixImpl(dimension, map ++ newRep)
       }
     }
 
-    override def all(color: Color): MatrixLed = new MatrixImpl(dimension, map.mapValues(_ => color))
+    override def all(color: String): MatrixLed = new MatrixImpl(dimension, map.mapValues(_ => color))
+
+    override val matrixMatch: Unit = {}
   }
 }
