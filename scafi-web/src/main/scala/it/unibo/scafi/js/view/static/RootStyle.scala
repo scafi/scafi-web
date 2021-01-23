@@ -49,68 +49,14 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   ".carousel-control" - (filter := "invert(1);")
 
-  ".btn-floating-group" - (
-
+  ".gutter" -(
+    backgroundRepeat.noRepeat,
+    backgroundPosition := "50%"
   )
-
-  /*".btn-group-fab" - (
-    position.fixed,
-    width(50 px),
-    height.auto,
-    right(20 px),
-    bottom(20 px)
+  ".gutter.gutter-horizontal" -(
+    height(contentHeight),
+    backgroundImage := s"${StringIcon.horizontalDivider}"
   )
-
-  ".btn-group-fab div" - (
-    position.relative,
-    width(100 %%),
-    height.auto
-  )
-
-  ".btn-group-fab .btn" - (
-    position.absolute,
-    bottom(0 px),
-    borderRadius(50 %%),
-    display.block,
-    marginBottom(4 px),
-    width(40 px),
-    height(40 px),
-    marginTop(4 px),
-    marginBottom(4 px),
-    marginLeft.auto,
-    marginRight.auto
-  )
-
-  ".btn-group-fab .btn-main" - (
-    width(50 px),
-    height(50 px),
-    right(50 %%),
-    marginRight(-25 px),
-    zIndex(9)
-  )
-
-  ".btn-group-fab .btn-sub" - (
-    bottom(0 px),
-    zIndex(8),
-    right(50 %%),
-    transition := "all 0.5s",
-  )
-
-  ".btn-group-fab.active .btn-sub:nth-child(2)" - (
-    bottom(60 px)
-  )
-
-  ".btn-group-fab.active .btn-sub:nth-child(3)" - (
-    bottom(110 px)
-  )
-
-  ".btn-group-fab.active .btn-sub:nth-child(4)" - (
-    bottom(160 px)
-  )
-
-  ".btn-group-fab .btn-sub:nth-child(5)" - (
-    bottom(210 px)
-  )*/
 }
 
 object RootStyle extends StyleSheet.Standalone {
@@ -131,9 +77,9 @@ object RootStyle extends StyleSheet.Standalone {
     val measure = Measure(
       navHeight = nav vh,
       pageContentHeight = (maxVh - nav) vh,
-      contentHeight = 86 vh,
-      visualizationHeight = (76 - bottomBar) vh,
-      editorHeight = 81 vh,
+      contentHeight = 88 vh,
+      visualizationHeight = (78 - bottomBar) vh,
+      editorHeight = 83 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
     )
@@ -144,9 +90,9 @@ object RootStyle extends StyleSheet.Standalone {
     val measure = Measure(
       navHeight = 0 vh,
       pageContentHeight = maxVh vh,
-      contentHeight = 96 vh,
-      visualizationHeight = (86 - bottomBar) vh,
-      editorHeight = 91 vh,
+      contentHeight = 98 vh,
+      visualizationHeight = (88 - bottomBar) vh,
+      editorHeight = 93 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
     )

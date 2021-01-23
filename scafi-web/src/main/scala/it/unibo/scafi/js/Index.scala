@@ -3,13 +3,15 @@ package it.unibo.scafi.js
 import it.unibo.scafi.js.code.{BasicExample, HighLevelExample, LibraryExample}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
+import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
+import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
-import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection, PhaserInteraction}
+import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.{BooleanExport, BooleanRender, LabelRender, TextifyBitmap}
-import it.unibo.scafi.js.view.static.{RootStyle, SkeletonPage}
+import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
 import monix.execution.Scheduler
 import org.scalajs.dom.experimental.URLSearchParams
 
@@ -107,9 +109,9 @@ object Index {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
 
     // dynamic part configuration
-    val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
-    val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
     val interaction = new Interaction.PhaserInteraction(support)
+    val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv, SensorsMenu(interaction))
+    val renders: Seq[LabelRender] = Seq(BooleanRender(), BooleanExport(), /*LabelRender.gradientLike, test only*/ TextifyBitmap())
     val phaserRender = new PhaserGraphSection(
       paneSection = SkeletonPage.visualizationSection,
       interaction = interaction,
@@ -117,7 +119,7 @@ object Index {
       labelRenders = renders
     )
     val viewControls = new InteractionBoundButtonBar(interaction)
-//    viewControls.render(SkeletonPage.panMoveMode)
+    //    viewControls.render(SkeletonPage.panMoveMode)
     viewControls.render(SkeletonPage.panModeButton, SkeletonPage.selectModeButton)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
@@ -141,7 +143,17 @@ object Index {
     }
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
     val example = Seq(BasicExample(), LibraryExample(), HighLevelExample())
+    //PageStructure.static()
+    PageStructure.resizable()
+    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
+      override def main(): Any = rep(0)(_ + 1)
+    }))
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
+
+    // TODO
+//    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
+//      override def main(): Boolean = sense[Boolean]("source")
+//    }))
   }
 
   @JSExportTopLevel("ScafiBackend")

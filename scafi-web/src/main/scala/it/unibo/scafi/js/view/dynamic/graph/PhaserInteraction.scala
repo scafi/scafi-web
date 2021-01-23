@@ -20,8 +20,6 @@ import it.unibo.scafi.js.view.static.Cursor
 import it.unibo.scafi.js.view.static.Cursor.Implicits._
 import org.scalajs.dom.ext.Color
 
-import scala.scalajs.js
-
 class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result])
   extends ((Scene, NodeDescriptionPopup, Container) => Unit) {
 
@@ -38,13 +36,15 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
   private var scene: Nullable[Scene] = _
   private var mainContainer: Nullable[Container] = _
   private var popup: Nullable[NodeDescriptionPopup] = _
+
   EventBus.listen {
-    case SupportConfiguration(_, _, deviceShape, _, _) => sensors = deviceShape.sensors
-      .filter {
-        case (_, _: Boolean) => true
-        case _ => false
-      }
-      .map { case (name, _) => name }.toSeq
+    case SupportConfiguration(_, _, deviceShape, _, _) =>
+      sensors = deviceShape.sensors
+        .filter {
+          case (_, _: Boolean) => true
+          case _ => false
+        }
+        .map { case (name, _) => name }.toSeq
       onToggle()
   }
 
@@ -58,8 +58,6 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
     onPointerUp()
     onMainContainerDrag()
     onMainContainerDrag()
-    controlKeyEvents()
-    altKeyEvents()
     onToggle()
     onGameInOut()
   }
@@ -87,7 +85,7 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
 
   private def onPointerUp(): Unit = (scene.toOption, mainContainer.toOption) match {
     case (Some(scene), Some(mainContainer)) =>
-      scene.input.on(POINTER_UP, (self: Any, pointer: Input.Pointer) => state match {
+      scene.input.on(POINTER_UP, (_: Any, _: Input.Pointer) => state match {
         case OnSelection => state = Idle
           val bounds = rectangleSelection.getBounds()
           val (overlapX, overlapY) = (bounds.x - mainContainer.x, bounds.y - mainContainer.y)
@@ -108,19 +106,19 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
 
   private def onMainContainerDrag(): Unit = (mainContainer.toOption, scene.toOption) match {
     case (Some(mainContainer), Some(scene)) =>
-      mainContainer.on(DRAG_START, (_: Any, pointer: Pointer) => state match {
+      mainContainer.on(DRAG_START, (_: Any, _: Pointer) => state match {
         case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grabbing
         case _ =>
       })
-      mainContainer.on(DRAG, dragMoveworldFunction)
-      mainContainer.on(DRAG_END, (_: Any, pointer: Pointer) => state match {
+      mainContainer.on(DRAG, dragMoveWorldFunction)
+      mainContainer.on(DRAG_END, (_: Any, _: Pointer) => state match {
         case MoveWorld => scene.game.canvas.style.cursor = Cursor.Grab
         case _ =>
       })
     case _ =>
   }
 
-  private val dragMoveworldFunction: Handler4[Transform] = (obj: Transform, pointer: Pointer, dragX: JSNumber, dragY: JSNumber, _: Any) => state match {
+  private val dragMoveWorldFunction: Handler4[Transform] = (obj: Transform, pointer: Pointer, dragX: JSNumber, dragY: JSNumber, _: Any) => state match {
     case MoveWorld => obj.setPosition(dragX, dragY)
     case OnSelection =>
       rectangleSelection.setSize(pointer.worldX - rectangleSelection.x, pointer.worldY - rectangleSelection.y)
@@ -196,14 +194,14 @@ class PhaserInteraction(private val commandInterpreter: CommandInterpreter[_, _,
       keys.foreach(scene.input.keyboard.get.removeKey(_, destroy = true))
       keys.zip(sensors).
         map { case (key, name) => name -> scene.input.keyboard.get.addKey(key) }
-        .foreach { case (sensor, key) => key.on(DOWN, onClickDown(sensor)) }
+        .foreach { case (sensor, key) => key.on(DOWN, getToggleSensorHandler(sensor)) }
       resetSelection() //fix selection problems
     case _ =>
   }
 
-  private def onClickDown(sensor: String): Handler1[Scene] = (obj, event: js.Object) => {
+  private def getToggleSensorHandler(sensor: String): Handler1[Scene] = (_, _) => {
     val ids = selectionContainer.list[GameObjects.Arc]
-      .map(node => (node.id))
+      .map(node => node.id)
       .toSet
     commandInterpreter.execute(ToggleSensor(sensor, ids))
   }
