@@ -153,17 +153,30 @@ class PhaserGraphSection(paneSection: HTMLElement,
           val rendered = render.graphicalRepresentation(node, labelsRemains, world, scene)
           val renderedLabel = rendered.flatMap { case (_, labels) => labels }
           val renderedGameobject = rendered.map { case (gameobj, _) => gameobj }
-          val labelsRemainsUpdated = labelsRemains.filterNot { case (name, value) => renderedLabel.contains(name) }
+          val labelsRemainsUpdated = labelsRemains.filterNot { case (name, _) => renderedLabel.contains(name) }
           (labelsRemainsUpdated, gameObjects ++ renderedGameobject)
       }._2
     }
 
-    nodes.map { case (node, gameobject) => gameobject -> node.labels }
-      .map { case (node, labels) => node -> labels.filter(label => settings.sensorsMenu.sensorEnabled(label._1)) }
-      .map { case (node, labels) => node -> labels.toList }
-      .map { case (node, labels) => node -> (if (settings.idEnabled) ("id" -> node.id) :: labels else labels) }
-      .flatMap { case (node, labels) => renderNodeLabels(node, labels) }
-      .foreach(labelContainer.add(_))
+//    nodes.map { case (node, labels) if settings.idEnabled => node -> ("id" -> node.id) :: Nil}
+
+    if (settings.idEnabled) {
+//      nodes
+//        .map { case (node, _) => node -> ("id" -> node.id) :: Nil }
+//        .flatMap { case (node, labels) => renderNodeLabels(node, labels) }
+      nodes
+        .map { case (_, gameObject) => gameObject}
+        .map(node => node -> ("id" -> node.id))
+        .flatMap { case (node, label) => renderNodeLabels(node, label :: Nil) }
+        .foreach(labelContainer.add(_))
+    }
+
+//    nodes.map { case (node, gameobject) => gameobject -> node.labels }
+//      .map { case (node, labels) => node -> labels.filter(label => settings.sensorsMenu.sensorEnabled(label._1)) }
+//      .map { case (node, labels) => node -> labels.toList }
+//      .map { case (node, labels) => node -> (if (settings.idEnabled) ("id" -> node.id) :: labels else labels) }
+//      .flatMap { case (node, labels) => renderNodeLabels(node, labels) }
+//      .foreach(labelContainer.add(_))
   }
 }
 
