@@ -3,6 +3,8 @@ package it.unibo.scafi.js
 import it.unibo.scafi.js.code.{BasicExample, HighLevelExample, LibraryExample}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
+import it.unibo.scafi.js.controller.scripting.Script.ScaFi
+import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.utils.{Cookie, Execution}
@@ -143,6 +145,9 @@ object Index {
     val example = Seq(BasicExample(), LibraryExample(), HighLevelExample())
     //PageStructure.static()
     PageStructure.resizable()
+    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
+      override def main(): Any = rep(0)(_ + 1)
+    }))
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
   }
 

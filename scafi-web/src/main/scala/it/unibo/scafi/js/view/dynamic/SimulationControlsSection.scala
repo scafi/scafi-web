@@ -4,9 +4,12 @@ import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecut
 import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.ScaFi
+import it.unibo.scafi.js.utils.Debug
+import it.unibo.scafi.js.view.HtmlRenderable
 import monix.execution.Scheduler
+import org.querki.jquery.$
 import org.scalajs.dom.ext.AjaxException
-import org.scalajs.dom.html.{Button, Div, Input, Label}
+import org.scalajs.dom.html.{Button, Div, Element, Input, Label}
 import scalatags.JsDom.all._
 
 import scala.util.{Failure, Success}
@@ -21,16 +24,24 @@ class SimulationControlsSection {
   val loadButton: Button = button("load", buttonClass, id := "load-code").render
   val startButton: Button = button("start", buttonClass, id := "start-sim").render
   val stopButton: Button = button("stop", buttonClass, id := "stop-sim").render
-  val (rangeBatch, labelBatch, valueBatch) = rangeWithLabel("batch", 1, 1000, 1)
-  val (rangeDelta, labelDelta, valueDelta) = rangeWithLabel("period", 0, 1000, 0)
+  val (slow, normal, fast) = (2, 5, 20)
+  private val velocitySelector = VelocitySelector(slow, normal, fast)
   val tick: Button = button("tick", buttonClass, id := "tick-button").render
   var simulation: Option[SimulationExecution] = None
 
+  velocitySelector.onChangeRadio = () => {
+    simulation = simulation match {
+      case Some(d : Daemon) =>
+        Some(d.stop().toDaemon(0, velocitySelector.batchSize))
+      case Some(t : TickBased) => Some(t.withBatchSize(velocitySelector.batchSize))
+      case other => other
+    }
+  }
   stopButton.onclick = _ => stopCurrentSimulation()
 
   startButton.onclick = _ => simulation match {
     case Some(ticker: TickBased) =>
-      val daemon = ticker.toDaemon(rangeDelta.intValue, rangeBatch.intValue)
+      val daemon = ticker.toDaemon(0, velocitySelector.batchSize)
       daemon.failed.onComplete {
         case Failure(exc) =>
           ErrorModal.showError(exc.toString)
@@ -40,11 +51,10 @@ class SimulationControlsSection {
       simulation = Some(daemon)
       stopButton.disabled = false
       (tick :: startButton :: Nil) foreach { el => el.disabled = true }
-      (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = true }
   }
 
   tick.onclick = _ => simulation match {
-    case Some(ticker: TickBased) => ticker.withBatchSize(rangeBatch.intValue).tick() onComplete {
+    case Some(ticker: TickBased) => ticker.withBatchSize(velocitySelector.batchSize).tick() onComplete {
       case Failure(exc) => ErrorModal.showError(exc.toString)
       case _ =>
     }
@@ -55,9 +65,9 @@ class SimulationControlsSection {
   def render(execution: SimulationExecutionPlatform,
              editor: EditorSection, controlDiv: Div): Unit = {
     lazy val loader = new Loader(controlDiv.parentElement)
-    (loadButton :: startButton :: stopButton :: tick :: Nil) foreach (el => controlDiv.appendChild(el))
-    (labelBatch :: rangeBatch :: valueBatch :: labelDelta :: rangeDelta :: valueDelta :: Nil) foreach (el => controlDiv.appendChild(el))
+    (loadButton :: startButton :: stopButton :: tick :: velocitySelector.html :: Nil) foreach (el => controlDiv.appendChild(el))
     (tick :: stopButton :: startButton :: Nil) foreach { el => el.disabled = true }
+    velocitySelector.init()
     EventBus.listen {
       case code@ScaFi(_) => loadScript(code)
       case config: SupportConfiguration => stopCurrentSimulation()
@@ -71,7 +81,7 @@ class SimulationControlsSection {
         result match {
           case Success(ticker: TickBased) =>
             simulation foreach clearSimulationExecution
-            simulation = Some(ticker)
+            simulation = Some(ticker.withBatchSize(velocitySelector.batchSize))
             (tick :: startButton :: Nil) foreach { el => el.disabled = false }
           case Failure(e: AjaxException) if (e.xhr.status == 404) => ErrorModal.showError(s"Compilation service not found...")
           case Failure(e: AjaxException) => ErrorModal.showError(s"request error, code : ${e.xhr.status}\n${e.xhr.responseText}")
@@ -88,25 +98,41 @@ class SimulationControlsSection {
       startButton.disabled = false
     }
     (tick :: loadButton :: Nil) foreach { el => el.disabled = false }
-    (rangeBatch :: rangeDelta :: Nil) foreach { el => el.disabled = false }
   }
 
   private def clearSimulationExecution(execution: SimulationExecution): SimulationExecution = execution match {
-    case ex: Daemon => ex.stop().withBatchSize(rangeBatch.intValue)
+    case ex: Daemon => ex.stop().withBatchSize(velocitySelector.batchSize)
     case a => a
   }
 
-  private implicit class RichInput(input: Input) {
-    def intValue: Int = input.value.toInt
-  }
+  private case class VelocitySelector(slow : Int, normal : Int, fast : Int) extends HtmlRenderable[Element] {
+    override val html: Element = label("speed", cls := "ml-2 font-weight-bold text-white",
+      div(cls := "ml-2 btn-group btn-group-toggle", attr("data-toggle") := "buttons",
+        label(cls := "btn btn-sm btn-secondary active",
+          input(tpe :="radio", name := "speed", id := "slow"), "Slow"
+        ),
+        label(cls := "btn btn-sm btn-secondary",
+          input(tpe :="radio", name := "speed", id := "normal"), "Normal"
+        ),
+        label(cls := "btn btn-sm btn-secondary",
+          input(tpe :="radio", name := "speed", id := "fast"), "Fast"
+        )
+    )).render
 
-  private def rangeWithLabel(name: String, min: Int = 0, max: Int, value: Int = 0): (Input, Label, Label) = {
-    val range = input(tpe := "range", cls := "mt-2", id := name).render
-    range.min = min.toString
-    range.max = max.toString
-    range.value = value.toString
-    val valueLabel = label(range.value, cls := "mr-3 ml-3 text-light", `for` := name).render
-    range.oninput = _ => valueLabel.textContent = range.value
-    (range, label(`for` := name, name, cls := "mr-3 ml-3 text-light").render, valueLabel)
+    def init(): Unit = {
+      addListener("slow", slow)
+      addListener("normal", normal)
+      addListener("fast", fast)
+    }
+
+    private def addListener(name : String, value : Int) : Unit = {
+      $(s"#${name}").on("change", () => {
+        println("hereee" + name)
+        batchSize = value
+        onChangeRadio()
+      })
+    }
+    var onChangeRadio : () => Unit = () => {}
+    var batchSize : Int = slow
   }
 }
