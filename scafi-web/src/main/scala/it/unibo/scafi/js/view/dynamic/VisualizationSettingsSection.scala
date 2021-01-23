@@ -34,10 +34,5 @@ object VisualizationSettingsSection {
     settingDiv.appendChild(idEnabledSection.html)
     settingDiv.appendChild(neighbourhoodSection.html)
     settingDiv.appendChild(sensorsMenu.html)
-//    new SimpleBar(settingDiv)
-//    if (!$(s"#${settingDiv.id} .simplebar-content").hasClass("form-inline")) {
-//      $(s"#${settingDiv.id} .simplebar-content").addClass("form-inline")
-//    }
   }
-
 }

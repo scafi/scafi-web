@@ -21,7 +21,15 @@ object Toggle {
   def apply(labelValue: String, check: Boolean = false): Toggle = new ToggleFormRow(labelValue, check)
 
   class CheckBox(val labelValue: String, check: Boolean = false, inline: Boolean = true) extends Toggle {
-    private val inputPart = input(cls := "form-check-input", tpe := "checkbox", id := labelValue).render
+    private val inputPart = input(
+      cls := "form-check-input",
+      tpe := "checkbox",
+      id := labelValue,
+    ).render
+
+    if (check) {
+      inputPart.checked = true
+    }
 
     inputPart.onclick = _ => EventBus.publish(ForceRepaint)
 
@@ -31,11 +39,10 @@ object Toggle {
 
     def uncheck(): Unit = inputPart.checked = false
 
-    val html: Div = div(
+    lazy val html: Div = div(
       cls := s"form-check ${if (inline) "form-check-inline" else ""}",
       inputPart,
       label(cls := "form-check-label text-light", `for` := labelValue, labelValue),
-      checked := check
     ).render
   }
 
@@ -43,9 +50,14 @@ object Toggle {
     private lazy val toggle = input(
       `type` := "checkbox",
       `class` := "custom-control-input",
-      id := s"$labelValue-toggle",
-      checked := check
+      id := s"$labelValue-toggle"
     ).render
+
+    if (check) {
+      toggle.checked = true
+    }
+
+    toggle.onclick = _ => EventBus.publish(ForceRepaint)
 
     /**
       * @return the internal representation of the object under the html tag.
