@@ -123,7 +123,6 @@ class SimulationControlsSection {
 
     private def addListener(name : String, value : Int) : Unit = {
       $(s"#${name}").on("change", () => {
-        println("hereee" + name)
         batchSize = value
         onChangeRadio()
       })
