@@ -135,6 +135,9 @@ object Index {
     val example = Seq(BasicExamples(), LibraryExamples(), MatrixLedExample(), MovementExamples(), HighLevelExamples())
     //PageStructure.static()
     PageStructure.resizable()
+    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
+      override def main(): Any = rep(0)(_ + 1)
+    }))
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
   }
   @JSExportTopLevel("ScafiBackend")
