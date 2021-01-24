@@ -21,6 +21,7 @@ object GeomNamespace extends js.Object {
     var y : JSNumber = js.native
     var width : JSNumber = js.native
     var height : JSNumber = js.native
+    def contains(x : JSNumber, y : JSNumber) : Boolean = js.native
   }
 
   /**

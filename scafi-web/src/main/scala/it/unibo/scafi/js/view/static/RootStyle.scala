@@ -3,11 +3,10 @@ package it.unibo.scafi.js.view.static
 import it.unibo.scafi.js.view.static.CssSettings._
 import it.unibo.scafi.js.view.static.RootStyle.Measure
 import scalacss.internal.Length
+
 import scala.language.postfixOps
 
-/**
- * The css main file of the page, it contains the main tag and id that need to be styled
- */
+/** The css main file of the page, it contains the main tag and id that need to be styled. */
 case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   import dsl._
@@ -66,6 +65,7 @@ object RootStyle extends StyleSheet.Standalone {
 
   val maxVh = 100
   val standardNavHeight = 10
+  val standardBottomBarHeight = 5
 
   case class Measure(navHeight: Length[Int],
                      pageContentHeight: Length[Int],
@@ -73,12 +73,12 @@ object RootStyle extends StyleSheet.Standalone {
                      visualizationHeight: Length[Int], editorHeight: Length[Int],
                      demoSelectionHeight: Length[Int], utilsVisualizationHeight: Length[Int])
 
-  def withNav(nav: Int = standardNavHeight): RootStyle = {
+  def withNav(nav: Int = standardNavHeight, bottomBar: Int = standardBottomBarHeight): RootStyle = {
     val measure = Measure(
       navHeight = nav vh,
       pageContentHeight = (maxVh - nav) vh,
       contentHeight = 88 vh,
-      visualizationHeight = 78 vh,
+      visualizationHeight = (78 - bottomBar) vh,
       editorHeight = 83 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
@@ -86,12 +86,12 @@ object RootStyle extends StyleSheet.Standalone {
     RootStyle(measure)
   }
 
-  lazy val withoutNav: RootStyle = {
+  def withoutNav(bottomBar: Int = standardBottomBarHeight): RootStyle = {
     val measure = Measure(
       navHeight = 0 vh,
       pageContentHeight = maxVh vh,
       contentHeight = 98 vh,
-      visualizationHeight = 88 vh,
+      visualizationHeight = (88 - bottomBar) vh,
       editorHeight = 93 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh

@@ -1,17 +1,15 @@
 package it.unibo.scafi.js
 
-import it.unibo.scafi.js.code.{BasicExamples, HighLevelExamples, LibraryExamples, MatrixLedExample, MovementExamples}
+import it.unibo.scafi.js.code._
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.{Cookie, Execution}
 import it.unibo.scafi.js.view.dynamic._
-import it.unibo.scafi.js.view.dynamic.graph.{PhaserGraphSection, PhaserInteraction}
-import it.unibo.scafi.js.view.dynamic.graph.LabelRender._
+import it.unibo.scafi.js.view.dynamic.graph.LabelRender.{LabelRender, MatrixLedRender, TextifyBitmap}
+import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection}
 import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
-import it.unibo.scafi.space.Point2D
 import monix.execution.Scheduler
 import org.scalajs.dom.experimental.URLSearchParams
 
@@ -70,7 +68,7 @@ object Index {
 
   def contentOnly(): Unit = {
     // page injection
-    document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withoutNav).render)
+    document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withoutNav()).render)
     document.body.appendChild(SkeletonPage.contentOnly.render)
   }
 
@@ -108,9 +106,18 @@ object Index {
   def scafiInitialization(): Unit = {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
-    val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv)
+    val interaction = new Interaction.PhaserInteraction(support)
+    val visualizationSettingsSection = VisualizationSettingsSection(SkeletonPage.visualizationOptionDiv, SensorsMenu(interaction))
     val renders: Seq[LabelRender] = Seq(TextifyBitmap(Set("matrix")), MatrixLedRender(matrixSize))
-    val phaserRender = new PhaserGraphSection(SkeletonPage.visualizationSection, new PhaserInteraction(support), visualizationSettingsSection, renders)
+    val phaserRender = new PhaserGraphSection(
+      paneSection = SkeletonPage.visualizationSection,
+      interaction = interaction,
+      settings = visualizationSettingsSection,
+      labelRenders = renders
+    )
+    val viewControls = new InteractionBoundButtonBar(interaction)
+    //    viewControls.render(SkeletonPage.panMoveMode)
+    viewControls.render(SkeletonPage.panModeButton, SkeletonPage.selectModeButton)
     val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
     controls.render(support, editor, SkeletonPage.controlsDiv)
@@ -135,9 +142,6 @@ object Index {
     val example = Seq(BasicExamples(), LibraryExamples(), MatrixLedExample(), MovementExamples(), HighLevelExamples())
     //PageStructure.static()
     PageStructure.resizable()
-    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
-      override def main(): Any = rep(0)(_ + 1)
-    }))
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
   }
   @JSExportTopLevel("ScafiBackend")
