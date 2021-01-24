@@ -151,9 +151,9 @@ object Index {
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
 
     // TODO
-//    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
-//      override def main(): Boolean = sense[Boolean]("source")
-//    }))
+    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
+      override def main(): Boolean = sense[Boolean]("source")
+    }))
   }
 
   @JSExportTopLevel("ScafiBackend")

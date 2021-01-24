@@ -63,8 +63,10 @@ class PhaserGraphSection(paneSection: HTMLElement,
       mainContainer = scene.add.container(0, 0, js.Array(vertexContainer, nodeContainer, labelContainer))
       popup = NodeDescriptionPopup(mainContainer, scene)
       mainContainer.setSize(Int.MaxValue, Int.MaxValue)
+      paneSection.onmouseleave = (_: Any) => scene.input.enabled = false
+      paneSection.onmouseenter = (_: Any) => scene.input.enabled = true
       interaction.onPhaserLoaded(scene, popup, mainContainer)
-      keyboardBindings.init(scene) // TODO to remove...
+      // keyboardBindings.init(scene) // TODO to remove...
       scene.input.on(Phaser.Input.Events.POINTER_WHEEL,
         (_: js.Any, _: js.Any, _: js.Any, _: JSNumber, dy: JSNumber, _: JSNumber) => {
           mainCamera.zoom -= (dy / 1000)
@@ -101,7 +103,7 @@ class PhaserGraphSection(paneSection: HTMLElement,
     scene.cameras.main.scrollY = -(gameCenterY - centerY)
     val zoomFactorHeight = (game.canvas.height / height)
     val zoomFactorWidth = (game.canvas.width / width)
-    val zoomFactor = if(zoomFactorWidth < zoomFactorHeight) zoomFactorWidth else zoomFactorHeight
+    val zoomFactor = if (zoomFactorWidth < zoomFactorHeight) zoomFactorWidth else zoomFactorHeight
     val slack = if (zoomFactor > 1) cameraSlack else noSlack
     scene.cameras.main.zoom = zoomFactor + slack
   }
@@ -160,7 +162,7 @@ class PhaserGraphSection(paneSection: HTMLElement,
 
     if (settings.idEnabled) {
       nodes
-        .map { case (_, gameObject) => gameObject}
+        .map { case (_, gameObject) => gameObject }
         .map(node => node -> ("id" -> node.id))
         .flatMap { case (node, label) => renderNodeLabels(node, label :: Nil) }
         .foreach(labelContainer.add(_))
