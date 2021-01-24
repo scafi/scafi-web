@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased}
 import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecutionPlatform, SupportConfiguration}
+import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.utils.Debug
@@ -15,7 +15,9 @@ import scalatags.JsDom.all._
 import scala.util.{Failure, Success}
 
 class SimulationControlsSection {
+
   import it.unibo.scafi.js.utils.Execution
+
   implicit val exc: Scheduler = Execution.timeoutBasedScheduler
 
   private val buttonClass = cls := "btn btn-primary ml-1 btn-sm"
@@ -25,7 +27,7 @@ class SimulationControlsSection {
   val (slow, normal, fast) = (2, 5, 20)
   private val velocitySelector = VelocitySelector(slow, normal, fast)
   val tick: Button = button("tick", buttonClass, id := "tick-button").render
-  var simulation : Option[SimulationExecution] = None
+  var simulation: Option[SimulationExecution] = None
 
   velocitySelector.onChangeRadio = () => {
     simulation = simulation match {
@@ -38,7 +40,7 @@ class SimulationControlsSection {
   stopButton.onclick = _ => stopCurrentSimulation()
 
   startButton.onclick = _ => simulation match {
-    case Some(ticker : TickBased) =>
+    case Some(ticker: TickBased) =>
       val daemon = ticker.toDaemon(0, velocitySelector.batchSize)
       daemon.failed.onComplete {
         case Failure(exc) =>
@@ -58,6 +60,7 @@ class SimulationControlsSection {
     }
     case _ =>
   }
+
   //TODO move the execution far from here...
   def render(execution: SimulationExecutionPlatform,
              editor: EditorSection, controlDiv: Div): Unit = {
@@ -67,36 +70,37 @@ class SimulationControlsSection {
     velocitySelector.init()
     EventBus.listen {
       case code@ScaFi(_) => loadScript(code)
-      case config : SupportConfiguration => stopCurrentSimulation()
+      case config: SupportConfiguration => stopCurrentSimulation()
     }
     loadButton.onclick = event => loadScript(editor.getScript())
 
-    def loadScript(script : Script) : Unit = {
+    def loadScript(script: Script): Unit = {
       loader.load()
       execution.loadScript(script).onComplete(result => {
         loader.loaded()
         result match {
-        case Success(ticker: TickBased) =>
-          simulation foreach clearSimulationExecution
-          simulation = Some(ticker.withBatchSize(velocitySelector.batchSize))
-         (tick :: startButton :: Nil) foreach { el => el.disabled = false }
-        case Failure(e : AjaxException) if(e.xhr.status == 404) => ErrorModal.showError(s"Compilation service not found...")
-        case Failure(e : AjaxException) => ErrorModal.showError(s"request error, code : ${e.xhr.status }\n${e.xhr.responseText}")
-        case Failure(exception) => ErrorModal.showError(exception.toString)
-      }})
+          case Success(ticker: TickBased) =>
+            simulation foreach clearSimulationExecution
+            simulation = Some(ticker.withBatchSize(velocitySelector.batchSize))
+            (tick :: startButton :: Nil) foreach { el => el.disabled = false }
+          case Failure(e: AjaxException) if (e.xhr.status == 404) => ErrorModal.showError(s"Compilation service not found...")
+          case Failure(e: AjaxException) => ErrorModal.showError(s"request error, code : ${e.xhr.status}\n${e.xhr.responseText}")
+          case Failure(exception) => ErrorModal.showError(exception.toString)
+        }
+      })
     }
   }
 
-  private def stopCurrentSimulation() : Unit = {
+  private def stopCurrentSimulation(): Unit = {
     simulation = simulation.map(clearSimulationExecution)
     stopButton.disabled = true
-    if(simulation.nonEmpty) {
+    if (simulation.nonEmpty) {
       startButton.disabled = false
     }
     (tick :: loadButton :: Nil) foreach { el => el.disabled = false }
   }
 
-  private def clearSimulationExecution(execution: SimulationExecution) : SimulationExecution = execution match {
+  private def clearSimulationExecution(execution: SimulationExecution): SimulationExecution = execution match {
     case ex: Daemon => ex.stop().withBatchSize(velocitySelector.batchSize)
     case a => a
   }
