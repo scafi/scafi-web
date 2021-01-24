@@ -1,6 +1,8 @@
 package it.unibo.scafi.js.code
 
-object HighLevelExample {
+import it.unibo.scafi.js.controller.local.DeviceConfiguration
+
+object HighLevelExamples {
   trait Heater {
     def temp : Double
     def turnOn : Unit
@@ -64,5 +66,21 @@ object HighLevelExample {
         |branch(leader) { "leader" } { action(heater) }
         |""".stripMargin
     },
+    Example.create("Pattern SCR with movement", DeviceConfiguration.standard) {
+      """//using StandardSensors, Actuation, Movement2D, FlockLib, AdvancedFlock, BlockC, BlockG, BlockT, BlockS
+        |/*
+        |  This example shows how to elect a leader and then stay near him. It is possible using the S block,
+        |  that allows to divide the space into zones and to elect a leader.
+        |  The result shows the creation of agglomerates near a node.
+        | */
+        |val radius = 200
+        |val separationDistance = 30.0
+        |val leader = S(radius, nbrRange)
+        |val leaderPosition = broadcast(leader, currentPosition())
+        |val ledColor = mux(leader) { "red" } { "#000000" }
+        |val direction = withSeparation(goToPoint(leaderPosition.x, leaderPosition.y))(separationDistance)
+        |(ledAll to ledColor, velocity set direction, leader)
+        |}""".stripMargin
+    }
   ))
 }

@@ -4,7 +4,7 @@ import it.unibo.scafi.js.controller.local.DeviceConfiguration
 
 import scala.scalajs.js
 
-object LibraryExample {
+object LibraryExamples {
   private val sourceSensor = DeviceConfiguration(js.Dictionary("source" -> false, "matrix" -> DeviceConfiguration.standardMatrix))
   private val examples : Seq[Example] = Seq(
     Example.create("Spread across the gradient", sourceSensor) {

@@ -2,7 +2,7 @@ package it.unibo.scafi.js.dsl
 
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.incarnations.Incarnation
-import it.unibo.scafi.js.lib.MovementLibrary
+import it.unibo.scafi.js.lib.{ActuationLib, MovementLibrary}
 import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.lib.StandardLibrary
 import it.unibo.scafi.simulation.SpatialSimulation

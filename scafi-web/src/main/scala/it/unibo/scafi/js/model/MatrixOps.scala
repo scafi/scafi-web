@@ -24,9 +24,9 @@ object MatrixOps {
   def apply(action : MatrixOps, matrix : MatrixLed) : MatrixLed = {
     action.cells match {
       case One(i, j) => matrix.set(new Led(i, j, action.color.toHex)).getOrElse(matrix)
-      case Column(i) => val led = (0 until matrix.dimension).map(new Led(i, _, action.color.toHex)).toJSArray
+      case Column(i) => val led = (0 until matrix.dimension).map(new Led(_, i, action.color.toHex)).toJSArray
         matrix.setBulk(led).getOrElse(matrix)
-      case Row(j) => val led = (0 until matrix.dimension).map(new Led(_, j, action.color.toHex)).toJSArray
+      case Row(j) => val led = (0 until matrix.dimension).map(new Led(j, _, action.color.toHex)).toJSArray
         matrix.setBulk(led).getOrElse(matrix)
       case All => matrix.all(action.color.toHex)
       case Diagonal => val cells = 0 until matrix.dimension

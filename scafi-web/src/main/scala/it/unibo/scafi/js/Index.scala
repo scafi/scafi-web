@@ -1,6 +1,6 @@
 package it.unibo.scafi.js
 
-import it.unibo.scafi.js.code.{BasicExample, HighLevelExample, LibraryExample}
+import it.unibo.scafi.js.code.{BasicExamples, HighLevelExamples, LibraryExamples, MatrixLedExample, MovementExamples}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.controller.scripting.Script.ScaFi
@@ -132,13 +132,10 @@ object Index {
       modal.show()
     }
     EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
-    val example = Seq(BasicExample(), LibraryExample(), HighLevelExample())
+    val example = Seq(BasicExamples(), LibraryExamples(), MatrixLedExample(), MovementExamples(), HighLevelExamples())
     //PageStructure.static()
     PageStructure.resizable()
     val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
-    EventBus.publish(ScaFi(new incarnation.AggregateProgram {
-      override def main(): Boolean = sense[Boolean]("source")
-    }))
   }
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)

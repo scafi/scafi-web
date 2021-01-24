@@ -4,7 +4,7 @@ import it.unibo.scafi.js.controller.local.DeviceConfiguration
 
 import scala.scalajs.js
 
-object BasicExample {
+object BasicExamples {
   private def sense(sensor : String) = s"""sense[Boolean]("$sensor")"""
   private val oneSensor = DeviceConfiguration(js.Dictionary("sensor" -> false, "matrix" -> DeviceConfiguration.standardMatrix))
   private val twoSensor = DeviceConfiguration(js.Dictionary("sensor1" -> true, "sensor2" -> true, "matrix" -> DeviceConfiguration.standardMatrix))

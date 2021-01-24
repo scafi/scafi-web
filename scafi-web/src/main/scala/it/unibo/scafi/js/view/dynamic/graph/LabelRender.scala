@@ -138,7 +138,7 @@ object LabelRender {
           val center = (node.x - matrixSize, node.y - matrixSize)
           for(i <- 0 until matrix.dimension;
             j <- 0 until matrix.dimension) {
-            val toPhaser = matrix.get(i, j).get.tail
+            val toPhaser = matrix.get(j, i).get.tail
             result.fillStyle(s"0x$toPhaser", 1)
             result.fillRect(center._1 + delta(i), center._2 + delta(j), elemSize, elemSize)
           }

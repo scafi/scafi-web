@@ -1,10 +1,10 @@
-package it.unibo.scafi.js.dsl
+package it.unibo.scafi.js.lib
 
 import it.unibo.scafi.incarnations.Incarnation
 import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
-import it.unibo.scafi.js.model.{MatrixOps, Movement}
 import it.unibo.scafi.js.model.MatrixOps._
 import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
+import it.unibo.scafi.js.model.{MatrixOps, Movement}
 import org.scalajs.dom.ext.Color
 
 import scala.scalajs.js.|

@@ -15,8 +15,8 @@ trait Flock_Lib {
    *  - some shortcuts for expressing flock behaviors;
    *  - an utility method (withSeparation) that move a node agglomerate trying to maintain a separation distance.
    */
-  trait FlockLib {
-    self: FieldCalculusSyntax with StandardSensors =>
+  trait FlockLib extends ProgramMovementImplicits {
+    self: FieldCalculusSyntax with StandardSensors with Actuation =>
     /**
       * This class summarize the parameters to describe a Flocking like behaviour.
       * @param flockingField the boolean field in which the flock behaviour should happen
@@ -140,7 +140,7 @@ trait Flock_Lib {
        * @param importance how much the goal influences the swarm? (default 1.0)
        * @return the behaviour with the goal in mind
        */
-      def withGoal(goal : P, importance : Double = 1.0) : FlockBehaviour = flock.addBehaviour { goToPoint(goal) * importance }
+      def withGoal(goal : (Double, Double), importance : Double = 1.0) : FlockBehaviour = flock.addBehaviour { goToPoint(goal._1, goal._2) * importance }
       /**
        * It guide the swarm to avoid a specific part of the field (delimited with obstacleSensor selector)
        * @param obstacleSensor the field that the swarm tends to avoid
