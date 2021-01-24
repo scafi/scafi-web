@@ -159,10 +159,10 @@ class PhaserGraphSection(paneSection: HTMLElement,
           (labelsRemainsUpdated, gameObjects ++ renderedGameObject)
       }._2
     }
-
+    //TODO fix
     if (settings.idEnabled) {
       nodes
-        .map { case (node, gameObj) => gameObj -> ((node.labels.toSeq) :+ ("id" -> node.id)) }
+        .map { case (node, gameObj) => gameObj -> (node.labels.toSeq :+ ("id" -> node.id)) }
         .flatMap { case (node, labels) => renderNodeLabels(node, labels ) }
         .foreach(labelContainer.add(_))
     }

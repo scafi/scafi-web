@@ -53,7 +53,7 @@ object SensorsMenu {
         sensorsGroup.textContent = ""
         sensors = device
           .sensors
-          .map { case (name, _) =>
+          .map { case (name, value : Boolean) =>
             name -> Toggle(
               labelValue = name,
               onClick = (e: MouseEvent) => {
@@ -62,6 +62,7 @@ object SensorsMenu {
                 Toggle.Repaint(e)
               })
           }
+          //TODO move export away
           .+=(SimulationSupport.EXPORT_LABEL -> Toggle(SimulationSupport.EXPORT_LABEL, check = true, onClick = Toggle.Repaint))
         sensors
           .map { case (_, toggle) => toggle }
