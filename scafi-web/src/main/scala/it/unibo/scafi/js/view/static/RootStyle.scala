@@ -3,6 +3,7 @@ package it.unibo.scafi.js.view.static
 import it.unibo.scafi.js.view.static.CssSettings._
 import it.unibo.scafi.js.view.static.RootStyle.Measure
 import scalacss.internal.Length
+import scalacss.internal.LengthUnit.px
 
 import scala.language.postfixOps
 
@@ -45,6 +46,10 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   "#page-container" - (height(pageContentHeight))
 
+  "#control-mode-container" - (
+    position.relative,
+    top(- 55 px)
+  )
   ".simplebar-scrollbar::before" - (backgroundColor(gray))
 
   ".carousel-control" - (filter := "invert(1);")
@@ -73,26 +78,26 @@ object RootStyle extends StyleSheet.Standalone {
                      visualizationHeight: Length[Int], editorHeight: Length[Int],
                      demoSelectionHeight: Length[Int], utilsVisualizationHeight: Length[Int])
 
-  def withNav(nav: Int = standardNavHeight, bottomBar: Int = standardBottomBarHeight): RootStyle = {
+  def withNav(nav: Int = standardNavHeight): RootStyle = {
     val measure = Measure(
       navHeight = nav vh,
       pageContentHeight = (maxVh - nav) vh,
-      contentHeight = 88 vh,
-      visualizationHeight = (78 - bottomBar) vh,
-      editorHeight = 83 vh,
+      contentHeight = 87 vh,
+      visualizationHeight = 77 vh,
+      editorHeight = 82 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
     )
     RootStyle(measure)
   }
 
-  def withoutNav(bottomBar: Int = standardBottomBarHeight): RootStyle = {
+  def withoutNav(): RootStyle = {
     val measure = Measure(
       navHeight = 0 vh,
       pageContentHeight = maxVh vh,
-      contentHeight = 98 vh,
-      visualizationHeight = (88 - bottomBar) vh,
-      editorHeight = 93 vh,
+      contentHeight = 97 vh,
+      visualizationHeight = 87 vh,
+      editorHeight = 92 vh,
       demoSelectionHeight = 5 vh,
       utilsVisualizationHeight = 5 vh
     )

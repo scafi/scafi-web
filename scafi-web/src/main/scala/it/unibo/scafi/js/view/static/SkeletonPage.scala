@@ -197,7 +197,7 @@ object SkeletonPage {
 
   // toggle as button group
   lazy val panMoveMode: Div = div(
-    cls := "btn-floating-group text-center pt-2",
+    cls := "btn-floating-group text-center pt-2", id := PanMoveModeFormName + "-container",
     div(
       cls := "btn-group btn-group-toggle",
       id := PanMoveModeFormName,

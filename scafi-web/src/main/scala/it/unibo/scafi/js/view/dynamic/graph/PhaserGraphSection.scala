@@ -160,12 +160,12 @@ class PhaserGraphSection(paneSection: HTMLElement,
       }._2
     }
     //TODO fix
-    if (settings.idEnabled) {
-      nodes
-        .map { case (node, gameObj) => gameObj -> (node.labels.toSeq :+ ("id" -> node.id)) }
-        .flatMap { case (node, labels) => renderNodeLabels(node, labels ) }
-        .foreach(labelContainer.add(_))
-    }
+    nodes
+      .map { case (node, gameObj) => gameObj -> (node.labels.toSeq :+ ("id" -> node.id)) }
+      .map { case (node, labels) => node -> labels.filter(sensor => settings.sensorEnabled(sensor._1)) }
+      .flatMap { case (node, labels) => renderNodeLabels(node, labels ) }
+      .foreach(labelContainer.add(_))
+
   }
 }
 

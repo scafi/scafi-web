@@ -10,12 +10,7 @@ import scalatags.JsDom.all.{button, div, _}
 
 import scala.scalajs.js
 
-trait SensorsMenu extends HtmlRenderable[Div] {
-
-  def sensorsEnabled: Boolean
-
-  def sensorEnabled(name: String): Boolean
-}
+trait SensorsMenu extends HtmlRenderable[Div] {}
 
 object SensorsMenu {
   def apply(interaction: Interaction): SensorsMenu = new DropdownSensorsMenu(interaction)
@@ -35,9 +30,6 @@ object SensorsMenu {
 
     private lazy val sensorsGroup = div(cls := "form-group").render
 
-    override def sensorsEnabled: Boolean = sensors.exists { case (_, checkBox) => checkBox.enabled }
-
-    override def sensorEnabled(name: String): Boolean = sensors.get(name).fold(false)(_.enabled)
 
     override val html: Div = div(
       cls := "dropdown",
@@ -53,8 +45,8 @@ object SensorsMenu {
         sensorsGroup.textContent = ""
         sensors = device
           .sensors
-          .map { case (name, value : Boolean) =>
-            name -> Toggle(
+          .collect { case (name, value : Boolean) =>
+            name -> Toggle.button(
               labelValue = name,
               onClick = (e: MouseEvent) => {
                 val ids = interaction.selection.map(_.toSet).getOrElse(Set())
@@ -62,8 +54,6 @@ object SensorsMenu {
                 Toggle.Repaint(e)
               })
           }
-          //TODO move export away
-          .+=(SimulationSupport.EXPORT_LABEL -> Toggle(SimulationSupport.EXPORT_LABEL, check = true, onClick = Toggle.Repaint))
         sensors
           .map { case (_, toggle) => toggle }
           .foreach(toggle => {

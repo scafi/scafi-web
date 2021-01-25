@@ -55,6 +55,9 @@ object Toggle {
   def apply(labelValue: String, check: Boolean = false, onClick: js.Function1[MouseEvent, _]): Toggle =
     new ToggleFormRow(labelValue, check, onClick)
 
+  def button(labelValue: String, check: Boolean = false, onClick: js.Function1[MouseEvent, _]): Toggle =
+    new ToggleWithButton(labelValue, check, onClick)
+
   /*private*/ class CheckBox(val labelValue: String, check: Boolean = false, inline: Boolean = true) extends Toggle {
     private val inputPart = input(
       cls := "form-check-input",
@@ -123,4 +126,43 @@ object Toggle {
     override def uncheck(): Unit = toggle.checked = false
   }
 
+  class ToggleWithButton(val labelValue: String,
+                        check: Boolean = false,
+                        onClick: js.Function1[MouseEvent, _] = Repaint)
+    extends Toggle {
+    private var _check = check
+    private lazy val toggle = input(
+      `type` := "button",
+      `class` := "btn btn-sm bg-primary mr-2 text-white",
+      id := s"$labelValue-toggle",
+      value := s"toggle",
+    ).render
+
+    toggle.onclick = ev => {
+      _check = !_check
+      onClick(ev)
+    }
+
+    /**
+     * @return the internal representation of the object under the html tag.
+     */
+    override lazy val html: Div = div(
+      `class` := "form-row mt-2",
+      div(
+        `class` := "form-inline",
+        this.toggle,
+        label(
+          `class` := "text-white",
+          `for` := this.toggle.id,
+          this.labelValue
+        )
+      )
+    ).render
+
+    override def enabled: Boolean = _check
+
+    override def check(): Unit = _check = true
+
+    override def uncheck(): Unit = _check = false
+  }
 }
