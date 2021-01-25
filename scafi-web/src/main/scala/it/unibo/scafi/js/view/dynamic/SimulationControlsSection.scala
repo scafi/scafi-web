@@ -4,7 +4,7 @@ import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecut
 import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased}
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.ScaFi
-import it.unibo.scafi.js.utils.Debug
+import it.unibo.scafi.js.utils.{Debug, GlobalStore}
 import it.unibo.scafi.js.view.HtmlRenderable
 import monix.execution.Scheduler
 import org.querki.jquery.$
@@ -68,7 +68,7 @@ class SimulationControlsSection {
     (loadButton :: startButton :: stopButton :: tick :: velocitySelector.html :: Nil) foreach (el => controlDiv.appendChild(el))
     (tick :: stopButton :: startButton :: Nil) foreach { el => el.disabled = true }
     velocitySelector.init()
-    EventBus.listen {
+    PageBus.listen {
       case code@ScaFi(_) => loadScript(code)
       case config: SupportConfiguration => stopCurrentSimulation()
     }
@@ -106,15 +106,24 @@ class SimulationControlsSection {
   }
 
   private case class VelocitySelector(slow : Int, normal : Int, fast : Int) extends HtmlRenderable[Element] {
+    private val globalLabel = "velocitySelector"
+    val active = GlobalStore.getOrElseUpdate(globalLabel, "slow")
+    var onChangeRadio : () => Unit = () => {}
+    var batchSize : Int = active match {
+      case "slow" => slow
+      case "normal" => normal
+      case "fast" => fast
+    }
+
     override val html: Element = label("speed", cls := "ml-2 font-weight-bold text-white",
       div(cls := "ml-2 btn-group btn-group-toggle", attr("data-toggle") := "buttons",
-        label(cls := "btn btn-sm btn-secondary active",
+        label(cls := s"btn btn-sm btn-secondary ${activeLabel("slow")}",
           input(tpe :="radio", name := "speed", id := "slow"), "Slow"
         ),
-        label(cls := "btn btn-sm btn-secondary",
+        label(cls := s"btn btn-sm btn-secondary ${activeLabel("normal")}",
           input(tpe :="radio", name := "speed", id := "normal"), "Normal"
         ),
-        label(cls := "btn btn-sm btn-secondary",
+        label(cls := s"btn btn-sm btn-secondary ${activeLabel("fast")}",
           input(tpe :="radio", name := "speed", id := "fast"), "Fast"
         )
     )).render
@@ -125,13 +134,17 @@ class SimulationControlsSection {
       addListener("fast", fast)
     }
 
+    private def activeLabel(s : String) : String = s match {
+      case `active` => "active"
+      case _ => ""
+    }
+
     private def addListener(name : String, value : Int) : Unit = {
       $(s"#${name}").on("change", () => {
         batchSize = value
+        GlobalStore.put(globalLabel, name)
         onChangeRadio()
       })
     }
-    var onChangeRadio : () => Unit = () => {}
-    var batchSize : Int = slow
   }
 }

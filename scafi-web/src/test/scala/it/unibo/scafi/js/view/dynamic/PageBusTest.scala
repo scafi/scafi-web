@@ -5,17 +5,17 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Promise
 
-class EventBusTest extends AsyncFunSpec with Matchers {
+class PageBusTest extends AsyncFunSpec with Matchers {
 
   describe("The event bus") {
     it("able to listen and publish event") {
       val event = "Ciao"
       val promise = Promise[String]()
-      EventBus.listen {
+      PageBus.listen {
         case word : String => promise.success(event)
         case _ => promise.failure(new IllegalArgumentException)
       }
-      EventBus.publish(event)
+      PageBus.publish(event)
       promise.future.map { case `event` => succeed }
     }
   }

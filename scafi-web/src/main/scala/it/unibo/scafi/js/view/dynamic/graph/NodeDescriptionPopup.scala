@@ -7,7 +7,7 @@ import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespac
 import it.unibo.scafi.js.model.Node
 import it.unibo.scafi.js.view.dynamic.CarouselModal.{CarouselContent, CarouselItem, ContentList, ContentTree}
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
-import it.unibo.scafi.js.view.dynamic.{CarouselModal, EventBus}
+import it.unibo.scafi.js.view.dynamic.{CarouselModal, PageBus}
 import org.scalajs.dom.raw.MouseEvent
 import NodeRepresentation._
 import it.unibo.scafi.js.facade.phaser.namespaces.input.InputEventsNamespace.{DRAG, POINTER_DOWN}
@@ -83,7 +83,7 @@ object NodeDescriptionPopup {
       gameElement.y = node.y
       gameElement.visible = true
       selectedId = Some(node.id)
-      EventBus.publish(ForceRepaint)
+      PageBus.publish(ForceRepaint)
     }
 
     private def updateTitle(title : String) = modal.title.innerHTML = title

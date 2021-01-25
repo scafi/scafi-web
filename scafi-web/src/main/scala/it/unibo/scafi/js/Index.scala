@@ -21,7 +21,6 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 object Index {
 
   import org.scalajs.dom._
-  private val matrixSize = 7 //put in a global config? How to change it in the view?
   implicit val incarnation: BasicWebIncarnation = WebIncarnation // incarnation chosen
 
   /** Interpreter chosen. */
@@ -110,9 +109,9 @@ object Index {
     val visualizationSettingsSection = VisualizationSettingsSection(
       SkeletonPage.visualizationOptionDiv,
       SensorsMenu(interaction),
-      "viz-setting-dropdown"
+      SkeletonPage.visualizationConfigDropdown
     )
-    val renders: Seq[LabelRender] = Seq(TextifyBitmap(Set("matrix")), MatrixLedRender(matrixSize))
+    val renders: Seq[LabelRender] = Seq(TextifyBitmap(Set("matrix")), MatrixLedRender())
     val phaserRender = new PhaserGraphSection(
       paneSection = SkeletonPage.visualizationSection,
       interaction = interaction,
@@ -130,7 +129,7 @@ object Index {
     // force repaint
     support.invalidate()
     SkeletonPage.visualizationSection.focus()
-    EventBus.publish(configuration) // tell to all component the new configuration installed on the frontend
+    PageBus.publish(configuration) // tell to all component the new configuration installed on the frontend
 
     if (!Cookie.get("visited").exists(_.toBoolean)) {
       val modal = welcomeModal
@@ -142,7 +141,7 @@ object Index {
       }
       modal.show()
     }
-    EventBus.publish(configuration) //tell to all component the new configuration installed on the frontend
+    PageBus.publish(configuration) //tell to all component the new configuration installed on the frontend
     val example = Seq(BasicExamples(), LibraryExamples(), MatrixLedExample(), MovementExamples(), HighLevelExamples())
     //PageStructure.static()
     PageStructure.resizable()

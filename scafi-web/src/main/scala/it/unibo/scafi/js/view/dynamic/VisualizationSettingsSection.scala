@@ -4,9 +4,11 @@ import it.unibo.scafi.js.controller.local.SimulationSupport
 import it.unibo.scafi.js.utils.GlobalStore
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.static.VisualizationSetting
-import org.scalajs.dom.{VisibilityState, document}
 import org.scalajs.dom.html.Div
+import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
+
+import scala.scalajs.js
 
 trait VisualizationSettingsSection {
   def idEnabled: Boolean
@@ -20,14 +22,22 @@ trait VisualizationSettingsSection {
 
 object VisualizationSettingsSection {
 
-  def apply(settingDiv: Div, sensorsMenu: SensorsMenu, visualizationDropId : String): VisualizationSettingsSection =
-    new VisualizationSettingsSectionImpl(settingDiv, sensorsMenu, visualizationDropId)
+  def apply(settingDiv: Div, sensorsMenu: SensorsMenu, visualizationDropMenu : Div): VisualizationSettingsSection =
+    new VisualizationSettingsSectionImpl(settingDiv, sensorsMenu, visualizationDropMenu)
 
-  private class VisualizationSettingsSectionImpl(settingDiv: Div, override val sensorsMenu: SensorsMenu, visualizationDropId : String)
+  private class VisualizationSettingsSectionImpl(settingDiv: Div, override val sensorsMenu: SensorsMenu, visualizationDropMenu : Div)
     extends VisualizationSettingsSection {
-    private val idEnabledSection = Toggle("id", check = true, onClick = Toggle.Repaint)
-    private val neighbourhoodSection = Toggle("neighborhood", check = true, onClick = Toggle.Repaint)
-    private val exportSection = Toggle(SimulationSupport.EXPORT_LABEL, check = true, onClick = Toggle.Repaint)
+    private val labelsEnabledGlobal = "labelEnabled"
+    private val labels = GlobalStore.getOrElseUpdate(labelsEnabledGlobal, js.Dictionary(
+      "id" -> true,
+      "neighborhood" -> true,
+      SimulationSupport.EXPORT_LABEL -> true
+    ))
+    private val exportLabel = SimulationSupport.EXPORT_LABEL
+    private val idEnabledSection = Toggle("id", check = labels("id"), onClick = e => onLabelChange(e, "id"))
+    private val neighbourhoodSection = Toggle("neighborhood", check = labels("neighborhood"), onClick = e => onLabelChange(e, "neighborhood"))
+    private val exportSection = Toggle(exportLabel, check = labels(exportLabel), onClick = e => onLabelChange(e, exportLabel))
+
     private val standardFontSize = 12
     private val minFontSize = 10
     private val maxFontSize = 20
@@ -56,14 +66,19 @@ object VisualizationSettingsSection {
       case _ => false
     }
 
-    idEnabledSection.check()
-    neighbourhoodSection.check()
-    document.getElementById(visualizationDropId).appendChild(nodeSizeTag.html)
-    document.getElementById(visualizationDropId).appendChild(fontSizeTag.html)
+    visualizationDropMenu.appendChild(nodeSizeTag.html)
+    visualizationDropMenu.appendChild(fontSizeTag.html)
     settingDiv.appendChild(idEnabledSection.html)
     settingDiv.appendChild(neighbourhoodSection.html)
     settingDiv.appendChild(exportSection.html)
     settingDiv.appendChild(sensorsMenu.html)
+
+    private def onLabelChange(e : MouseEvent, name : String) : Unit = {
+      val labelsMap = GlobalStore.get[js.Dictionary[Boolean]](labelsEnabledGlobal).get
+      labelsMap.put(name, !labelsMap(name))
+      GlobalStore.put(labelsEnabledGlobal, labelsMap)
+      Toggle.Repaint(e)
+    }
   }
 
   private case class NumericVizInput(labelValue : String, minValue : Int,

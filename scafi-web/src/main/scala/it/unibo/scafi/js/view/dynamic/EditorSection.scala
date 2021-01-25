@@ -4,7 +4,7 @@ import it.unibo.scafi.js.code.Example
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.{Javascript, Scala, ScalaEasy}
 import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Doc, Editor, EditorConfiguration}
-import it.unibo.scafi.js.utils.GlobalStore
+import it.unibo.scafi.js.utils.{Execution, GlobalStore}
 import it.unibo.scafi.js.view.dynamic.EditorSection.Mode
 import org.querki.jquery.{$, JQuery, JQueryEventObject}
 import org.scalajs.dom.html.TextArea
@@ -76,7 +76,7 @@ object EditorSection {
   private class EditorSectionImpl(textArea: TextArea)
     extends EditorSection {
     var mode: Mode = ScalaModeEasy
-    private val modeSelection = new ModeSelection("modeSelection")
+    private val modeSelection = new ModeSelection("editor-header")
     private lazy val popup: Modal = Modal.okCancel("Warning!", "The mode change will erase all your code, are you sure?",
       onOk = () => {
         this.setCode("", ScalaModeEasy)
@@ -97,7 +97,7 @@ object EditorSection {
       case _ =>
     }
     GlobalStore.put("doc", editor.doc)
-    modeSelection.onClick(() => {
+    modeSelection.onClick = () => {
       if (mode == ScalaModeEasy) {
         val fullCode = ScalaModeEasy.convertToFull(this.getRaw())
         editor.setValue(fullCode)
@@ -105,8 +105,8 @@ object EditorSection {
       } else {
         popup.show()
       }
-    })
-    EventBus.listen { case Example(_, code, _) => this.setCode(code, ScalaModeEasy) }
+    }
+    PageBus.listen { case Example(_, code, _) => this.setCode(code, ScalaModeEasy) }
 
     override def setCode(code: String, mode: Mode): Unit = {
       mode match {
@@ -133,17 +133,14 @@ object EditorSection {
   }
 
   class ModeSelection(id: String) {
-    val mode = $(s"#$id")
-
-    def isChecked(): Boolean = mode.prop("checked").get.asInstanceOf[Boolean]
-
-    def onClick(handler: () => Unit): JQuery = mode.click((e: JQueryEventObject) => {
-      handler()
-    })
-
-    def off(): Unit = mode.prop("checked", false).change()
-
-    def on(): Unit = mode.prop("checked", true).change()
+    private val mode = $(s"#$id")
+    private val toggle = Toggle("advanced", false, e => onClick())
+    toggle.html.classList.add("ml-2")
+    mode.append(toggle.html)
+    def isChecked(): Boolean = toggle.enabled
+    var onClick : () => Unit = () => {}
+    def off(): Unit = toggle.uncheck()
+    def on(): Unit = toggle.check()
   }
 
 }

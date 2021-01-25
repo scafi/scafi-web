@@ -21,15 +21,17 @@ object PageStructure {
 
   object Resizable {
     private val firstSection = 1
-    private val configPortion = 10
-    private val editorPortion = 40
-    private val visualizationPortion = 49
-    private val minControlPortion = 300
-    private val minEditorPortion = 300
-    private val minVisualizationPortion = 400 //put in css?? verify..
-    private val configSection = SplitSection(configPortion, minControlPortion, "#backend-config-section")
-    private val editorSection = SplitSection(editorPortion, minEditorPortion, "#editor-section")
-    private val visualizationSection = SplitSection(visualizationPortion, minVisualizationPortion, "#visualization-section")
+    private val (configPortion, editorPortion, visualizationPortion) = (10.0, 40.0, 49.0)
+    private val (minControlPortion, minEditorPortion, minVisualizationPortion) = (250, 250, 400)
+    private val empty = new SplitSection(0, 0)
+    private val (config, editor, visualization) = (0, 1, 2)
+    //val sizes = GlobalStore.getOrElseUpdate[PageSizes](sizesInGlobal, new PageSizes(configPortion, editorPortion, visualizationPortion))
+    private val sections = js.Array("#backend-config-section", "#editor-section", "#visualization-section")
+    private val configSection = new SplitSection(configPortion, minControlPortion)
+    private val editorSection = new SplitSection(editorPortion, minEditorPortion)
+    private val visualizationSection = new SplitSection(visualizationPortion, minVisualizationPortion)
+    private val standardConfig = new PageDivision(false, js.Array(configSection, editorSection, visualizationSection))
+    val divisions : PageDivision = GlobalStore.getOrElseUpdate(sizesInGlobal, standardConfig)
     private var split : js.Dynamic = Split.default
     private val gutterCreator : js.Any = (index : Int, direction : Any, pairElement : Element) => {
       val gutter: Div = div().render
@@ -43,39 +45,36 @@ object PageStructure {
     private val doubleClickEvent = (ev : js.Any) => {
       val backendSection = $("#backend-config-section")
       split.destroy()
-      if(backendSection.is(":visible")) {
-        GlobalStore.put("mode", "noconfig")
-
-      } else {
-        GlobalStore.put("mode", "full")
+      val divisions = GlobalStore.get[PageDivision](sizesInGlobal).get
+      if(divisions.collapsed) {
+        divisions.elems(config) = configSection
+        divisions.elems(visualization) = new SplitSection(divisions.elems(visualization).size - configSection.size, minVisualizationPortion)
         backendSection.show()
+        GlobalStore.put(sizesInGlobal, new PageDivision(false, divisions.elems))
+        split = createSplit(gutterCreator, sections, divisions.elems:_*)
+      } else {
+        backendSection.hide()
+        val oldConfig = divisions.elems(config)
+        divisions.elems(config) = empty
+        divisions.elems(visualization) = new SplitSection(divisions.elems(visualization).size + oldConfig.size, minVisualizationPortion)
+        GlobalStore.put(sizesInGlobal, new PageDivision(true, divisions.elems))
+        split = createSplit(gutterCreator, sections, divisions.elems:_*)
       }
-      split = createSplitFromGlobal()
     }
 
     def install() : Unit = {
-      split = createSplitFromGlobal()
-      Debug("split", split)
+      val backendSection = $("#backend-config-section")
+      if(divisions.collapsed) {
+        backendSection.hide()
+        val oldConfig = divisions.elems(config)
+        divisions.elems(config) = empty
+        divisions.elems(visualization) = new SplitSection(divisions.elems(visualization).size + oldConfig.size, minVisualizationPortion)
+      }
+      split = createSplit(gutterCreator, sections, divisions.elems:_*)
       $("#backend-config-section").addClass("pl-3")
     }
-    case class SplitSection(size : Int, minSize : Int, id : String)
 
-    private def createSplitFromGlobal() : js.Dynamic = {
-      GlobalStore.get[String]("mode") match {
-        case Success("full") => createSplit(gutterCreator, configSection, editorSection, visualizationSection)
-        case Success("noconfig") =>
-          $("#backend-config-section").hide()
-          createSplit(gutterCreator,
-            configSection.copy(minSize = 0, size = 0),
-            editorSection,
-            visualizationSection.copy(size = configSection.size + visualizationSection.size))
-
-        case _ => createSplit(gutterCreator, configSection, editorSection, visualizationSection)
-      }
-    }
-
-    private def createSplit(handler : js.Any, splitSection: SplitSection *) : js.Dynamic = {
-      val sections = js.Array(splitSection.map(_.id):_*)
+    private def createSplit(handler : js.Any, sections : js.Array[String], splitSection: SplitSection *) : js.Dynamic = {
       val sizes = js.Array(splitSection.map(_.size):_*)
       val minSizes = js.Array(splitSection.map(_.minSize):_*)
       Split.default(sections,
@@ -83,9 +82,22 @@ object PageStructure {
           "sizes" -> sizes,
           "minSize" -> minSizes,
           "gutter" -> handler,
-          "expandToMin" -> true
+          "expandToMin" -> true,
+          "onDrag" -> ((elems : js.Array[Double]) => {
+            val oldConfig = GlobalStore.get[PageDivision](sizesInGlobal).get
+            val newPageDivision = new PageDivision(oldConfig.collapsed, js.Array(
+              new SplitSection(elems(config), if(oldConfig.collapsed) 0 else minControlPortion),
+              new SplitSection(elems(editor), minEditorPortion),
+              new SplitSection(elems(visualization), minVisualizationPortion),
+            ))
+            GlobalStore.put(sizesInGlobal, newPageDivision)
+          })
         )
       )
     }
   }
+
+  class SplitSection(val size : Double, val minSize : Int) extends js.Object
+  class PageDivision(val collapsed : Boolean, val elems : js.Array[SplitSection]) extends js.Object
+  val sizesInGlobal = "page-sizes"
 }

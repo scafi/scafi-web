@@ -49,7 +49,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
   }
   init(Random)
   var elements : js.Array[Any] = js.Array()
-  EventBus.listen {
+  PageBus.listen {
     case config : SupportConfiguration => lastConfiguration = config
       configureFromConfig(config)
   }
@@ -121,7 +121,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
 
   private def evolve(config : SupportConfiguration) : Unit = {
     support.evolve(config)
-    EventBus.publish(config)
+    PageBus.publish(config)
   }
 }
 

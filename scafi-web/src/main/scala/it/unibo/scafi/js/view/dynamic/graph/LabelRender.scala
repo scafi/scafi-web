@@ -131,7 +131,7 @@ object LabelRender {
     }
   }
 
-  case class MatrixLedRender(fullMatrix : Double) extends LabelRender {
+  case class MatrixLedRender() extends LabelRender {
     val fallBackSize = 7.0
     private val cache = new mutable.HashMap[String, js.Dynamic]()
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph,  scene: Scene): Output = {
@@ -176,7 +176,7 @@ object LabelRender {
   private def removeActuationFrom(e : Any) : String = {
     val dataFlatten = e match {
       case e : ActuationData => Seq()
-      case e : Product => e.productIterator.toList.filter(_.isInstanceOf[ActuationData])
+      case e : Product => e.productIterator.toList
       case e : Iterable[_] => e
       case e : Any => Seq(e)
     }

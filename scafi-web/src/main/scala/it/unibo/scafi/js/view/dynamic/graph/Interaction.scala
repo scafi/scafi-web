@@ -10,7 +10,7 @@ import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Containe
 import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.Pointer
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace.Transform
 import it.unibo.scafi.js.utils.{Execution, JSNumber}
-import it.unibo.scafi.js.view.dynamic.EventBus
+import it.unibo.scafi.js.view.dynamic.PageBus
 import it.unibo.scafi.js.view.dynamic.graph.Interaction.State
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import monix.execution.Scheduler
@@ -76,7 +76,7 @@ object Interaction {
       this.scene = scene
       this.popup = popup
       this.mainContainer = container
-      EventBus.listen { case _: SupportConfiguration => resetSelection() } // todo fix selection issue
+      PageBus.listen { case _: SupportConfiguration => resetSelection() } // todo fix selection issue
       initRectangle()
       onDragStart()
       onDrag()

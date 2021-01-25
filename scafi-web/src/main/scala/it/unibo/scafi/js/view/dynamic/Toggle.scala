@@ -21,7 +21,7 @@ trait Toggle extends HtmlRenderable[Div] {
 }
 
 object Toggle {
-  val Repaint: js.Function1[MouseEvent, _] = _ => EventBus.publish(ForceRepaint)
+  val Repaint: js.Function1[MouseEvent, _] = _ => PageBus.publish(ForceRepaint)
 
 //  /**
 //    * Build a simple '''toggle'''.
@@ -65,9 +65,8 @@ object Toggle {
       id := labelValue,
     ).render
 
-    if (check) {
-      inputPart.checked = true
-    }
+    inputPart.checked = check
+
 
     inputPart.onclick = Repaint
 
@@ -94,9 +93,7 @@ object Toggle {
       id := s"$labelValue-toggle"
     ).render
 
-    if (check) {
-      toggle.checked = true
-    }
+    toggle.checked = check
 
     toggle.onclick = onClick
 

@@ -28,18 +28,15 @@ object SkeletonPage {
     * Select part to choose an aggregate program.
     */
   lazy val selectionProgram: Select = select(id := "select-program", cls := "form-control bg-dark text-light").render
-  private val modeSelectionId = "modeSelection";
-  /**
-    * Advanced and easy mode selection
-    */
-  lazy val modeSelection: Div = div(cls := "d-flex pl-2 pr-2 align-items-center",
-    input(`type` := "checkbox", id := modeSelectionId),
-    label(`for` := "modeSelection", cls := "form-check-label text-light ml-1", "advanced")
-  ).render
+  private val modeSelectionId = "advanced-toggle";
   /**
     * Section that contains the controls to manage the backend, it is support specific.
     */
   lazy val controlsDiv: Div = div(id := "controls").render
+  /**
+   * Section that contains some visualization configuration (e.g. font size, node size, ...)
+   */
+  lazy val visualizationConfigDropdown = div(cls := "form-group", id := "viz-setting-dropdown").render
   /**
     * Editor header that contains the program and mode selector
     */
@@ -50,8 +47,7 @@ object SkeletonPage {
       cls := "input-group-prepend",
       span(cls := "input-group-text", "Examples")
     ),
-    selectionProgram,
-    modeSelection
+    selectionProgram
   ).render
   lazy val editorHeaderPopover = new Popover(
     attachTo = editorHeader.id,
@@ -135,9 +131,7 @@ object SkeletonPage {
           span(cls := "fas fa-cogs fa-lg pr-2", aria.hidden := true),
           "Settings"
         ),
-        form(cls := "dropdown-menu bg-dark p-2 text-white",
-          div(cls := "form-group", id := "viz-setting-dropdown")
-        )
+        form(cls := "dropdown-menu bg-dark p-2 text-white", visualizationConfigDropdown)
       ),
       a(
         cls := "btn btn-outline-light mr-2 my-sm-0",

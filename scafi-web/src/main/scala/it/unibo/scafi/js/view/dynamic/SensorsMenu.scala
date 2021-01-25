@@ -40,12 +40,12 @@ object SensorsMenu {
       ),
     ).render
 
-    EventBus.listen {
+    PageBus.listen {
       case SupportConfiguration(_, _, device, _, _) =>
         sensorsGroup.textContent = ""
         sensors = device
           .sensors
-          .collect { case (name, value : Boolean) =>
+          .collect { case (name, _ : Boolean) =>
             name -> Toggle.button(
               labelValue = name,
               onClick = (e: MouseEvent) => {
@@ -56,9 +56,7 @@ object SensorsMenu {
           }
         sensors
           .map { case (_, toggle) => toggle }
-          .foreach(toggle => {
-            sensorsGroup.appendChild(toggle.html)
-          })
+          .foreach(toggle => sensorsGroup.appendChild(toggle.html))
     }
   }
 

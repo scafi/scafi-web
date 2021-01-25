@@ -7,14 +7,14 @@ import it.unibo.scafi.js.facade.phaser.namespaces.EventsNamespace.Handler1
 import it.unibo.scafi.js.facade.phaser.namespaces.input.KeyboardNamespace.Events.DOWN
 import it.unibo.scafi.js.facade.phaser.namespaces.input.KeyboardNamespace.KeyCodes._
 import it.unibo.scafi.js.utils.{Nullable, _}
-import it.unibo.scafi.js.view.dynamic.EventBus
+import it.unibo.scafi.js.view.dynamic.PageBus
 
 class KeyboardBindings(interaction: Interaction) {
   private var sensors: Seq[String] = Seq()
 //  private val keys = List(ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE)
   var scene: Nullable[Scene] = _
 
-  EventBus.listen {
+  PageBus.listen {
     case SupportConfiguration(_, _, deviceShape, _, _) =>
       sensors = deviceShape
         .sensors

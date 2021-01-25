@@ -46,7 +46,7 @@ object ScafiCompiler {
                   |import it.unibo.scafi.js.Index
                   |import it.unibo.scafi.js.Index.configuration
                   |import it.unibo.scafi.js.controller.scripting.Script.ScaFi
-                  |import it.unibo.scafi.js.view.dynamic.EventBus
+                  |import it.unibo.scafi.js.view.dynamic.PageBus
                   |import it.unibo.scafi.js.view.dynamic.EditorSection
                   |import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel, JSGlobal, JSExportAll}
                   |@JSExportTopLevel("Injector")
@@ -58,12 +58,12 @@ object ScafiCompiler {
                   |     Index.main(Array())
                   |     $core
                   |     Index.editor.setCode($h$h$h$showCode$h$h$h, ${mode.toString})
-                  |     EventBus.publish(ScaFi(program))
+                  |     PageBus.publish(ScaFi(program))
                   |     import it.unibo.scafi.js.controller.local.SupportConfiguration
                   |     SupportConfiguration.loadGlobal().foreach {
                   |       config => {
                   |         Index.support.evolve(config)
-                  |         EventBus.publish(config)
+                  |         PageBus.publish(config)
                   |       }
                   |     }
                   |  }

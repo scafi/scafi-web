@@ -8,7 +8,7 @@ import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.model.{Graph, Node}
 import it.unibo.scafi.js.utils.{Debug, GlobalStore, JSNumber}
-import it.unibo.scafi.js.view.dynamic.{EventBus, VisualizationSettingsSection}
+import it.unibo.scafi.js.view.dynamic.{PageBus, VisualizationSettingsSection}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.{Bound, ForceRepaint}
 import it.unibo.scafi.js.view.static.VisualizationSetting
@@ -56,7 +56,7 @@ class PhaserGraphSection(paneSection: HTMLElement,
     preload = scene => labelRenders.foreach(_.onInit(scene)),
     create = (scene, _) => {
       GlobalStore.listen[Any](VisualizationSetting.globalName)(_  => {
-        EventBus.publish(ForceRepaint)
+        PageBus.publish(ForceRepaint)
       })
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
@@ -90,7 +90,7 @@ class PhaserGraphSection(paneSection: HTMLElement,
 
   override def apply(v1: Graph): Unit = model = (Some(v1), true)
 
-  EventBus.listen {
+  PageBus.listen {
     case ForceRepaint => model = model.copy(_2 = true)
     case SupportConfiguration(_@RandomNetwork(min, max, _), _, _, _, _) => newBound = Some(Bound(min, min, max, max))
     case SupportConfiguration(_@GridLikeNetwork(row, col, stepX, stepY, _), _, _, _, _) =>
