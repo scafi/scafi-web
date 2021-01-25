@@ -7,12 +7,14 @@ import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{BitmapTe
 import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
 import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.TextStyle
 import it.unibo.scafi.js.model.{ActuationData, Graph, MatrixLed}
-import it.unibo.scafi.js.utils.Debug
+import it.unibo.scafi.js.utils.{Debug, GlobalStore, JSNumber}
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
+import it.unibo.scafi.js.view.static.VisualizationSetting
 import org.scalajs.dom.ext.Color
 
 import scala.collection.mutable
 import scala.scalajs.js
+import scala.util.{Failure, Success}
 
 object LabelRender {
   type SensorEntries = Seq[(String, Any)]
@@ -41,13 +43,18 @@ object LabelRender {
   }
 
   case class TextifyBitmap(except : Set[String] = Set.empty) extends LabelRender {
-    val fontSize = 12 //todo put in a global configuration object
+    val fallBackSize = 12
+   //todo put in a global configuration object
     //val textureUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.png"
     //val fontUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
     val textureUrl = "./fonts/font.png"
     val fontUrl = "./fonts/font.xml"
     private val cache : mutable.Map[String, BitmapText] = new mutable.HashMap()
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph, scene: Scene): Output = {
+      val (fontSize, width) = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName) match {
+        case Success(VisualizationSetting(fontSize, nodeWidth)) => (fontSize, nodeWidth : JSNumber)
+        case Failure(_) => (fallBackSize, node.width)
+      }
       val textLabel = elements
         .filterNot { case (name, _) => except.contains(name) }
       val result = textLabel
@@ -55,7 +62,8 @@ object LabelRender {
         .mkString("\n")
       val text = cache.getOrElseUpdate(node.id, scene.add.bitmapText(node.x + node.width / 2, node.y, "fonts", normalizeValue(result), fontSize))
       text.ignoreDestroy = true
-      text.setPosition(node.x + node.width / 2, node.y)
+      text.setFontSize(fontSize)
+      text.setPosition(node.x + width / 2, node.y)
       text.setText(normalizeValue(result))
       Seq((text, textLabel.map { case (name, value) => name}))
     }
@@ -124,12 +132,17 @@ object LabelRender {
   }
 
   case class MatrixLedRender(fullMatrix : Double) extends LabelRender {
+    val fallBackSize = 7.0
     private val cache = new mutable.HashMap[String, js.Dynamic]()
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph,  scene: Scene): Output = {
+      val fullMatrix = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName) match {
+        case Success(VisualizationSetting(_, nodeSize)) => (nodeSize : Double)
+        case Failure(_) => fallBackSize
+      }
       val result = elements.collectFirst { case ("matrix", MatrixLed(m)) => ("matrix", m) }
       result match {
         case Some((label, matrix)) =>
-          val matrixSize = (fullMatrix) / 2
+          val matrixSize = (fullMatrix) / 2.0
           val elemSize = fullMatrix / matrix.dimension
           def delta(index : Int) : Double =  index * elemSize
           val result = cache.getOrElseUpdate(node.id, scene.add.asInstanceOf[js.Dynamic].graphics(0, 0))

@@ -126,6 +126,19 @@ object SkeletonPage {
     ),
     span(cls := "navbar-text ml-2", "Discover the power of the collective"),
     form(cls := "form-inline",
+      div(cls := "dropdown",
+        span(
+          cls := "btn btn-outline-light mr-2 my-sm-0 dropdown-toggle",
+          data("toggle") := "dropdown",
+          aria.haspopup := true,
+          aria.expanded := false,
+          span(cls := "fas fa-cogs fa-lg pr-2", aria.hidden := true),
+          "Settings"
+        ),
+        form(cls := "dropdown-menu bg-dark p-2 text-white",
+          div(cls := "form-group", id := "viz-setting-dropdown")
+        )
+      ),
       a(
         cls := "btn btn-outline-light mr-2 my-sm-0",
         href := "https://scafi.github.io/",

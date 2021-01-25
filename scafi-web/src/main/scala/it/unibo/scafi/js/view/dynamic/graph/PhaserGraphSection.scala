@@ -1,16 +1,17 @@
 package it.unibo.scafi.js.view.dynamic.graph
 
 import it.unibo.scafi.js.controller.local.{GridLikeNetwork, RandomNetwork, SupportConfiguration}
-import it.unibo.scafi.js.facade.phaser.{types, Phaser}
+import it.unibo.scafi.js.facade.phaser.{Phaser, types}
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.GameObject
 import it.unibo.scafi.js.facade.phaser.namespaces.ScaleNamespace.ScaleModes
 import it.unibo.scafi.js.facade.phaser.types.core._
 import it.unibo.scafi.js.facade.phaser.types.physics.arcade.ArcadeWorldConfig
 import it.unibo.scafi.js.model.{Graph, Node}
-import it.unibo.scafi.js.utils.{Debug, JSNumber}
+import it.unibo.scafi.js.utils.{Debug, GlobalStore, JSNumber}
 import it.unibo.scafi.js.view.dynamic.{EventBus, VisualizationSettingsSection}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.{Bound, ForceRepaint}
+import it.unibo.scafi.js.view.static.VisualizationSetting
 import org.scalajs.dom.ext.Color
 import org.scalajs.dom.raw.HTMLElement
 
@@ -54,6 +55,9 @@ class PhaserGraphSection(paneSection: HTMLElement,
   private lazy val sceneHandler: types.scenes.CreateSceneFromObjectConfig = types.scenes.callbacks(
     preload = scene => labelRenders.foreach(_.onInit(scene)),
     create = (scene, _) => {
+      GlobalStore.listen[Any](VisualizationSetting.globalName)(_  => {
+        EventBus.publish(ForceRepaint)
+      })
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
       Debug("scene", scene)
