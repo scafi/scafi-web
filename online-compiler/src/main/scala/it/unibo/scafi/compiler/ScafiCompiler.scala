@@ -57,7 +57,6 @@ object ScafiCompiler {
                   |  def main() {
                   |     Index.main(Array())
                   |     $core
-                  |     Index.editor.setCode($h$h$h$showCode$h$h$h, ${mode.toString})
                   |     PageBus.publish(ScaFi(program))
                   |     import it.unibo.scafi.js.controller.local.SupportConfiguration
                   |     SupportConfiguration.loadGlobal().foreach {

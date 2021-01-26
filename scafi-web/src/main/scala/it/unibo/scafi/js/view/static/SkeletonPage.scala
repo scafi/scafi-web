@@ -23,7 +23,7 @@ object SkeletonPage {
   /**
     * Textarea associated with the editor section.
     */
-  lazy val editorSection: TextArea = textarea(id := "editor").render
+  lazy val editorSection: Div = div(id := "editor").render
   /**
     * Select part to choose an aggregate program.
     */

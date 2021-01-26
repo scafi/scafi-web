@@ -17,8 +17,6 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
   "nav" - (height(navHeight))
 
   "#editor" - (
-    height(100 %%),
-    paddingBottom(10 px),
     flex := "1 1 auto",
     position.relative,
     overflow.auto

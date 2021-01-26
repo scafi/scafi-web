@@ -3,13 +3,13 @@ package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.js.code.Example
 import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.{Javascript, Scala, ScalaEasy}
-import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Doc, Editor, EditorConfiguration}
-import it.unibo.scafi.js.utils.{Execution, GlobalStore}
+import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Doc, EditorConfiguration}
+import it.unibo.scafi.js.utils.GlobalStore
 import it.unibo.scafi.js.view.dynamic.EditorSection.Mode
-import org.querki.jquery.{$, JQuery, JQueryEventObject}
-import org.scalajs.dom.html.TextArea
+import org.querki.jquery.$
+import org.scalajs.dom.html.Div
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 trait EditorSection {
   def setCode(code: String, mode: Mode): Unit
@@ -73,7 +73,7 @@ object EditorSection {
     case JavascriptMode.lang => JavascriptMode
   }
 
-  private class EditorSectionImpl(textArea: TextArea)
+  private class EditorSectionImpl(editorZone: Div)
     extends EditorSection {
     var mode: Mode = ScalaModeEasy
     private val modeSelection = new ModeSelection("editor-header")
@@ -88,13 +88,14 @@ object EditorSection {
         modeSelection.on()
       }
     )
+    val editor = GlobalStore.get[Doc]("doc") match {
+      case Success(doc) => val config = new EditorConfiguration(doc.getValue(), mode.codeMirrorMode, "native", true, "material")
 
-    val editorConfiguration = new EditorConfiguration(mode.codeMirrorMode, "native", true, "material")
-    private val editor: Editor = CodeMirror.fromTextArea(textArea, editorConfiguration)
-    //TODO think if it is to put outside or inside
-    GlobalStore.get[Doc]("doc") match {
-      case Success(doc) => editor.doc.setHistory(doc.getHistory())
-      case _ =>
+        val editor = CodeMirror(editorZone, config)
+        editor.doc.setHistory(doc.getHistory())
+        editor
+      case Failure(exception) => val config = new EditorConfiguration("", mode.codeMirrorMode, "native", true, "material")
+         CodeMirror(editorZone, config)
     }
     GlobalStore.put("doc", editor.doc)
     modeSelection.onClick = () => {
@@ -128,8 +129,8 @@ object EditorSection {
     override def getRaw(): String = editor.getValue()
   }
 
-  def apply(textArea: TextArea): EditorSection = {
-    new EditorSectionImpl(textArea)
+  def apply(div: Div): EditorSection = {
+    new EditorSectionImpl(div)
   }
 
   class ModeSelection(id: String) {
