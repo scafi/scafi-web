@@ -31,7 +31,6 @@ object PageStructure {
     private val editorSection = new SplitSection(editorPortion, minEditorPortion)
     private val visualizationSection = new SplitSection(visualizationPortion, minVisualizationPortion)
     private val standardConfig = new PageDivision(false, js.Array(configSection, editorSection, visualizationSection))
-    val divisions : PageDivision = GlobalStore.getOrElseUpdate(sizesInGlobal, standardConfig)
     private var split : js.Dynamic = Split.default
     private val gutterCreator : js.Any = (index : Int, direction : Any, pairElement : Element) => {
       val gutter: Div = div().render
@@ -63,6 +62,7 @@ object PageStructure {
     }
 
     def install() : Unit = {
+      val divisions : PageDivision = GlobalStore.getOrElseUpdate(sizesInGlobal, standardConfig)
       val backendSection = $("#backend-config-section")
       if(divisions.collapsed) {
         backendSection.hide()
@@ -84,12 +84,14 @@ object PageStructure {
           "gutter" -> handler,
           "expandToMin" -> true,
           "onDrag" -> ((elems : js.Array[Double]) => {
+            split.destroy()
             val oldConfig = GlobalStore.get[PageDivision](sizesInGlobal).get
             val newPageDivision = new PageDivision(oldConfig.collapsed, js.Array(
               new SplitSection(elems(config), if(oldConfig.collapsed) 0 else minControlPortion),
               new SplitSection(elems(editor), minEditorPortion),
               new SplitSection(elems(visualization), minVisualizationPortion),
             ))
+            install()
             GlobalStore.put(sizesInGlobal, newPageDivision)
           })
         )
