@@ -173,13 +173,10 @@ object LabelRender {
     }
   }
 
-  private def removeActuationFrom(e : Any) : String = {
-    val dataFlatten = e match {
-      case e : ActuationData => Seq()
-      case e : Product => e.productIterator.toList
-      case e : Iterable[_] => e
-      case e : Any => Seq(e)
+  private def removeActuationFrom(e : Any) : String = e match {
+      case e : ActuationData => ""
+      case e : Iterable[_] => e.filterNot(_.isInstanceOf[ActuationData]).toString()
+      case e : Product => e.productIterator.toList.filterNot(_.isInstanceOf[ActuationData]).mkString("(", ",", ")")
+      case e : Any => e.toString
     }
-    dataFlatten.filterNot(_.isInstanceOf[ActuationData]).mkString(",")
-  }
 }

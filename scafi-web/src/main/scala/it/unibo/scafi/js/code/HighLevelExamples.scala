@@ -19,7 +19,8 @@ object HighLevelExamples {
     def turnOn : Unit = on = true
     def turnOff : Unit = on = false
   }
-  def apply() : ExampleGroup = ExampleGroup("High level", Seq(
+
+  private val examples = Seq(
     Example.create("Pattern SCR") {
       """//using StandardSensors, BlockG, BlockC, BlockS, StateManagement
         |trait Heater {
@@ -80,7 +81,8 @@ object HighLevelExamples {
         |val ledColor = mux(leader) { "red" } { "#000000" }
         |val direction = withSeparation(goToPoint(leaderPosition.x, leaderPosition.y))(separationDistance)
         |(ledAll to ledColor, velocity set direction, leader)
-        |}""".stripMargin
+        |""".stripMargin
     }
-  ))
+  )
+  def apply() : ExampleGroup = ExampleGroup("High level", examples)
 }

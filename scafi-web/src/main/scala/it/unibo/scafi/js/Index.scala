@@ -34,7 +34,7 @@ object Index {
     with BuiltinsJs
 
   val configuration: SupportConfiguration = SupportConfiguration(
-    GridLikeNetwork(10, 10, 60, 60, 0),
+    GridLikeNetwork(10, 10, 60, 60, 10),
     SpatialRadius(range = 70),
     deviceShape = DeviceConfiguration.standard,
     seed = SimulationSeeds(),

@@ -45,7 +45,7 @@ object MovementExamples {
         |velocity set flockVelocity""".stripMargin
     },
     Example.create("Flock lib: with separation") {
-      """/using Actuation, FlockLib, AdvancedFlock, Movement2D, StandardSensors
+      """//using Actuation, FlockLib, AdvancedFlock, Movement2D, StandardSensors
         |val weigth = 0.5
         |val separation = 30.0
         |velocity set withSeparation(goToPoint(0, 0) * weigth)(separation)

@@ -48,7 +48,9 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   "#control-mode-container" - (
     position.relative,
-    top(- 55 px)
+    top(- 55 px),
+    width(0 px),
+    left( 50 %%)
   )
   ".simplebar-scrollbar::before" - (backgroundColor(gray))
 

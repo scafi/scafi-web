@@ -21,7 +21,7 @@ object PageStructure {
 
   object Resizable {
     private val firstSection = 1
-    private val (configPortion, editorPortion, visualizationPortion) = (10.0, 40.0, 49.0)
+    private val (configPortion, editorPortion, visualizationPortion) = (15.0, 35.0, 49.0)
     private val (minControlPortion, minEditorPortion, minVisualizationPortion) = (250, 250, 400)
     private val empty = new SplitSection(0, 0)
     private val (config, editor, visualization) = (0, 1, 2)

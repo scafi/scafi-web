@@ -7,6 +7,9 @@ import scala.scalajs.js
 object BasicExamples {
   private def sense(sensor : String) = s"""sense[Boolean]("$sensor")"""
   private val oneSensor = DeviceConfiguration(js.Dictionary("sensor" -> false, "matrix" -> DeviceConfiguration.standardMatrix))
+  private val gradient = DeviceConfiguration(js.Dictionary("sensor" -> false, "matrix" -> DeviceConfiguration.standardMatrix),
+    js.Dictionary("1" -> js.Dictionary("sensor" -> true))
+  )
   private val twoSensor = DeviceConfiguration(js.Dictionary("sensor1" -> true, "sensor2" -> true, "matrix" -> DeviceConfiguration.standardMatrix))
   private val dollar = '$'
   private val examples = Seq(
@@ -43,15 +46,20 @@ object BasicExamples {
       """def sense1() = sense[Boolean]("sensor")
         |foldhood(0)(_+_)(if(nbr{sense1}) 1 else 0)""".stripMargin
     },
-    Example.create("Gradient", oneSensor) {
-      s"""//using StandardSensors
-         |rep(Double.PositiveInfinity)(distance =>
+    Example.create("Gradient", gradient) {
+      s"""//using StandardSensors, Actuation
+         |val gradient = rep(Double.PositiveInfinity)(distance =>
          |  mux(sense[Boolean]("sensor")){
          |    0.0
          |  }{
          |    minHoodPlus(nbr{distance} + nbrRange)
          |  }
-         |).formatted("%4.2g")""".stripMargin
+         |)
+         |val maxValue = 500.0
+         |val hueColor = 0
+         |val saturation = if(gradient.isInfinite) { 0 } else { gradient / maxValue }
+         |val color = hsl(hueColor,1 - saturation, 0.5)
+         |(gradient.formatted("%4.2f"), ledAll to color)""".stripMargin
     },
   )
   def apply() : ExampleGroup = ExampleGroup("Basic", examples)

@@ -45,11 +45,11 @@ object VisualizationSettingsSection {
     private val maxNodeSize = 20
     private val standardNodeSize = 7
     val initialConfig = GlobalStore.getOrElseUpdate(VisualizationSetting.globalName, VisualizationSetting(standardFontSize, standardNodeSize))
-    private val fontSizeTag = NumericVizInput("Font size", minFontSize, maxFontSize, standardFontSize, font => {
+    private val fontSizeTag = NumericVizInput("Font size", minFontSize, maxFontSize, initialConfig.fontSize, font => {
       val config = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName).get
       GlobalStore.put(VisualizationSetting.globalName, config.changeFont(font))
     })
-    private val nodeSizeTag = NumericVizInput("Node size", minNodeSize, maxNodeSize, standardNodeSize, node => {
+    private val nodeSizeTag = NumericVizInput("Node size", minNodeSize, maxNodeSize, initialConfig.nodeSize, node => {
       val config = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName).get
       GlobalStore.put(VisualizationSetting.globalName, config.changeNode(node))
     })

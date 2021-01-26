@@ -93,8 +93,9 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   private def handleMove(exports : Seq[(ID, Iterable[Any])]) : Unit = {
     val movement = exports.map { case (id, values) => id -> values.collect { case (a : Movement) => a } }.toMap
     movement.foreach( { case (id, movements) => movements.foreach(movement => act(id, movement))})
-    val effect = PositionChanged(movement.map { case (id, _) => id -> backend.space.getLocation(id) })
-    sideEffectsStream.onNext(effect)
+//    val effect = PositionChanged(movement.map { case (id, _) => id -> backend.space.getLocation(id) })
+//    sideEffectsStream.onNext(effect)
+    sideEffectsStream.onNext(Invalidated)
   }
 
   private def act(id : ID, movement: Movement) : Unit = {
