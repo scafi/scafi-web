@@ -9,6 +9,7 @@ import it.unibo.scafi.js.view.dynamic.EditorSection.Mode
 import org.querki.jquery.$
 import org.scalajs.dom.html.Div
 
+import scala.scalajs.js
 import scala.util.{Failure, Success}
 
 trait EditorSection {
@@ -23,18 +24,18 @@ trait EditorSection {
 
 object EditorSection {
 
-  trait Mode {
+  trait Mode extends js.Object {
     def lang: String
 
     def codeMirrorMode: String
   }
 
-  case object ScalaModeFull extends Mode {
+  object ScalaModeFull extends Mode {
     override val lang: String = "full-scala"
     override val codeMirrorMode: String = "text/x-scala"
   }
 
-  case object ScalaModeEasy extends Mode {
+  object ScalaModeEasy extends Mode {
     private val pattern = """(?:\s*//\s*using\s*)(\w*(?:\s*,\s*\w+)*)""".r.unanchored
     override val lang: String = "easy-scala"
     override val codeMirrorMode: String = "text/x-scala"
@@ -62,7 +63,7 @@ object EditorSection {
     }
   }
 
-  case object JavascriptMode extends Mode {
+  object JavascriptMode extends Mode {
     override val lang: String = "javascript"
     override val codeMirrorMode: String = lang
   }
@@ -75,8 +76,14 @@ object EditorSection {
 
   private class EditorSectionImpl(editorZone: Div)
     extends EditorSection {
-    var mode: Mode = ScalaModeEasy
-    private val modeSelection = new ModeSelection("editor-header")
+    var mode: Mode = GlobalStore.get[Mode]("mode") match {
+      case Failure(exception) => ScalaModeEasy
+      case Success(mode) => mode
+    }
+    private val modeSelection = new ModeSelection("editor-header", mode.lang match {
+      case ScalaModeEasy.lang => false
+      case ScalaModeFull.lang => true
+    })
     private lazy val popup: Modal = Modal.okCancel("Warning!", "The mode change will erase all your code, are you sure?",
       onOk = () => {
         this.setCode("", ScalaModeEasy)
@@ -90,7 +97,6 @@ object EditorSection {
     )
     val editor = GlobalStore.get[Doc]("doc") match {
       case Success(doc) => val config = new EditorConfiguration(doc.getValue(), mode.codeMirrorMode, "native", true, "material")
-
         val editor = CodeMirror(editorZone, config)
         editor.doc.setHistory(doc.getHistory())
         editor
@@ -99,10 +105,9 @@ object EditorSection {
     }
     GlobalStore.put("doc", editor.doc)
     modeSelection.onClick = () => {
-      if (mode == ScalaModeEasy) {
+      if (mode.lang == ScalaModeEasy.lang) {
         val fullCode = ScalaModeEasy.convertToFull(this.getRaw())
-        editor.setValue(fullCode)
-        this.mode = ScalaModeFull
+        this.setCode(fullCode, ScalaModeFull)
       } else {
         popup.show()
       }
@@ -110,20 +115,21 @@ object EditorSection {
     PageBus.listen { case Example(_, code, _) => this.setCode(code, ScalaModeEasy) }
 
     override def setCode(code: String, mode: Mode): Unit = {
-      mode match {
-        case ScalaModeEasy => modeSelection.off()
-        case ScalaModeFull => modeSelection.on()
+      mode.lang match {
+        case ScalaModeEasy.lang => modeSelection.off()
+        case ScalaModeFull.lang => modeSelection.on()
         case _ =>
       }
       editor.setValue(code)
+      GlobalStore.put("mode", mode)
       this.mode = mode
       editor.setOption("mode", mode.codeMirrorMode)
     }
 
-    override def getScript(): Script = mode match {
-      case JavascriptMode => Javascript(getRaw())
-      case ScalaModeFull => Scala(getRaw())
-      case ScalaModeEasy => ScalaEasy(getRaw())
+    override def getScript(): Script = mode.lang match {
+      case JavascriptMode.lang => Javascript(getRaw())
+      case ScalaModeFull.lang => Scala(getRaw())
+      case ScalaModeEasy.lang => ScalaEasy(getRaw())
     }
 
     override def getRaw(): String = editor.getValue()
@@ -133,9 +139,9 @@ object EditorSection {
     new EditorSectionImpl(div)
   }
 
-  class ModeSelection(id: String) {
+  class ModeSelection(id: String, enabled : Boolean) {
     private val mode = $(s"#$id")
-    private val toggle = Toggle("advanced", false, e => onClick())
+    private val toggle = Toggle("advanced", enabled, e => onClick())
     toggle.html.classList.add("ml-2")
     mode.append(toggle.html)
     def isChecked(): Boolean = toggle.enabled
@@ -143,5 +149,4 @@ object EditorSection {
     def off(): Unit = toggle.uncheck()
     def on(): Unit = toggle.check()
   }
-
 }
