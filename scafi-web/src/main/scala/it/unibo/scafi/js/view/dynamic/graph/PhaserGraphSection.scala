@@ -163,7 +163,7 @@ class PhaserGraphSection(paneSection: HTMLElement,
           (labelsRemainsUpdated, gameObjects ++ renderedGameObject)
       }._2
     }
-    //TODO fix
+
     nodes
       .map { case (node, gameObj) => gameObj -> (node.labels.toSeq :+ ("id" -> node.id)) }
       .map { case (node, labels) => node -> labels.filter(sensor => settings.sensorEnabled(sensor._1)) }

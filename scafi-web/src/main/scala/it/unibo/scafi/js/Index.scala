@@ -91,7 +91,7 @@ object Index {
     .addNextPopover(
       attachTo = controls.stopButton.id,
       title = "Stop the simulation",
-      text = "You can stop the simulation with this butto to restart it later."
+      text = "You can stop the simulation with this button to restart it later."
     )
     .addNextPopover(
       attachTo = controls.tick.id,
@@ -135,7 +135,7 @@ object Index {
       val modal = welcomeModal
       document.body.appendChild(modal.html)
       val tour = buildTour(controls).start()
-      modal.onClose = _ => {
+      modal.onClose = () => {
         modal.hide()
         tour.stepForward()
       }

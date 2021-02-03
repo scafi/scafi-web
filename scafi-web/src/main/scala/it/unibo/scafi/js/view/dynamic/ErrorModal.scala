@@ -15,8 +15,8 @@ object ErrorModal extends Modal {
       bar = SimpleBar.wrap(text) //with hide, the simple bar has some problem... with rewrapping it seems to work
       this.toggle()
   }
-  this.appendOnRoot //put in the page..
-  onClose = _ => {
+  this.appendOnRoot() //put in the page..
+  onClose = () => {
     bar.unMount()
     this.hide()
   }

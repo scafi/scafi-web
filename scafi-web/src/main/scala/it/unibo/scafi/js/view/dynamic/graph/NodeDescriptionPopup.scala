@@ -47,9 +47,8 @@ object NodeDescriptionPopup {
 
     container.add(domContainer)
     gameElement.visible = false
-    modal.onClose = (ev : MouseEvent) => {
+    modal.onClose = () => {
       gameElement.visible = false
-      ev.stopImmediatePropagation()
       selectedId = None
     }
 

@@ -58,7 +58,7 @@ case class CarouselModal(carousel: CarouselContent, minBound: Double, innerHeigh
   override lazy val modalDialog: Element = innerModal.modalDialog
   override lazy val html: Element = innerModal.html
 
-  innerModal.onClose = (e => this.onClose(e))
+  innerModal.onClose = (() => this.onClose())
   SimpleBar.wrap(carouselInner)
 
   override def body: Seq[Element] = innerModal.body

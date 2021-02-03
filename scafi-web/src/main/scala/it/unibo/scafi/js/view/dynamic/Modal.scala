@@ -1,8 +1,9 @@
 package it.unibo.scafi.js.view.dynamic
 
+import it.unibo.scafi.js.utils.Debug
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.JQueryBootstrap._
-import org.querki.jquery.$
+import org.querki.jquery.{$, JQuery, JQueryEventObject}
 import org.scalajs.dom.document
 import org.scalajs.dom.html.{Button, Element}
 import org.scalajs.dom.raw.MouseEvent
@@ -13,7 +14,7 @@ import scala.scalajs.js
 
 trait Modal extends HtmlRenderable[Element] {
   private val closeButton: Button = button(`type` := "button", cls := "close text-danger", span("×")).render
-  closeButton.onclick = ev => onClose(ev)
+  closeButton.onclick = _ => onClose()
   lazy val modalId: String = UUID.randomUUID().toString
 
   def title: Element
@@ -38,7 +39,7 @@ trait Modal extends HtmlRenderable[Element] {
 
   def headerStyle: String = ""
 
-  var onClose: MouseEvent => Unit = e => hide()
+  var onClose: () => Unit = () => hide()
   lazy val modalDialog : Element = div(
     style := s"min-width: ${minBound}px",
     cls := "modal-dialog",
@@ -58,7 +59,10 @@ trait Modal extends HtmlRenderable[Element] {
     modalDialog
   ).render
 
-  def appendOnRoot(): Unit = document.body.appendChild(html)
+  def appendOnRoot(): Unit = {
+   document.body.appendChild(html)
+    $(s"#${modalId}").on("hidden.bs.modal", () => onClose())
+  }
 }
 
 object Modal {
@@ -113,9 +117,8 @@ object Modal {
     ok.onclick = _ => onOk()
     cancel.onclick = _ => onCancel()
     val base = textual(title, body, 0).copy(footer = Seq(ok, cancel))
-    val function: js.Function0[Unit] = () => onCancel()
+    base.onClose = onCancel
     base.appendOnRoot()
-    $(s"#${base.modalId}").on("hidden.bs.modal", function)
     base
   }
 }
