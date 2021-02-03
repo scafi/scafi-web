@@ -22,7 +22,7 @@ object PageStructure {
   object Resizable {
     private val firstSection = 1
     private val (configPortion, editorPortion, visualizationPortion) = (15.0, 35.0, 49.0)
-    private val (minControlPortion, minEditorPortion, minVisualizationPortion) = (250, 250, 400)
+    private val (minControlPortion, minEditorPortion, minVisualizationPortion) = (240, 250, 420)
     private val empty = new SplitSection(0, 0)
     private val (config, editor, visualization) = (0, 1, 2)
     //val sizes = GlobalStore.getOrElseUpdate[PageSizes](sizesInGlobal, new PageSizes(configPortion, editorPortion, visualizationPortion))
@@ -87,9 +87,9 @@ object PageStructure {
             split.destroy()
             val oldConfig = GlobalStore.get[PageDivision](sizesInGlobal).get
             val newPageDivision = new PageDivision(oldConfig.collapsed, js.Array(
-              new SplitSection(elems(config), if(oldConfig.collapsed) 0 else minControlPortion),
+              new SplitSection(if(oldConfig.collapsed) 0 else elems(config), if(oldConfig.collapsed) 0 else minControlPortion),
               new SplitSection(elems(editor), minEditorPortion),
-              new SplitSection(elems(visualization), minVisualizationPortion),
+              new SplitSection(elems(visualization) + (if(oldConfig.collapsed) elems(config) else 0), minVisualizationPortion),
             ))
             install()
             GlobalStore.put(sizesInGlobal, newPageDivision)
