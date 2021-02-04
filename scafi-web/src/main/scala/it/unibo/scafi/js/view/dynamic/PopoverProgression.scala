@@ -104,4 +104,15 @@ object PopoverProgression {
       }
     }
   }
+
+  object ResetButton {
+    def render(popoverProgression: PopoverProgression, rightSideBar: Form): Unit = {
+      lazy val restartButton = a(
+          cls := "btn btn-outline-light my-2 my-sm-0 ml-2",
+          i(cls := "far fa-question-circle fa-lg", aria.hidden := true)
+        ).render
+      restartButton.onclick = _ => popoverProgression.restart()
+      rightSideBar.appendChild(restartButton)
+    }
+  }
 }

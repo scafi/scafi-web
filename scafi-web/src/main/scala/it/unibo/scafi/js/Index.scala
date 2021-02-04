@@ -60,7 +60,7 @@ object Index {
       spaPage()
     }
     scafiInitialization()
-    ThemeSwitcher.render(SkeletonPage.navRightSide) //attach the theme switcher
+    ThemeSwitcher.render(SkeletonPage.navRightSide) // attach the theme switcher
   }
 
   def spaPage(): Unit = {
@@ -133,10 +133,11 @@ object Index {
     SkeletonPage.visualizationSection.focus()
     PageBus.publish(configuration) // tell to all component the new configuration installed on the frontend
 
+    val tour = buildTour(controls).start()
+    PopoverProgression.ResetButton.render(tour, SkeletonPage.navRightSide)
     if (!Cookie.get("visited").exists(_.toBoolean)) {
       val modal = welcomeModal
       document.body.appendChild(modal.html)
-      val tour = buildTour(controls).start()
       modal.onClose = () => {
         modal.hide()
         tour.stepForward()
