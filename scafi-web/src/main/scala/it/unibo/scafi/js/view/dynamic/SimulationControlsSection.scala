@@ -6,6 +6,7 @@ import it.unibo.scafi.js.controller.scripting.Script
 import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.utils.{Debug, GlobalStore}
 import it.unibo.scafi.js.view.HtmlRenderable
+import it.unibo.scafi.js.view.static.RootStyle.smallPrimaryBtnClass
 import monix.execution.Scheduler
 import org.querki.jquery.$
 import org.scalajs.dom.ext.AjaxException
@@ -20,7 +21,7 @@ class SimulationControlsSection {
 
   implicit val exc: Scheduler = Execution.timeoutBasedScheduler
 
-  private val buttonClass = cls := "btn btn-primary ml-1 btn-sm"
+  private val buttonClass = cls := smallPrimaryBtnClass("ml-1")
   val loadButton: Button = button("load", buttonClass, id := "load-code").render
   val startButton: Button = button("start", buttonClass, id := "start-sim").render
   val stopButton: Button = button("stop", buttonClass, id := "stop-sim").render
@@ -107,7 +108,7 @@ class SimulationControlsSection {
 
   private case class VelocitySelector(slow : Int, normal : Int, fast : Int) extends HtmlRenderable[Element] {
     private val globalLabel = "velocitySelector"
-    val active = GlobalStore.getOrElseUpdate(globalLabel, "slow")
+    val active: String = GlobalStore.getOrElseUpdate(globalLabel, "slow")
     var onChangeRadio : () => Unit = () => {}
     var batchSize : Int = active match {
       case "slow" => slow

@@ -3,7 +3,6 @@ package it.unibo.scafi.js.view.static
 import it.unibo.scafi.js.view.static.CssSettings._
 import it.unibo.scafi.js.view.static.RootStyle.Measure
 import scalacss.internal.Length
-import scalacss.internal.LengthUnit.px
 
 import scala.language.postfixOps
 
@@ -71,6 +70,11 @@ object RootStyle extends StyleSheet.Standalone {
   val maxVh = 100
   val standardNavHeight = 10
   val standardBottomBarHeight = 5
+
+  val primaryBtnClass = "btn btn-primary"
+  def primaryBtnClass(and: String): String = primaryBtnClass + " " + and
+  val smallPrimaryBtnClass: String = primaryBtnClass("btn-sm")
+  def smallPrimaryBtnClass(and: String): String = smallPrimaryBtnClass + " " + and
 
   case class Measure(navHeight: Length[Int],
                      pageContentHeight: Length[Int],

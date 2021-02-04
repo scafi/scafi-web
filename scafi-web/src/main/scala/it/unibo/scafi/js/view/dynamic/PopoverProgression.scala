@@ -1,6 +1,9 @@
 package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.view.dynamic.Popover.Direction
+import it.unibo.scafi.js.view.dynamic.ThemeSwitcher.{install, theme, Light}
+import it.unibo.scafi.js.view.static.RootStyle.smallPrimaryBtnClass
+import org.scalajs.dom.html.Form
 import scalatags.JsDom.all._
 
 import scala.scalajs.js
@@ -9,6 +12,12 @@ trait PopoverProgression {
 
   /** Show next [[Popover]]. */
   def stepForward()
+
+  /** Close current [[Popover]] and end the progression. */
+  def end()
+
+  /** (Re)start the sequence of [[Popover]]s. */
+  def restart()
 }
 
 object PopoverProgression {
@@ -38,11 +47,13 @@ object PopoverProgression {
 
       /** @inheritdoc */
       override def addNextPopover(attachTo: String, title: String, text: String, direction: Direction = Popover.Bottom): Builder = {
-        lazy val nextBtn = button(cls := "btn btn-primary btn-sm ml-1 mr-1", `type` := "button", "OK").render
+        lazy val nextBtn = button(cls := smallPrimaryBtnClass("ml-1 mr-1"), `type` := "button", "OK").render
         nextBtn.onclick = _ => popoverTour.stepForward()
+        lazy val exitBtn = button(cls := smallPrimaryBtnClass("ml-1 mr-1"), `type` := "button", "Close").render
+        exitBtn.onclick = _ => popoverTour.end()
         popoverTour.popovers = popoverTour.popovers :+ Popover(attachTo, data = div(
           p(text),
-          div(cls := "text-center", nextBtn)
+          div(cls := "text-center", nextBtn, exitBtn)
         ).render, title, direction)
         this
       }
@@ -65,23 +76,31 @@ object PopoverProgression {
       override def stepForward(): Unit = {
         (iterator, current) match {
           case (None, _) | (_, None) =>
-            val iter = popovers.iterator
-            iterator = Some(iter)
-            val cur = iter.next()
-            current = Some(cur)
-            cur.show()
+            restart()
           case (Some(iter), Some(curr)) if iter.hasNext =>
             curr.hide()
             val next = iter.next()
             current = Some(next)
             next.show()
-          case (Some(iter), Some(curr)) if !iter.hasNext =>
-            curr.hide()
-            current = None
-            doFinally match {
-              case Some(action) => action()
-            }
+          case (Some(iter), Some(_)) if !iter.hasNext =>
+            end()
         }
+      }
+
+      override def end(): Unit = {
+        current.foreach(curr => curr.hide())
+        current = None
+        doFinally match {
+          case Some(action) => action()
+        }
+      }
+
+      override def restart(): Unit = {
+        val iter = popovers.iterator
+        iterator = Some(iter)
+        val cur = iter.next()
+        current = Some(cur)
+        cur.show()
       }
     }
   }
