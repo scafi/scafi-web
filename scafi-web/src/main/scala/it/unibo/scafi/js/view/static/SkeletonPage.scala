@@ -3,7 +3,7 @@ package it.unibo.scafi.js.view.static
 import it.unibo.scafi.js.view.dynamic.{Popover, PopoverProgression}
 import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar.{MoveModeFormValue, PanModeFormValue, PanMoveModeFormName}
 import it.unibo.scafi.js.view.static.CssSettings._
-import org.scalajs.dom.html.{Div, Label, Select, TextArea}
+import org.scalajs.dom.html.{Div, Form, Label, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalacss.ScalatagsCss._
 import scalatags.JsDom.TypedTag
@@ -18,7 +18,10 @@ object SkeletonPage {
   /**
     * The root style of the web page.
     */
-  def renderedStyle(style: RootStyle): TypedTag[HTMLStyleElement] = style.render[TypedTag[HTMLStyleElement]]
+  def renderedStyle(style: RootStyle): TypedTag[HTMLStyleElement] = {
+    val result = style.render[TypedTag[HTMLStyleElement]]
+    result(id := "main-style")
+  }
 
   /**
     * Textarea associated with the editor section.
@@ -90,6 +93,35 @@ object SkeletonPage {
     tabindex := 0
   ).render
 
+  lazy val navRightSide : Form = form(cls := "form-inline",
+    div(cls := "dropdown",
+      span(
+        cls := "btn btn-outline-light mr-2 my-sm-0 dropdown-toggle",
+        data("toggle") := "dropdown",
+        aria.haspopup := true,
+        aria.expanded := false,
+        span(cls := "fas fa-cogs fa-lg pr-2", aria.hidden := true),
+        "Settings"
+      ),
+      form(cls := "dropdown-menu bg-dark p-2 text-white", visualizationConfigDropdown)
+    ),
+    a(
+      cls := "btn btn-outline-light mr-2 my-sm-0",
+      href := "https://scafi.github.io/",
+      target := "_blank",
+      rel :="noopener noreferrer",
+      i(cls := "fas fa-globe fa-lg pr-2", aria.hidden := true),
+      "Website"
+    ),
+    a(
+      cls := "btn btn-outline-light my-2 my-sm-0",
+      href := "https://github.com/scafi/scafi",
+      target := "_blank",
+      rel :="noopener noreferrer",
+      i(cls := "fab fa-github fa-lg pr-2", aria.hidden := true),
+      "Repository"
+    )
+  ).render
   /**
     * Section used to configure the backend (it is support specific)
     */
@@ -121,35 +153,7 @@ object SkeletonPage {
       h1(cls := "text-light", "Scafi")
     ),
     span(cls := "navbar-text ml-2", "Discover the power of the collective"),
-    form(cls := "form-inline",
-      div(cls := "dropdown",
-        span(
-          cls := "btn btn-outline-light mr-2 my-sm-0 dropdown-toggle",
-          data("toggle") := "dropdown",
-          aria.haspopup := true,
-          aria.expanded := false,
-          span(cls := "fas fa-cogs fa-lg pr-2", aria.hidden := true),
-          "Settings"
-        ),
-        form(cls := "dropdown-menu bg-dark p-2 text-white", visualizationConfigDropdown)
-      ),
-      a(
-        cls := "btn btn-outline-light mr-2 my-sm-0",
-        href := "https://scafi.github.io/",
-        target := "_blank",
-        rel :="noopener noreferrer",
-        i(cls := "fas fa-globe fa-lg pr-2", aria.hidden := true),
-        "Website"
-      ),
-      a(
-        cls := "btn btn-outline-light my-2 my-sm-0",
-        href := "https://github.com/scafi/scafi",
-        target := "_blank",
-        rel :="noopener noreferrer",
-        i(cls := "fab fa-github fa-lg pr-2", aria.hidden := true),
-        "Repository"
-      )
-    )
+    navRightSide
   )
 
   private def pageContainer: TypedTag[Div] = div(

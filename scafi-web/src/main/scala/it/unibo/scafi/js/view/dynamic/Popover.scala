@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.view.JQueryBootstrap._
-import it.unibo.scafi.js.view.dynamic.Popover.Direction
+import it.unibo.scafi.js.view.dynamic.Popover.{Direction, template}
 import org.querki.jquery.$
 import org.scalajs.dom.html.Element
 
@@ -13,6 +13,7 @@ case class Popover(attachTo: String, data: Element, title: String, direction: Di
     "html" -> true,
     "sanitize" -> false,
     "placement" -> direction.value,
+    "template" -> template,
     "trigger" -> trigger,
     "content" -> data,
     "title" -> title
@@ -27,7 +28,12 @@ case class Popover(attachTo: String, data: Element, title: String, direction: Di
 }
 
 object Popover {
-
+  private val template =
+    """<div class="popover bg-secondary" role="tooltip">
+      | <div class="arrow">
+      | </div><h3 class="popover-header bg-info"></h3>
+      | <div class="popover-body"></div>
+      |</div>'""".stripMargin
   sealed abstract class Direction(val value: String)
 
   case object Top extends Direction("top")

@@ -29,6 +29,7 @@ object Service {
   val host = "0.0.0.0" //todo put in configuration
   val indexJs = "scafi-web-opt-bundle.js"
   val commonsCode = "common.js"
+  val pageDef : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
   val page : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index-server.html")).mkString
   val code : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(indexJs))(Codec("UTF-8")).mkString
   val codeDivision = code.split("Object.freeze")
@@ -56,8 +57,11 @@ object Service {
     }
   }
 
-  lazy val resourceLike = Seq(resourcePath("resources"), resourcePath("fonts"), resourcePath("icons"))
-  lazy val compilatedPage : Route = get {
+  lazy val resourceLike = Seq(
+    resourcePath("resources"), resourcePath("fonts"),
+    resourcePath("icons"), resourcePath("style", ContentType.parse("text/css").toOption.get)
+  )
+  lazy val compiledPage : Route = get {
     path("compilation" / Segment) { id =>
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, ScalaCompiledPage.html(id)))
     }
@@ -75,11 +79,11 @@ object Service {
     compileRoot((compiler, code) => compiler.compileEasy(code), "code" / "easy")
   }
 
-  def resourcePath(basePath : PathMatcher[Unit]) : Route = {
+  def resourcePath(basePath : PathMatcher[Unit], content : ContentType = ContentTypes.`application/octet-stream`) : Route = {
     path(basePath / Segment) {
       name => {
         val resource = StreamConverters.fromInputStream(() => getClass.getClassLoader.getResourceAsStream(name))
-        complete(HttpEntity(ContentTypes.`application/octet-stream`, resource))
+        complete(HttpEntity(content, resource))
       }
     }
   }
@@ -103,7 +107,7 @@ object Service {
 
   def main(args: Array[String]): Unit = {
     ScafiCompiler.init()
-    val allRoutes = Seq(index, jsCode, compilatedPage, fullCode, easyCode, pureCodeRequest) ++ resourceLike
+    val allRoutes = Seq(index, jsCode, compiledPage, fullCode, easyCode, pureCodeRequest) ++ resourceLike
     val route = concat(allRoutes:_*)
     val bindingFuture = Http().newServerAt(host, port).bind(route)
   }

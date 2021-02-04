@@ -103,6 +103,9 @@ object EditorSection {
       case Failure(exception) => val config = new EditorConfiguration("", mode.codeMirrorMode, "native", true, "material")
          CodeMirror(editorZone, config)
     }
+    ThemeSwitcher.onDark{ editor.setOption("theme", "material") }
+    ThemeSwitcher.onLight{ editor.setOption("theme", "default") }
+
     GlobalStore.put("doc", editor.doc)
     modeSelection.onClick = () => {
       if (mode.lang == ScalaModeEasy.lang) {

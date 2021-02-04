@@ -8,7 +8,9 @@ import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
 import it.unibo.scafi.js.facade.phaser.types.gameobjects.text.TextStyle
 import it.unibo.scafi.js.model.{ActuationData, Graph, MatrixLed}
 import it.unibo.scafi.js.utils.{Debug, GlobalStore, JSNumber}
+import it.unibo.scafi.js.view.dynamic.{PageBus, ThemeSwitcher}
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
+import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
 import it.unibo.scafi.js.view.static.VisualizationSetting
 import org.scalajs.dom.ext.Color
 
@@ -49,7 +51,12 @@ object LabelRender {
     //val fontUrl = "https://labs.phaser.io/assets/fonts/bitmap/atari-smooth.xml"
     val textureUrl = "./fonts/font.png"
     val fontUrl = "./fonts/font.xml"
+    val hexBasis = 16
     private val cache : mutable.Map[String, BitmapText] = new mutable.HashMap()
+    var tint = Integer.parseInt(Color.White.toHex.tail, hexBasis)
+    ThemeSwitcher.onDark { tint = Integer.parseInt(Color.White.toHex.tail, hexBasis); PageBus.publish(ForceRepaint)  }
+    ThemeSwitcher.onLight { tint = Integer.parseInt(Color.Black.toHex.tail, hexBasis); PageBus.publish(ForceRepaint) }
+
     override def graphicalRepresentation(node: GameobjectNode, elements: SensorEntries, world : Graph, scene: Scene): Output = {
       val (fontSize, width) = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName) match {
         case Success(VisualizationSetting(fontSize, nodeWidth)) => (fontSize, nodeWidth : JSNumber)
@@ -62,6 +69,7 @@ object LabelRender {
         .mkString("\n")
       val text = cache.getOrElseUpdate(node.id, scene.add.bitmapText(node.x + node.width / 2, node.y, "fonts", normalizeValue(result), fontSize))
       text.ignoreDestroy = true
+      text.setTint(tint, tint, tint, tint)
       text.setFontSize(fontSize)
       text.setPosition(node.x + width / 2, node.y)
       text.setText(normalizeValue(result))

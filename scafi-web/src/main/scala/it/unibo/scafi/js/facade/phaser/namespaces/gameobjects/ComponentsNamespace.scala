@@ -189,6 +189,7 @@ object ComponentsNamespace extends js.Object {
   @js.native
   trait Tint extends js.Object with This {
     override type This <: Tint
+    def setTint( topLeft : JSNumber, topRight : JSNumber, bottomLeft : JSNumber, bottomRight : JSNumber)
     /*todo*/
   }
   /**

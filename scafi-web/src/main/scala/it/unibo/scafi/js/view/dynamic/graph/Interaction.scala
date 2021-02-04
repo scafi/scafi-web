@@ -95,7 +95,7 @@ object Interaction {
     override def selectionSource: Observable[Seq[String]] = selectionSubject.publish
 
     def initRectangle(): Unit = {
-      rectangleSelection = scene.add.rectangle(0, 0, 0, 0, fillColor = Color.White, fillAlpha = rectangleAlpha).setOrigin(0)
+      rectangleSelection = scene.add.rectangle(0, 0, 0, 0, fillColor = Color.Yellow, fillAlpha = rectangleAlpha).setOrigin(0)
       selectionContainer = scene.add.container(0, 0)
       mainContainer.add(selectionContainer)
       mainContainer.setInteractive()

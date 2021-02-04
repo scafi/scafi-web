@@ -1,5 +1,9 @@
 package it.unibo.scafi.js
 
+import org.querki.jquery.$
+import org.scalajs.dom.raw.HTMLElement
+
+import java.util.UUID
 import scala.scalajs.js
 import scala.scalajs.js.|
 
@@ -13,6 +17,24 @@ package object utils {
   def stringify[E](element : E) : String = {
     val any : js.Any = element.asInstanceOf[js.Any]
     js.Dynamic.global.JSON.stringify(any).toString
+  }
+
+  /**
+   * verify if an id exist in the page
+   * @param id the id to search
+   * @return true if the element is in the DOM false otherwise
+   */
+  def exist(id : String) : Boolean = $(s"#$id").length > 0
+
+  /**
+   * append an element only once time through the page life
+   * @param where the element should be appended
+   * @param element the element to append
+   */
+  def appendOnce(where : HTMLElement, element : HTMLElement) : Unit = {
+    if(!exist(element.id)) {
+      where.appendChild(element)
+    }
   }
   /** a declarative way to define the interface of facade.*/
   type JSNumber = Double

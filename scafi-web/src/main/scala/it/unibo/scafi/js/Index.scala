@@ -5,16 +5,18 @@ import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.semantics._
 import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
-import it.unibo.scafi.js.utils.{Cookie, Execution}
+import it.unibo.scafi.js.utils.{Cookie, Execution, appendOnce}
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.{LabelRender, MatrixLedRender, TextifyBitmap}
 import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection}
 import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
 import monix.execution.Scheduler
 import org.scalajs.dom.experimental.URLSearchParams
+import scalatags.JsDom.all
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 /** Root object, it initialize the simulation, the page and the backend. */
@@ -58,16 +60,16 @@ object Index {
       spaPage()
     }
     scafiInitialization()
+    ThemeSwitcher.render(SkeletonPage.navRightSide) //attach the theme switcher
   }
 
   def spaPage(): Unit = {
-    document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withNav()).render)
+    appendOnce(document.head, SkeletonPage.renderedStyle(RootStyle.withNav()).render)
     document.body.appendChild(SkeletonPage.fullPage.render)
   }
 
   def contentOnly(): Unit = {
-    // page injection
-    document.head.appendChild(SkeletonPage.renderedStyle(RootStyle.withoutNav()).render)
+    appendOnce(document.head, SkeletonPage.renderedStyle(RootStyle.withoutNav()).render)
     document.body.appendChild(SkeletonPage.contentOnly.render)
   }
 
