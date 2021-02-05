@@ -4,9 +4,8 @@ import it.unibo.scafi.js.controller.AggregateSystemSupport
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
 import it.unibo.scafi.js.model.MatrixLed
-import it.unibo.scafi.js.utils.Debug
 import it.unibo.scafi.js.view.dynamic.ConfigurationSection._
-import org.scalajs.dom.ext.Color
+import it.unibo.scafi.js.view.static.RootStyle.smallPrimaryBtnClass
 import org.scalajs.dom.html.{Button, Div, Select}
 import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
@@ -16,7 +15,7 @@ import scala.util.{Failure, Success, Try}
 class ConfigurationSection(configuration : Div, support : AggregateSystemSupport[_, SupportConfiguration, _]) {
   private val container: Div = div(cls := "pt-1, pb-1").render
   private val selectMode: Select = select(cls := "form-control bg-dark text-light", option(Random.toString), option(Grid.toString)).render
-  private val loadButton: Button = button(cls := "btn btn-primary btn-sm ml-1 mr-1", `type` := "button", "load config").render
+  private val loadButton: Button = button(cls := smallPrimaryBtnClass("ml-1 mr-1"), `type` := "button", "load config").render
   private val mainDiv: Div = div(
     cls := "input-group input-group-sm pt-1",
     div(
@@ -29,7 +28,7 @@ class ConfigurationSection(configuration : Div, support : AggregateSystemSupport
   private val (min, max, howMany) = (InputText("min", 0), InputText("max", 500), InputText("howMany", 100))
   private val randomValue = List(min, max, howMany)
   private val radius = InputText("radius", 70)
-  private val addSensorButton = button( cls := "btn btn-primary btn-sm",`type` := "button", "add sensor").render
+  private val addSensorButton = button( cls := smallPrimaryBtnClass,`type` := "button", "add sensor").render
   private var matrix = MatrixInput(3, DeviceConfiguration.standardColor.toHex)
   private var sensors : List[SensorInputText] = List()
   private var lastConfiguration : SupportConfiguration = _

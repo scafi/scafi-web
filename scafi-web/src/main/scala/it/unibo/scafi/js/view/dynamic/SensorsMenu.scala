@@ -4,6 +4,7 @@ import it.unibo.scafi.js.controller.local.{SimulationSupport, SupportConfigurati
 import it.unibo.scafi.js.controller.local.SimulationCommand.ToggleSensor
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.dynamic.graph.Interaction
+import it.unibo.scafi.js.view.static.RootStyle.smallPrimaryBtnClass
 import org.scalajs.dom.html.Div
 import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all.{button, div, _}
@@ -19,7 +20,7 @@ object SensorsMenu {
     private var sensors: js.Dictionary[Toggle] = js.Dictionary()
 
     private lazy val dropdownButton = button(
-      cls := "btn btn-primary ml-1 btn-sm dropdown-toggle",
+      cls := smallPrimaryBtnClass("ml-1 dropdown-toggle"),
       `type` := "button",
       id := "dropdownMenuButton",
       data("toggle") := "dropdown",
@@ -29,7 +30,6 @@ object SensorsMenu {
     ).render
 
     private lazy val sensorsGroup = div(cls := "form-group").render
-
 
     override val html: Div = div(
       cls := "dropdown",

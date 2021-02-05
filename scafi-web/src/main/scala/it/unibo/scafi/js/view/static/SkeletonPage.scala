@@ -3,6 +3,7 @@ package it.unibo.scafi.js.view.static
 import it.unibo.scafi.js.view.dynamic.{Popover, PopoverProgression}
 import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar.{MoveModeFormValue, PanModeFormValue, PanMoveModeFormName}
 import it.unibo.scafi.js.view.static.CssSettings._
+import it.unibo.scafi.js.view.static.RootStyle.primaryBtnClass
 import org.scalajs.dom.html.{Div, Form, Label, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalacss.ScalatagsCss._
@@ -39,7 +40,7 @@ object SkeletonPage {
   /**
    * Section that contains some visualization configuration (e.g. font size, node size, ...)
    */
-  lazy val visualizationConfigDropdown = div(cls := "form-group", id := "viz-setting-dropdown").render
+  lazy val visualizationConfigDropdown: Div = div(cls := "form-group", id := "viz-setting-dropdown").render
   /**
     * Editor header that contains the program and mode selector
     */
@@ -182,7 +183,7 @@ object SkeletonPage {
 
   lazy val selectModeButton: Label = label(
 //    `class` := "btn btn-secondary active",
-    `class` := "btn btn-primary",
+    `class` := primaryBtnClass,
     input(
       `type` := "radio",
       name := PanMoveModeFormName,
@@ -194,7 +195,7 @@ object SkeletonPage {
   ).render
 
   lazy val panModeButton: Label = label(
-    `class` := "btn btn-primary active",
+    `class` := primaryBtnClass("active"),
 //    `class` := "btn btn-secondary",
     input(
       `type` := "radio",
