@@ -1,6 +1,7 @@
 package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.js.controller.ExecutionPlatform
+import it.unibo.scafi.js.controller.local.CompilationServers.isReachable
 import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
 import it.unibo.scafi.js.controller.local.SimulationSideEffect.SideEffects
 import it.unibo.scafi.js.controller.scripting.Script
@@ -110,7 +111,9 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   private def remoteRequest(code : String, pathGenerator : (String) => (String)) : Future[SimulationExecution] = {
     SupportConfiguration.storeGlobal(this.systemConfig)
     CompilationServers().flatMap(servers => {
+      //val serverHost = servers.map(server).find(isReachable).getOrElse("")
       val serverHost = server(servers.head)
+
       Ajax.post(pathGenerator(serverHost), Ajax.InputData.str2ajax(code))
         .filter(_.status == 200)
         .map(_.responseText)
