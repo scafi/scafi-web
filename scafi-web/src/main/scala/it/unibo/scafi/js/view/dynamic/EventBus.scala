@@ -6,10 +6,12 @@ import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.Future
+import scala.scalajs.js.annotation.JSExportAll
 /**
  * A very minimalistic event bus used to intercommunication between dynamic section part.
  * It uses Monix subject to create this event bus. It is like actor in akka platform.
  */
+@JSExportAll
 class EventBus {
   type Handler = PartialFunction[Any, Unit]
   private val bus: PublishSubject[Any] = PublishSubject()

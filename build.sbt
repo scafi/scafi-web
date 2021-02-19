@@ -315,6 +315,7 @@ lazy val `online-compiler` = project.
       "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
       "org.scala-js" %% "scalajs-linker" % scalaJSVersion,
       "io.get-coursier" %% "coursier" % "1.0.3",
+      "ch.megard" %% "akka-http-cors" % "1.1.1",
       "com.lihaoyi" %% "upickle" % "0.4.4",
       "io.get-coursier" %% "coursier-cache" % "1.0.3",
       "org.apache.maven" % "maven-artifact" % "3.3.9",

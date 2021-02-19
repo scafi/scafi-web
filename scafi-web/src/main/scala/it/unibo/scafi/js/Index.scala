@@ -11,6 +11,7 @@ import it.unibo.scafi.js.view.dynamic.graph.LabelRender.{LabelRender, MatrixLedR
 import it.unibo.scafi.js.view.dynamic.graph.{Interaction, InteractionBoundButtonBar, PhaserGraphSection}
 import it.unibo.scafi.js.view.static.{PageStructure, RootStyle, SkeletonPage}
 import monix.execution.Scheduler
+import org.querki.jquery.$
 import org.scalajs.dom.experimental.URLSearchParams
 import scalatags.JsDom.all
 

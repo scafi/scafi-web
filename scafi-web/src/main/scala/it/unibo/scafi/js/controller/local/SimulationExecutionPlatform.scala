@@ -10,6 +10,7 @@ import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
 import it.unibo.scafi.js.model.{ActuationData, MatrixLed, MatrixOps, Movement}
 import it.unibo.scafi.simulation.SpatialSimulation
 import it.unibo.scafi.space.Point2D
+import org.querki.jquery.$
 import org.scalajs.dom
 import org.scalajs.dom.document
 import org.scalajs.dom.ext.Ajax
@@ -30,9 +31,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val location = document.location
-  val server = s"${location.protocol}//${location.host}"
-  val url = s"$server/code"
-  val easyCompilationUrl = s"$url/easy"
+
   override def loadScript(script: Script): Future[SimulationExecution] = script match {
     case Javascript(code) => Future.fromTry {
       Try { interpreter.adaptForScafi(code) }
@@ -43,7 +42,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
       Try { sideEffectExecution(aggregateClass.program) }
     }
     case ScalaEasy(code) => remoteRequest(code, easyCompilationUrl)
-    case Scala(code) => remoteRequest(code, url)
+    case Scala(code) => remoteRequest(code, standardCompilation)
     case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
   private def sideEffectExecution(program : js.Function1[CONTEXT, EXPORT]) : TickBased = {
@@ -108,22 +107,28 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
     }
     backend.setPosition(id, position)
   }
-  private def remoteRequest(code : String, path : String) : Future[SimulationExecution] = {
+  private def remoteRequest(code : String, pathGenerator : (String) => (String)) : Future[SimulationExecution] = {
     SupportConfiguration.storeGlobal(this.systemConfig)
-    Ajax.post(path, Ajax.InputData.str2ajax(code))
-      .filter(_.status == 200)
-      .map(_.responseText)
-      .map{ id =>
-        document.body.innerHTML = "" //TODO NOT SAFE
-        val newScript = document.createElement("script").asInstanceOf[dom.html.Script]
-        newScript.src = s"$server/js/$id"
-        newScript.`type` = "text/javascript"
-        newScript.id = "scafiWeb"
-        document.body.appendChild(newScript)
-        //document.location.replace(s"$server/compilation/$id") //injection...
-        sideEffectExecution(new AggregateProgram {
-          override def main(): Any = {}
-        }) //TODO USELESS, find another way
-      }
+    CompilationServers().flatMap(servers => {
+      val serverHost = server(servers.head)
+      Ajax.post(pathGenerator(serverHost), Ajax.InputData.str2ajax(code))
+        .filter(_.status == 200)
+        .map(_.responseText)
+        .map{ id =>
+          document.body.innerHTML = "" //TODO NOT SAFE
+          val newScript = document.createElement("script").asInstanceOf[dom.html.Script]
+          newScript.src = s"$serverHost/js/$id"
+          newScript.`type` = "text/javascript"
+          newScript.id = "scafiWeb"
+          document.body.appendChild(newScript)
+          //document.location.replace(s"$server/compilation/$id") //injection...
+          sideEffectExecution(new AggregateProgram {
+            override def main(): Any = {}
+          }) //TODO USELESS, find another way
+        }
+    })
   }
+  private def server(name : String) = s"${location.protocol}//${name}"
+  private def standardCompilation(url : String) = s"$url/code"
+  private def easyCompilationUrl(url : String) = s"$url/code/easy"
 }

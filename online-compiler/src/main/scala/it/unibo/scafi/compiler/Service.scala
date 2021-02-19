@@ -13,7 +13,6 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.StreamConverters
 import it.unibo.scafi.compiler.cache.CodeCache
 import org.slf4j.LoggerFactory
-
 import java.util.UUID
 import scala.concurrent.ExecutionContextExecutor
 import scala.io.{Codec, Source}
@@ -40,8 +39,6 @@ object Service {
   var codeCache: CodeCache = CodeCache.limit(codeCacheLimit)
     .permanent(indexJs, core)
     .permanent(commonsCode, webpack)
-
-
   lazy val index : Route = get {
     path("") {
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, page))
@@ -58,8 +55,11 @@ object Service {
   }
 
   lazy val resourceLike = Seq(
-    resourcePath("resources"), resourcePath("fonts"),
-    resourcePath("icons"), resourcePath("style", ContentType.parse("text/css").toOption.get)
+    resourcePath("resources"),
+    resourcePath("fonts"),
+    resourcePath("icons"),
+    resourcePath("style", ContentType.parse("text/css").toOption.get),
+    resourcePath("config")
   )
   lazy val compiledPage : Route = get {
     path("compilation" / Segment) { id =>
@@ -108,7 +108,9 @@ object Service {
   def main(args: Array[String]): Unit = {
     ScafiCompiler.init()
     val allRoutes = Seq(index, jsCode, compiledPage, fullCode, easyCode, pureCodeRequest) ++ resourceLike
-    val route = concat(allRoutes:_*)
+    val cors = new CORSHandler {}
+    val route = cors.corsHandler(concat(allRoutes:_*))
     val bindingFuture = Http().newServerAt(host, port).bind(route)
+    bindingFuture.isCompleted
   }
 }
