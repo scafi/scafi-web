@@ -40,7 +40,7 @@ jobs:
         run:  sbt -v "project scafi-web; fullOptJS::webpack"
       - name: Adjust folders for deployment
         shell: bash
-        run: ../scripts/adjust-deployment.sh
+        run: .github/scripts/adjust-deployment.sh
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
