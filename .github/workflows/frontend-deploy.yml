@@ -1,0 +1,44 @@
+name: ScafiWeb frontend deploy
+
+on: [ push ]
+
+jobs:
+  Build:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        jvm_version: [ 11 ]
+    runs-on: ${{ matrix.os }}
+    env:
+      # if needed, define Java options for both official sbt and sbt-extras
+      # JAVA_OPTS: -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
+      # JVM_OPTS: -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
+      JAVA_VERSION: ${{ matrix.jvm_version }}
+      OS: ${{ matrix.os }}
+      TERM: dumb
+    steps:
+      # Checkout the repository
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Fetch tags
+        shell: bash
+        run: git fetch --tags -f
+      # Prefer olafurpg/setup-scala to preinstalled sbt with java from actions/setup-java or joschi/setup-jdk
+      # https://www.scala-sbt.org/1.x/docs/GitHub-Actions-with-sbt.html
+      - name: Setup Scala with Java ${{ matrix.jvm_version }}
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: adopt@1.${{ matrix.java }}
+      - name: Coursier cache
+        uses: coursier/cache-action@v5
+      - name: Build project scafi-web project with SBT
+        shell: bash
+        run:  sbt -v "project scafi-web; fullOptJS::webpack"
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./scafi-web/target/scala-2.12/classes
