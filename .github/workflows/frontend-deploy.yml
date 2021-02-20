@@ -1,10 +1,11 @@
 name: ScafiWeb frontend deploy
 
-on: [ push ]
+on: [ push, workflow_dispatch ]
 
 jobs:
   Build:
     strategy:
+      # Using matrix build even if not needed
       matrix:
         os: [ ubuntu-latest ]
         jvm_version: [ 11 ]
@@ -37,8 +38,23 @@ jobs:
       - name: Build project scafi-web project with SBT
         shell: bash
         run:  sbt -v "project scafi-web; fullOptJS::webpack"
+      - name: Adjust folders for deployment
+        shell: bash
+        run: |
+          mkdir ./public
+          for resource in `ls ./scafi-web/src/main/resources`
+            toCopy = "./scafi-web/target/scala-2.12/classes/${resource}"
+            echo "Copying ${toCopy}"
+            cp toCopy ./public/
+          done
+          mkdir -p ./public/js
+          cp "./scafi-web/target/scala-2.12/scalajs-bundler/main/scafi-web-opt-bundle.js" ./public/js
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./scafi-web/target/scala-2.12/classes
+#          publish_branch: gh-pages
+          publish_dir: ./public
+#          user_name: 'github-actions[bot]'
+#          user_email: 'github-actions[bot]@users.noreply.github.com'
+#          full_commit_message: ${{ github.event.head_commit.message }}
