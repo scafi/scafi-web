@@ -1,6 +1,10 @@
 name: ScafiWeb frontend deploy
 
-on: [ push, workflow_dispatch ]
+on:
+    push:
+        branches:
+            - master
+    workflow_dispatch:
 
 jobs:
   Build:
@@ -45,7 +49,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-          external_repository: cric96/gh-pages-test 
+          external_repository: scafi/web 
 #          publish_branch: gh-pages
           publish_dir: ./public
 #          user_name: 'github-actions[bot]'
