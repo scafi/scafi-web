@@ -350,13 +350,7 @@ lazy val `online-compiler` = project.
       ).toSeq.filter(file => file.getName.contains("scafi-web-opt-bundle"))
     } dependsOn (Compile / compile)).taskValue,
     (Compile / compile) := ((compile in Compile) dependsOn (`scafi-web` / Compile / fullOptJS / webpack)).value,
-    (Compile / resources) ++= Seq(
-      (LocalProject("scafi-web") / Compile / packageBin).value,
-      (coreCross.js / Compile / packageBin).value,
-      (commonsCross.js / Compile / packageBin).value,
-      (simulatorCross.js / Compile / packageBin).value,
-    ),
-    (Compile / resources) ++= (LocalProject("runtime1x") / Compile / managedClasspath).value.map(_.data),
+    (Compile / resources) ++= (LocalProject("runtime1x") / Compile / fullClasspathAsJars).value.map(_.data),
     (Compile / resources) ++= (LocalProject("scafi-web") / Compile / resources).value,
     resolvers += "Typesafe Repo" at "https://repo.typesafe.com/typesafe/releases/",
   )
