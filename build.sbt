@@ -289,7 +289,7 @@ lazy val `scafi-web` = project
     webpackConfigFile := Some(baseDirectory.value / "src" / "main" / "resources" / "dev.webpack.config.js"),
     webpackConfigFile in Test := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),
   )
-//allow to load the dependecies
+//allow to load the dependencies
 def runtimeProject(p: Project, scalaJSVersion: String): Project = {
   p.dependsOn(`scafi-web`).settings(
     libraryDependencies ++= Seq(
@@ -309,7 +309,7 @@ lazy val `online-compiler` = project.
     assemblyMergeStrategy in assembly := {
       case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
       case "reference.conf" => MergeStrategy.concat
-      case y => MergeStrategy.first
+      case _ => MergeStrategy.first
     },
     libraryDependencies ++= Seq("org.scala-js" %% "scalajs-library" % scalaJSVersion,
       "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,

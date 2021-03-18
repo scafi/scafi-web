@@ -8,14 +8,17 @@ import scala.scalajs.js
 import scala.util.Success
 
 object CompilationServers {
-  def apply() : Future[js.Array[String]] = {
+  def apply(): Future[js.Array[String]] = {
     val promise = Promise[js.Array[String]]
-    $.getJSON("config/server.json", success = (json, result, xhr) => promise.complete(Success(json.asInstanceOf[js.Array[String]])))
+    $.getJSON(
+      "config/server.json",
+      success = (json, result, xhr) =>
+        promise.complete(Success(json.asInstanceOf[js.Array[String]]))
+    )
     promise.future
   }
 
-  def isReachable(server : String) : Boolean = {
-    println(server)
+  def isReachable(server: String): Boolean = {
     val xhr = new XMLHttpRequest()
     xhr.open(
       "HEAD",
@@ -25,9 +28,9 @@ object CompilationServers {
     try {
       xhr.send();
       val status = xhr.status;
-      ( status >= 200 && status < 300 || status == 304 );
+      (status >= 200 && status < 300 || status == 304);
     } catch {
-      case _ : Exception => false
+      case _: Exception => false
     }
   }
 }
