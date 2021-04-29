@@ -1,7 +1,11 @@
 package it.unibo.scafi.js.view.static
 
 import it.unibo.scafi.js.view.dynamic.{Popover, PopoverProgression}
-import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar.{MoveModeFormValue, PanModeFormValue, PanMoveModeFormName}
+import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar.{
+  MoveModeFormValue,
+  PanModeFormValue,
+  PanMoveModeFormName
+}
 import it.unibo.scafi.js.view.static.CssSettings._
 import it.unibo.scafi.js.view.static.RootStyle.primaryBtnClass
 import org.scalajs.dom.html.{Div, Form, Label, Select, TextArea}
@@ -28,19 +32,27 @@ object SkeletonPage {
     * Textarea associated with the editor section.
     */
   lazy val editorSection: Div = div(id := "editor").render
+
   /**
     * Select part to choose an aggregate program.
     */
-  lazy val selectionProgram: Select = select(id := "select-program", cls := "form-control bg-dark text-light").render
+  lazy val selectionProgram: Select = select(
+    id := "select-program",
+    cls := "form-control bg-dark text-light"
+  ).render
   private val modeSelectionId = "advanced-toggle";
+
   /**
     * Section that contains the controls to manage the backend, it is support specific.
     */
   lazy val controlsDiv: Div = div(id := "controls").render
+
   /**
-   * Section that contains some visualization configuration (e.g. font size, node size, ...)
-   */
-  lazy val visualizationConfigDropdown: Div = div(cls := "form-group", id := "viz-setting-dropdown").render
+    * Section that contains some visualization configuration (e.g. font size, node size, ...)
+    */
+  lazy val visualizationConfigDropdown: Div =
+    div(cls := "form-group", id := "viz-setting-dropdown").render
+
   /**
     * Editor header that contains the program and mode selector
     */
@@ -64,14 +76,16 @@ object SkeletonPage {
     .addNextPopover(
       attachTo = editorHeader.id,
       title = "Code editor",
-      text = "With this selector you can choose a ScaFi example and edit it in the editor below")
+      text =
+        "With this selector you can choose a ScaFi example and edit it in the editor below"
+    )
     .addNextPopover(
       attachTo = modeSelectionId,
       title = "Advanced mode",
       text =
         """In basic mode, you can write directly ScaFi code, without worrying about producing valid Scala code.
-          |If you are not a beginner and you want more control on the produced Scala code, enable this toggle."""
-          .stripMargin)
+          |If you are not a beginner and you want more control on the produced Scala code, enable this toggle.""".stripMargin
+    )
     .addNextPopover(
       attachTo = backendConfig.id,
       title = "Backend configuration",
@@ -81,10 +95,13 @@ object SkeletonPage {
           |""".stripMargin,
       direction = Popover.Right
     )
+
   /**
     * Section that contains the controls to manage the visualization, it is support specific.
     */
-  lazy val visualizationOptionDiv: Div = div(id := "visualization-option", `class` := "form-inline").render
+  lazy val visualizationOptionDiv: Div =
+    div(id := "visualization-option", `class` := "form-inline").render
+
   /**
     * Section in which is rendered the graph that represent the aggregate system.
     */
@@ -94,8 +111,10 @@ object SkeletonPage {
     tabindex := 0
   ).render
 
-  lazy val navRightSide : Form = form(cls := "form-inline",
-    div(cls := "dropdown",
+  lazy val navRightSide: Form = form(
+    cls := "form-inline",
+    div(
+      cls := "dropdown",
       span(
         cls := "btn btn-outline-light mr-2 my-sm-0 dropdown-toggle",
         data("toggle") := "dropdown",
@@ -104,13 +123,16 @@ object SkeletonPage {
         span(cls := "fas fa-cogs fa-lg pr-2", aria.hidden := true),
         "Settings"
       ),
-      form(cls := "dropdown-menu bg-dark p-2 text-white", visualizationConfigDropdown)
+      form(
+        cls := "dropdown-menu bg-dark p-2 text-white",
+        visualizationConfigDropdown
+      )
     ),
     a(
       cls := "btn btn-outline-light mr-2 my-sm-0",
       href := "https://scafi.github.io/",
       target := "_blank",
-      rel :="noopener noreferrer",
+      rel := "noopener noreferrer",
       i(cls := "fas fa-globe fa-lg pr-2", aria.hidden := true),
       "Website"
     ),
@@ -118,11 +140,19 @@ object SkeletonPage {
       cls := "btn btn-outline-light my-2 my-sm-0",
       href := "https://github.com/scafi/scafi",
       target := "_blank",
-      rel :="noopener noreferrer",
+      rel := "noopener noreferrer",
       i(cls := "fab fa-github fa-lg pr-2", aria.hidden := true),
       "Repository"
+    ),
+    a(
+      cls := "btn btn-outline-light ml-2 my-sm-0",
+      href := "https://youtu.be/E-EoFmm5tuc",
+      target := "_blank",
+      rel := "noopener noreferrer",
+      i(cls := "fab fa-youtube fa-lg", aria.hidden := true),
     )
   ).render
+
   /**
     * Section used to configure the backend (it is support specific)
     */
@@ -131,6 +161,7 @@ object SkeletonPage {
     id := "backend-config-section",
     h3(cls := "text-light", "Backend configuration")
   ).render
+
   /**
     * The entirely page content.
     */
@@ -139,20 +170,16 @@ object SkeletonPage {
     navBar,
     pageContainer
   )
+
   /**
     * The main section of the page.
     */
-  val contentOnly: TypedTag[Div] = div(
-    cls := "container-fluid d-flex flex-column p-0 bg-dark",
-    pageContainer
-  )
+  val contentOnly: TypedTag[Div] =
+    div(cls := "container-fluid d-flex flex-column p-0 bg-dark", pageContainer)
 
   private def navBar: Tag = tag("nav")(
     cls := "navbar navbar-dark flex-shrink-0 bg-secondary",
-    span(
-      cls := "navbar-brand",
-      h1(cls := "text-light", "Scafi")
-    ),
+    span(cls := "navbar-brand", h1(cls := "text-light", "Scafi")),
     span(cls := "navbar-text ml-2", "Discover the power of the collective"),
     navRightSide
   )
@@ -165,12 +192,8 @@ object SkeletonPage {
     visualization
   )
 
-  private def editor: TypedTag[Div] = div(
-    cls := "bg-dark",
-    id := "editor-section",
-    editorHeader,
-    editorSection
-  )
+  private def editor: TypedTag[Div] =
+    div(cls := "bg-dark", id := "editor-section", editorHeader, editorSection)
 
   private def visualization: TypedTag[Div] = div(
     cls := "bg-dark",
@@ -191,7 +214,11 @@ object SkeletonPage {
       value := MoveModeFormValue,
 //      checked := true
     ),
-    i(id := "move-toggle", cls := "fas fa-mouse-pointer fa-lg", aria.hidden := true),
+    i(
+      id := "move-toggle",
+      cls := "fas fa-mouse-pointer fa-lg",
+      aria.hidden := true
+    ),
   ).render
 
   lazy val panModeButton: Label = label(
@@ -204,12 +231,17 @@ object SkeletonPage {
       value := PanModeFormValue,
       checked := true
     ),
-    i(id := "pan-toggle", cls := "fas fa-hand-paper fa-lg", aria.hidden := true),
+    i(
+      id := "pan-toggle",
+      cls := "fas fa-hand-paper fa-lg",
+      aria.hidden := true
+    ),
   ).render
 
   // toggle as button group
   lazy val panMoveMode: Div = div(
-    cls := "btn-floating-group text-center pt-2", id := PanMoveModeFormName + "-container",
+    cls := "btn-floating-group text-center pt-2",
+    id := PanMoveModeFormName + "-container",
     div(
       cls := "btn-group btn-group-toggle",
       id := PanMoveModeFormName,
