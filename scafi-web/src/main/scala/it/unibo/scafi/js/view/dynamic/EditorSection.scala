@@ -74,10 +74,10 @@ object EditorSection {
     case JavascriptMode.lang => JavascriptMode
   }
 
-  private class EditorSectionImpl(editorZone: Div)
+  private class EditorSectionImpl(editorZone: Div, defaultMode: Mode = ScalaModeEasy)
     extends EditorSection {
     var mode: Mode = GlobalStore.get[Mode]("mode") match {
-      case Failure(exception) => ScalaModeEasy
+      case Failure(exception) => defaultMode
       case Success(mode) => mode
     }
     private val modeSelection = new ModeSelection("editor-header", mode.lang match {
