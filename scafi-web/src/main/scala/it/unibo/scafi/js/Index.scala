@@ -60,7 +60,13 @@ object Index {
     } else {
       spaPage()
     }
-    scafiInitialization()
+    // to improve, support for ScaFi.js
+    val defaultMode = if (queryParams.has("javascript")) {
+      EditorSection.JavascriptMode
+    } else {
+      EditorSection.ScalaModeEasy
+    }
+    scafiInitialization(defaultMode)
     ThemeSwitcher.render(SkeletonPage.navRightSide) // attach the theme switcher
   }
 
@@ -105,7 +111,7 @@ object Index {
     // TODO add period description
     .andFinally(() => Cookie.store("visited", "true"))
 
-  def scafiInitialization(): Unit = {
+  def scafiInitialization(mode: EditorSection.Mode): Unit = {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
     val interaction = new Interaction.PhaserInteraction(support)
@@ -132,8 +138,6 @@ object Index {
     // force repaint
     support.invalidate()
     SkeletonPage.visualizationSection.focus()
-    PageBus.publish(configuration) // tell to all component the new configuration installed on the frontend
-
     val tour = buildTour(controls).start()
     PopoverProgression.ResetButton.render(tour, SkeletonPage.navRightSide)
     if (!Cookie.get("visited").exists(_.toBoolean)) {
@@ -145,11 +149,16 @@ object Index {
       }
       modal.show()
     }
+    
     PageBus.publish(configuration) //tell to all component the new configuration installed on the frontend
     val example = Seq(BasicExamples(), LibraryExamples(), MatrixLedExample(), MovementExamples(), HighLevelExamples())
     //PageStructure.static()
     PageStructure.resizable()
-    val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
+    if(mode == EditorSection.JavascriptMode) {
+      editor.setCode("", mode)
+    } else {
+      val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
+    }
   }
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)

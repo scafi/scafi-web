@@ -111,8 +111,8 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
   private def remoteRequest(code : String, pathGenerator : (String) => (String)) : Future[SimulationExecution] = {
     SupportConfiguration.storeGlobal(this.systemConfig)
     CompilationServers().flatMap(servers => {
-      //val serverHost = servers.map(server).find(isReachable).getOrElse("")
-      val serverHost = server(servers.head)
+      val serverHost = servers.map(server).find(isReachable).getOrElse("")
+      //val serverHost = server(servers.head)
 
       Ajax.post(pathGenerator(serverHost), Ajax.InputData.str2ajax(code))
         .filter(_.status == 200)
