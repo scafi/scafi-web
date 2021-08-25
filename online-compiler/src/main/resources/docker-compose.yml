@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  scafiweb:
+    image: "gianlucaaguzzi/scafi-web:latest"
+    ports: 
+        - "8080:8080"
+  https-reverse:
+    image: "gianlucaaguzzi/mini-reverse-proxy-https:latest"
+    ports:
+        - "443:8081"
+    environment:
+        - HOST=scafiweb
