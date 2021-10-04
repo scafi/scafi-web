@@ -18,7 +18,7 @@ object CompilationServers {
     println(server)
     val xhr = new XMLHttpRequest()
     xhr.open(
-      "HEAD",
+      "GET", //todo, put head
       url = server,
       async = false //todo this should return a promise, ok for now but a more robust method is needed
     )
