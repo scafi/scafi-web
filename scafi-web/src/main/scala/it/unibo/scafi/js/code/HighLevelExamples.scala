@@ -68,7 +68,7 @@ object HighLevelExamples {
         |""".stripMargin
     },
     Example.create("Pattern SCR building areas") {
-      """//using StandardSensors, BlockG, BlockC, BlockS, StateManagement
+      """//using StandardSensors, Actuation, BlockG, BlockS
         |def remap(min: Double, max: Double,
         |          newMin: Double, newMax: Double, x: Double): Double = {
         |  val nx = if(x < min) min else if(x > max) max else x
