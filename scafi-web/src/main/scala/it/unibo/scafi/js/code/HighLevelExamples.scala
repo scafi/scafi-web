@@ -67,6 +67,23 @@ object HighLevelExamples {
         |branch(leader) { "leader" } { action(heater) }
         |""".stripMargin
     },
+    Example.create("Pattern SCR building areas") {
+      """//using StandardSensors, BlockG, BlockC, BlockS, StateManagement
+        |def remap(min: Double, max: Double,
+        |          newMin: Double, newMax: Double, x: Double): Double = {
+        |  val nx = if(x < min) min else if(x > max) max else x
+        |  (nx-min)/(max-min) * (newMax-newMin) + newMin
+        |}
+        |val radius = 500
+        |def mapToHex(x: Double) = remap(0, radius, 255, 16, x).toLong.toHexString
+        |def S(grain: Double, metric: Metric): Boolean =
+        |      breakUsingUids(randomUid, grain, metric)
+        |val leader = S(radius, nbrRange)
+        |val distance = distanceTo(leader)
+        |val ledColor = mux(leader) { "red" } { s"#0000${mapToHex(distance)}" }
+        |ledAll to ledColor
+        |""".stripMargin
+    },
     Example.create("Pattern SCR with movement", DeviceConfiguration.standard) {
       """//using StandardSensors, Actuation, Movement2D, FlockLib, AdvancedFlock, BlockC, BlockG, BlockT, BlockS
         |/*
