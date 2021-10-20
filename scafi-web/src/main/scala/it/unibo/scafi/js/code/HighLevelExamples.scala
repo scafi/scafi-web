@@ -76,8 +76,7 @@ object HighLevelExamples {
         |}
         |val radius = 500
         |def mapToHex(x: Double) = remap(0, radius, 255, 16, x).toLong.toHexString
-        |def S(grain: Double, metric: Metric): Boolean =
-        |      breakUsingUids(randomUid, grain, metric)
+        |
         |val leader = S(radius, nbrRange)
         |val distance = distanceTo(leader)
         |val ledColor = mux(leader) { "red" } { s"#0000${mapToHex(distance)}" }
