@@ -11,7 +11,6 @@ import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
 import it.unibo.scafi.js.model.{ActuationData, MatrixLed, MatrixOps, Movement}
 import it.unibo.scafi.simulation.SpatialSimulation
 import it.unibo.scafi.space.Point2D
-import org.querki.jquery.$
 import org.scalajs.dom
 import org.scalajs.dom.document
 import org.scalajs.dom.ext.Ajax
@@ -28,6 +27,7 @@ import scala.util.{Success, Try}
 trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#SpaceAwareSimulator, SimulationSideEffect, SimulationExecution]{
   self : SimulationSupport with SideEffects =>
   import incarnation._
+  val sensorNames: incarnation.StandardSensorNames = new incarnation.StandardSensorNames { }
   //TODO add better support
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -103,7 +103,7 @@ trait SimulationExecutionPlatform extends ExecutionPlatform[SpatialSimulation#Sp
       case AbsoluteMovement(x, y) => Point2D(x, y)
       case VectorMovement(dx, dy) => val oldPos = backend.space.getLocation(id)
         val context = backend.context(id)
-        val delta = context.sense[FiniteDuration](LSNS_DELTA_TIME).get.toMillis
+        val delta = context.sense[FiniteDuration](sensorNames.LSNS_DELTA_TIME).get.toMillis
         Point2D(dx * delta + oldPos.x, dy * delta + oldPos.y)
     }
     backend.setPosition(id, position)

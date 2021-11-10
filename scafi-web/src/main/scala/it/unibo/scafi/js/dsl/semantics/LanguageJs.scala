@@ -16,6 +16,6 @@ trait LanguageJs {
   def aggregate[A](f: js.Function0[A]): A = eval.aggregate(f())
   def align[K, V](key: K, comp: js.Function1[K, V]): V = eval.align(key)((v : K) => comp(v))
   def mid(): String = eval.mid().toString //todo eval if it is correct
-  def sense[A](name: String): A = eval.sense(name.asInstanceOf[incarnation.LSNS])
-  def nbrvar[A](name: String): A = eval.nbrvar(name.asInstanceOf[incarnation.NSNS]) //TODO this isn't the correct way to handle this.. find another way
+  def sense[A](name: String): A = eval.sense(name.asInstanceOf[incarnation.CNAME])
+  def nbrvar[A](name: String): A = eval.nbrvar(name.asInstanceOf[incarnation.CNAME]) //TODO this isn't the correct way to handle this.. find another way
 }

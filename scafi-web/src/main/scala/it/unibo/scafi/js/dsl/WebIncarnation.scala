@@ -11,42 +11,30 @@ import it.unibo.utils.{Interop, Linearizable}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Random
 
 trait BasicWebIncarnation extends Incarnation
   with SpatialSimulation with StandardLibrary with ActuationLib with MovementLibrary {
   import Builtins.Bounded
   override implicit val idBounded: Bounded[ID] = Builtins.Bounded.of_s
-  override type LSNS = String
-  override type NSNS = String
+  override type CNAME = String
   override type ID = String
   override type P = Point2D
   override type EXECUTION = AggregateInterpreter
-  override val LSNS_POSITION: String = "position"
-  override val LSNS_TIME: String = "currentTime"
-  override val LSNS_TIMESTAMP: String = "timestamp"
-  override val LSNS_DELTA_TIME: String = "deltaTime"
-  override val LSNS_RANDOM: String = "randomGenerator"
-  override val NBR_RANGE: String = "nbrRange"
-  override val NBR_DELAY: String = "nbrDelay"
-  override val NBR_LAG: String = "nbrLag"
-  override val NBR_VECTOR: String = "nbrVector"
+  override implicit val interopID: Interop[String] = new Interop[String] {
+    override def toString(data: String): String = data
+    override def fromString(s: String): String = s
+  }
+  override def CNAMEfromString(s: String): String = s
 
   @transient implicit override val linearID: Linearizable[ID] = new Linearizable[ID] {
     override def toNum(v: ID): Int = Integer.parseInt(v)
     override def fromNum(n: Int): ID = n.toString
   }
-  @transient implicit override val interopID: Interop[ID] = new Interop[ID] {
+  @transient implicit override val interopCNAME: Interop[ID] = new Interop[ID] {
     def toString(id: ID): String = id
     def fromString(str: String): ID = str
-  }
-  @transient implicit override val interopLSNS: Interop[LSNS] = new Interop[LSNS] {
-    def toString(lsns: LSNS): String = lsns.toString
-    def fromString(str: String): LSNS = str
-  }
-  @transient implicit override val interopNSNS: Interop[NSNS] = new Interop[NSNS] {
-    def toString(nsns: NSNS): String = nsns.toString
-    def fromString(str: String): NSNS = str
   }
 
   trait WebSimulatorFactory extends SimulatorFactory {
@@ -104,4 +92,6 @@ object WebIncarnation extends BasicWebIncarnation
     new Basic3DSpace(elems.toMap) with EuclideanStrategy {
       override val proximityThreshold = range
     }
+
+  override type Time = FiniteDuration
 }

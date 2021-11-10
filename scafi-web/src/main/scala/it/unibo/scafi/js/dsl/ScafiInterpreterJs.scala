@@ -24,8 +24,8 @@ class ScafiInterpreterJs[+I <: Incarnation](val exportedName : String)(implicit 
     override def previousRoundVal[A]: Option[A] = vm.previousRoundVal
     override def neighbourVal[A]: A = vm.neighbourVal
     override def foldedEval[A](expr: => A)(id: incarnation.ID): Option[A] = vm.foldedEval(expr)(id)
-    override def localSense[A](name: incarnation.LSNS): A = vm.localSense(name)
-    override def neighbourSense[A](name: incarnation.NSNS): A = vm.neighbourSense(name)
+    override def localSense[A](name: incarnation.CNAME): A = vm.localSense(name)
+    override def neighbourSense[A](name: incarnation.CNAME): A = vm.neighbourSense(name)
     override def nest[A](slot: incarnation.Slot)(write: Boolean, inc: Boolean)(expr: => A): A = vm.nest(slot)(write, inc)(expr)
     override def locally[A](a: => A): A = vm.locally(a)
     override def alignedNeighbours(): List[incarnation.ID] = vm.alignedNeighbours()

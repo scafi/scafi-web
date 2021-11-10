@@ -3,7 +3,7 @@ import scalajsbundler.{JSDOMNodeJSEnv, Webpack}
 // Resolvers
 resolvers += Resolver.sonatypeRepo("snapshots")
 resolvers += Resolver.typesafeRepo("releases")
-
+resolvers += "Local Maven" at baseDirectory.value + "/libs/"
 // Constants
 val scalaVersionsForCrossCompilation = Seq(/*"2.11.12",*/ "2.12.2", "2.13.1") //drop support for 2.11?
 val akkaVersion = "2.5.32" // NOTE: Akka 2.4.0 REQUIRES Java 8! TODO check if it create conflicts
@@ -253,7 +253,7 @@ lazy val `demos-new` = project
   )
 lazy val `scafi-web` = project
   .enablePlugins(ScalaJSBundlerPlugin)
-  .dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
+  //.dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
   .settings(
     name := "scafi-web",
     scalaJSUseMainModuleInitializer := true,
@@ -263,7 +263,10 @@ lazy val `scafi-web` = project
       "com.lihaoyi" %%% "scalatags" % "0.9.1",
       "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
       "io.monix" %%% "monix-reactive" % "3.2.2",
-      "org.querki" %%% "jquery-facade" % "2.0"
+      "org.querki" %%% "jquery-facade" % "2.0",
+      "it.unibo.scafi" %%% "scafi-core" % "0.3.4-dev",
+      "it.unibo.scafi" %%% "scafi-commons" % "0.3.4-dev",
+      "it.unibo.scafi" %%% "scafi-simulator" % "0.3.4-dev",
     ),
     version in installJsdom := "12.0.0",
     requireJsDomEnv in Test := true,
@@ -294,7 +297,10 @@ def runtimeProject(p: Project, scalaJSVersion: String): Project = {
   p.dependsOn(`scafi-web`).settings(
     libraryDependencies ++= Seq(
       "org.scala-js" %% "scalajs-library" % scalaJSVersion,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "org.scala-js" %% "scalajs-library" % scalaJSVersion,
+      "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
+      "org.scala-js" %% "scalajs-linker" % scalaJSVersion,
     ),
     crossScalaVersions := scalaVersionsForCrossCompilation
   )
@@ -311,9 +317,7 @@ lazy val `online-compiler` = project.
       case "reference.conf" => MergeStrategy.concat
       case y => MergeStrategy.first
     },
-    libraryDependencies ++= Seq("org.scala-js" %% "scalajs-library" % scalaJSVersion,
-      "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
-      "org.scala-js" %% "scalajs-linker" % scalaJSVersion,
+    libraryDependencies ++= Seq(
       "io.get-coursier" %% "coursier" % "1.0.3",
       "ch.megard" %% "akka-http-cors" % "1.1.1",
       "com.lihaoyi" %% "upickle" % "0.4.4",
@@ -352,11 +356,10 @@ lazy val `online-compiler` = project.
     (Compile / compile) := ((compile in Compile) dependsOn (`scafi-web` / Compile / fullOptJS / webpack)).value,
     (Compile / resources) ++= Seq(
       (LocalProject("scafi-web") / Compile / packageBin).value,
-      (coreCross.js / Compile / packageBin).value,
-      (commonsCross.js / Compile / packageBin).value,
-      (simulatorCross.js / Compile / packageBin).value,
     ),
     (Compile / resources) ++= (LocalProject("runtime1x") / Compile / managedClasspath).value.map(_.data),
     (Compile / resources) ++= (LocalProject("scafi-web") / Compile / resources).value,
     resolvers += "Typesafe Repo" at "https://repo.typesafe.com/typesafe/releases/",
   )
+
+addCommandAlias("runService", ";project scafi-web; fullOptJS::webpack; project online-compiler; run")

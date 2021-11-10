@@ -31,7 +31,7 @@ object SimulationSideEffect {
      * a side effect bring to a changes in a set of sensor. The graph model should be updated.
      * @param sensorMap a map that link each node with the sensor changed (a map that link each sensor name with the new value)
      */
-    case class SensorChanged(sensorMap : Map[ID, Map[LSNS, Any]]) extends SimulationSideEffect
+    case class SensorChanged(sensorMap : Map[ID, Map[CNAME, Any]]) extends SimulationSideEffect
 
     /**
      * some nodes are moved in the world. The graph model should be altered to make the two world sync.

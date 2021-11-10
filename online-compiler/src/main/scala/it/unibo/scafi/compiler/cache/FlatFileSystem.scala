@@ -1,6 +1,7 @@
 package it.unibo.scafi.compiler.cache
 
 import akka.actor.ActorSystem
+import com.google.javascript.jscomp.jarjar.com.google.common.io.Files.getFileExtension
 import org.xerial.snappy.Snappy
 import upickle.default._
 import xerial.larray.mmap.MMapMode
@@ -69,7 +70,7 @@ object FlatFileSystem {
   private val validExtensions = Set("class", "sjsir")
   private def validFile(entry: ZipEntry) = {
     !entry.isDirectory &&
-    validExtensions.contains(com.google.common.io.Files.getFileExtension(entry.getName))
+    validExtensions.contains(getFileExtension(entry.getName))
   }
 
   def build(location: Path, jars: Seq[(String, InputStream)]): FlatFileSystem = {

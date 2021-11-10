@@ -98,7 +98,7 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)
     NaiveGraph(graph.insertNodes(nodesUpdated).nodes, computeVertices()) //neighbour could be change, todo improve performance
   }
 
-  private def updateGraphWithSensor(sensorMap : Map[ID, Map[LSNS, Any]], graph : Graph) = {
+  private def updateGraphWithSensor(sensorMap : Map[ID, Map[CNAME, Any]], graph : Graph) = {
     val nodeUpdated = sensorMap.toSeq.map { case (id, labels) => labels -> graph(id) }
       .map { case (labels, node) => node.copy(labels = node.labels ++ labels) }
     graph.insertNodes(nodeUpdated)

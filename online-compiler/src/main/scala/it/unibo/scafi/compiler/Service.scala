@@ -31,13 +31,13 @@ object Service {
   val pageDef : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
   val page : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index-server.html")).mkString
   val code : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(indexJs))(Codec("UTF-8")).mkString
-  val codeDivision = code.split("Object.freeze")
+  val codeDivision = code.split("'use strict'")
   val webpack : String = codeDivision(0)
   val core = codeDivision(1)
   val codeCacheLimit = 5
   val runtime = Runtime.getRuntime
   var codeCache: CodeCache = CodeCache.limit(codeCacheLimit)
-    .permanent(indexJs, core)
+    .permanent(indexJs, "'use strict'" + core)
     .permanent(commonsCode, webpack)
   lazy val index : Route = get {
     path("") {
@@ -47,6 +47,7 @@ object Service {
 
   lazy val jsCode : Route = get {
     path("js" / Segment) { id =>
+      println(id)
       codeCache.get(id) match {
         case Some(id) => complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, id))
         case _ => complete(StatusCodes.NotFound)
