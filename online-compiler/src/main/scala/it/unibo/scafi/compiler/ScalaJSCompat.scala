@@ -46,7 +46,7 @@ object ScalaJSCompat {
   type LinkerConfig = StandardConfig
 
   def defaultLinkerConfig: LinkerConfig =
-    StandardConfig()
+    StandardConfig().withESFeatures(_.withAvoidLetsAndConsts(false)).withESFeatures(_.withAvoidClasses(false))
 
   type Linker = org.scalajs.linker.interface.Linker
 
