@@ -47,7 +47,6 @@ object Service {
 
   lazy val jsCode : Route = get {
     path("js" / Segment) { id =>
-      println(id)
       codeCache.get(id) match {
         case Some(id) => complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, id))
         case _ => complete(StatusCodes.NotFound)
