@@ -17,29 +17,30 @@ object CodeMirror extends js.Function2[Element, EditorConfiguration, Editor] {
 }
 @js.native
 trait Editor extends js.Object {
-  def save() : js.Any = js.native
-  def getValue() : String = js.native
-  def setValue(s : String) : js.Any = js.native
-  def setOption(key : String, value : String) : js.Any = js.native
-  def doc : Doc
-  def swapDoc(doc : Doc) : Doc
+  def save(): js.Any = js.native
+  def getValue(): String = js.native
+  def setValue(s: String): js.Any = js.native
+  def setOption(key: String, value: String): js.Any = js.native
+  def doc: Doc
+  def swapDoc(doc: Doc): Doc
   /*TODO*/
 }
 
 @js.native
 trait Doc extends js.Object {
-  def getValue() : String
-  def getHistory() : History
-  def setHistory(history : History) : Unit
+  def getValue(): String
+  def getHistory(): History
+  def setHistory(history: History): Unit
   /*TODO*/
 }
 
 @js.native
 trait History extends js.Object { /* TODO */ }
 /*TODO enrich with more options*/
-class EditorConfiguration(val value : String | Doc,
-                          val mode : String,
-                          val scrollbarStyle : String,
-                          val lineNumbers : Boolean,
-                          val theme : String) extends js.Object
-
+class EditorConfiguration(
+    val value: String | Doc,
+    val mode: String,
+    val scrollbarStyle: String,
+    val lineNumbers: Boolean,
+    val theme: String
+) extends js.Object

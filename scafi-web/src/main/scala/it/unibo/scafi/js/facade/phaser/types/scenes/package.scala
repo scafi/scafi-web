@@ -10,15 +10,23 @@ package object scenes {
   type ScenePreloadCallback = ThisFunction0[Scene, Unit]
   type SceneInitCallback = ThisFunction1[Scene, js.Any, Unit]
   type UpdateCallback = ThisFunction0[Scene, Unit]
-  type SceneSetting = SettingsConfig | js.Array[SettingsConfig] | CreateSceneFromObjectConfig | js.Array[CreateSceneFromObjectConfig]
-  def callbacks(init : (Scene, js.Any) => Unit = (scene, any) => {},
-                preload: (Scene) => Unit = scene => {},
-                create : (Scene,js. Any) => Unit = (scene, any) => {},
-                update : (Scene) => Unit = scene => {}) : CreateSceneFromObjectConfig = {
-    val initJS : SceneCreateCallback = init
-    val preloadJS : ScenePreloadCallback = preload
-    val createJS : SceneInitCallback = create
-    val updateJS : UpdateCallback= update
-    new CreateSceneFromObjectConfig(js.defined(initJS), js.defined(preloadJS), js.defined(createJS), js.defined(updateJS))
+  type SceneSetting =
+    SettingsConfig | js.Array[SettingsConfig] | CreateSceneFromObjectConfig | js.Array[CreateSceneFromObjectConfig]
+  def callbacks(
+      init: (Scene, js.Any) => Unit = (scene, any) => {},
+      preload: (Scene) => Unit = scene => {},
+      create: (Scene, js.Any) => Unit = (scene, any) => {},
+      update: (Scene) => Unit = scene => {}
+  ): CreateSceneFromObjectConfig = {
+    val initJS: SceneCreateCallback = init
+    val preloadJS: ScenePreloadCallback = preload
+    val createJS: SceneInitCallback = create
+    val updateJS: UpdateCallback = update
+    new CreateSceneFromObjectConfig(
+      js.defined(initJS),
+      js.defined(preloadJS),
+      js.defined(createJS),
+      js.defined(updateJS)
+    )
   }
 }

@@ -17,12 +17,14 @@ trait URLLib {
       case (av :: tail, Nil) => 1
       case (Nil, bv :: tail) => -1
       case (av :: atail, bv :: btail) =>
-        if (av == bv)
+        if (av == bv) {
           compare(atail, btail)
-        else if (av > bv)
+        } else if(av > bv) {
+
           1
-        else
+        } else {
           -1
+        }
     }
 
     compare(a, b)
@@ -49,7 +51,7 @@ case class ExtLib(
 
 object ExtLib {
   private val repoSJSRE = """ *([^ %]+) *%%% *([^ %]+) *% *([^ %]+) *""".r
-  private val repoRE    = """ *([^ %]+) *%% *([^ %]+) *% *([^ %]+) *""".r
+  private val repoRE = """ *([^ %]+) *%% *([^ %]+) *% *([^ %]+) *""".r
 
   def apply(libDef: String): ExtLib = libDef match {
     case repoSJSRE(group, artifact, version) =>
@@ -63,12 +65,12 @@ object ExtLib {
   private def tsort[A](edges: Traversable[(A, A)]): Iterable[A] = {
     @tailrec
     def tsort(toPreds: Map[A, Set[A]], done: Iterable[A]): Iterable[A] = {
-      val (noPreds, hasPreds) = toPreds.partition { _._2.isEmpty }
+      val (noPreds, hasPreds) = toPreds.partition(_._2.isEmpty)
       if (noPreds.isEmpty) {
         if (hasPreds.isEmpty) done else edges.toList.flatMap(x => List(x._1, x._2)).distinct
       } else {
         val found = noPreds.keys
-        tsort(hasPreds.mapValues { _ -- found }, done ++ found)
+        tsort(hasPreds.mapValues(_ -- found), done ++ found)
       }
     }
 

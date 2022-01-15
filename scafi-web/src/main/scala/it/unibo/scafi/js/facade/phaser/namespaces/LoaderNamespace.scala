@@ -12,17 +12,16 @@ import scala.scalajs.js.|
 @JSGlobal("Phaser.Loader")
 object LoaderNamespace extends js.Object {
 
-  /**
-    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Loader.LoaderPlugin.html]]
-    */
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Loader.LoaderPlugin.html]] */
   @js.native
-  class LoaderPlugin(val scene : Phaser.Scene) extends js.Object {
+  class LoaderPlugin(val scene: Phaser.Scene) extends js.Object {
     /* todo */
-    def bitmapFont(key : String,
-                   textureUrl : String | js.Array[String] = js.native,
-                   fontDataURL : String = js.native,
-                   textureXhrSettings : XHRSettingsObject = js.native,
-                   fontDataXhrSettings : XHRSettingsObject = js.native
-                  ) : LoaderPlugin = js.native
+    def bitmapFont(
+        key: String,
+        textureUrl: String | js.Array[String] = js.native,
+        fontDataURL: String = js.native,
+        textureXhrSettings: XHRSettingsObject = js.native,
+        fontDataXhrSettings: XHRSettingsObject = js.native
+    ): LoaderPlugin = js.native
   }
 }

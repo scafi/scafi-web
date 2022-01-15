@@ -22,36 +22,38 @@ import scala.util.{Failure, Success, Try}
 
 object Service {
   val log = LoggerFactory.getLogger(getClass)
-  implicit val system : ActorSystem = ActorSystem()
-  implicit val materializer : ActorMaterializer = ActorMaterializer()
-  implicit val context : ExecutionContextExecutor =  system.dispatcher
+  implicit val system: ActorSystem = ActorSystem()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val context: ExecutionContextExecutor = system.dispatcher
   val defaultPort = 8080
-  val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(defaultPort) //todo put in configuration
-  val host = "0.0.0.0" //todo put in configuration
+  val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(defaultPort) // todo put in configuration
+  val host = "0.0.0.0" // todo put in configuration
   val indexJs = "scafi-web-opt-bundle.js"
   val commonsCode = "common.js"
-  val pageDef : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
-  val page : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index-server.html")).mkString
-  val code : String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(indexJs))(Codec("UTF-8")).mkString
+  val pageDef: String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
+  val page: String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index-server.html")).mkString
+  val code: String =
+    Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(indexJs))(Codec("UTF-8")).mkString
   val codeDivision = code.split("'use strict'")
-  val webpack : String = codeDivision(0)
+  val webpack: String = codeDivision(0)
   val core = codeDivision(1)
   val codeCacheLimit = 5
   val runtime = Runtime.getRuntime
-  var codeCache: CodeCache = CodeCache.limit(codeCacheLimit)
+  var codeCache: CodeCache = CodeCache
+    .limit(codeCacheLimit)
     .permanent(indexJs, "'use strict'" + core)
     .permanent(commonsCode, webpack)
-  lazy val index : Route = get {
+  lazy val index: Route = get {
     path("") {
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, page))
     }
   }
 
-  lazy val jsCode : Route = get {
+  lazy val jsCode: Route = get {
     path("js" / Segment) { id =>
       codeCache.get(id) match {
         case Some(id) => complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, id))
-        case _ => complete(StatusCodes.NotFound)
+        case _        => complete(StatusCodes.NotFound)
       }
     }
   }
@@ -63,45 +65,46 @@ object Service {
     resourcePath("style", ContentType.parse("text/css").toOption.get),
     resourcePath("config")
   )
-  lazy val compiledPage : Route = get {
+  lazy val compiledPage: Route = get {
     path("compilation" / Segment) { id =>
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, ScalaCompiledPage.html(id)))
     }
   }
 
-  lazy val pureCodeRequest : Route = post {
+  lazy val pureCodeRequest: Route = post {
     compileRoot((compiler, code) => compiler.compilePure(code), "code" / "pure")
   }
 
-  lazy val fullCode : Route = post {
+  lazy val fullCode: Route = post {
     compileRoot((compiler, code) => compiler.compile(code), "code")
   }
 
-  lazy val easyCode : Route = post {
+  lazy val easyCode: Route = post {
     compileRoot((compiler, code) => compiler.compileEasy(code), "code" / "easy")
   }
 
-  def resourcePath(basePath : PathMatcher[Unit], content : ContentType = ContentTypes.`application/octet-stream`) : Route = {
-    path(basePath / Segment) {
-      name => {
-        val resource = StreamConverters.fromInputStream(() => getClass.getClassLoader.getResourceAsStream(name))
-        complete(HttpEntity(content, resource))
-      }
+  def resourcePath(
+      basePath: PathMatcher[Unit],
+      content: ContentType = ContentTypes.`application/octet-stream`
+  ): Route = {
+    path(basePath / Segment) { name =>
+      val resource = StreamConverters.fromInputStream(() => getClass.getClassLoader.getResourceAsStream(name))
+      complete(HttpEntity(content, resource))
     }
   }
-  def compileRoot(logic : (ScafiCompiler.type, String) => Try[String], pathMatch : PathMatcher[Unit]) : Route = {
+  def compileRoot(logic: (ScafiCompiler.type, String) => Try[String], pathMatch: PathMatcher[Unit]): Route = {
     path(pathMatch) {
       entity[String](as[String]) { code =>
-        val compiled = this.synchronized { logic(ScafiCompiler, code) }
+        val compiled = this.synchronized(logic(ScafiCompiler, code))
         compiled match {
-          case Success(result) => val id = UUID.randomUUID().toString
-            this.synchronized { codeCache = codeCache put (id, (result)) } //fix
+          case Success(result) =>
+            val id = UUID.randomUUID().toString
+            this.synchronized { codeCache = codeCache put (id, result) } // fix
             log.debug("done : " + id)
             log.debug("occupied ram : " + (runtime.totalMemory() - runtime.freeMemory()) / 1000000.0 + " Mb")
             complete(id)
-          case Failure(exception) => {
+          case Failure(exception) =>
             complete(StatusCodes.InternalServerError, exception.getMessage)
-          }
         }
       }
     }
@@ -111,7 +114,7 @@ object Service {
     ScafiCompiler.init()
     val allRoutes = Seq(index, jsCode, compiledPage, fullCode, easyCode, pureCodeRequest) ++ resourceLike
     val cors = new CORSHandler {}
-    val route = cors.corsHandler(concat(allRoutes:_*))
+    val route = cors.corsHandler(concat(allRoutes: _*))
     val server = Http().newServerAt(host, port).bind(route)
     // Close the server when it receive enter
     StdIn.readLine()

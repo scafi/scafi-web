@@ -9,7 +9,7 @@ import scala.scalajs.js
 
 object MatrixLedExample {
   val bigMatrix = DeviceConfiguration(js.Dictionary("matrix" -> MatrixLed.fill(5, Color.White.toHex)))
-  private val examples : Seq[Example] = Seq(
+  private val examples: Seq[Example] = Seq(
     Example.create("Turn on matrix with colors") {
       """//using Actuation
         |mux(mid().toInt < 50) { ledAll to "green" } { ledAll to "#FF00FF" }""".stripMargin
@@ -58,5 +58,5 @@ object MatrixLedExample {
         |eyes ++ mouth""".stripMargin
     }
   )
-  def apply() : ExampleGroup = ExampleGroup("Matrix led", examples)
+  def apply(): ExampleGroup = ExampleGroup("Matrix led", examples)
 }

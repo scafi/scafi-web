@@ -44,13 +44,16 @@ object Toggle {
 //  def apply(labelValue: String, check: Boolean = false, inline: Boolean): Toggle =
 //    new CheckBox(labelValue, check, inline)
 
-  /**
-    * Build a '''toggle''' with a specified behavior.
+  /** Build a '''toggle''' with a specified behavior.
     *
-    * @param labelValue the label attached to the toggle
-    * @param check whether the toggle should be checked or not
-    * @param onClick what to do when the toggle is clicked
-    * @return the toggle
+    * @param labelValue
+    *   the label attached to the toggle
+    * @param check
+    *   whether the toggle should be checked or not
+    * @param onClick
+    *   what to do when the toggle is clicked
+    * @return
+    *   the toggle
     */
   def apply(labelValue: String, check: Boolean = false, onClick: js.Function1[MouseEvent, _]): Toggle =
     new ToggleFormRow(labelValue, check, onClick)
@@ -58,15 +61,15 @@ object Toggle {
   def button(labelValue: String, check: Boolean = false, onClick: js.Function1[MouseEvent, _]): Toggle =
     new ToggleWithButton(labelValue, check, onClick)
 
-  /*private*/ class CheckBox(val labelValue: String, check: Boolean = false, inline: Boolean = true) extends Toggle {
+  /*private*/
+  class CheckBox(val labelValue: String, check: Boolean = false, inline: Boolean = true) extends Toggle {
     private val inputPart = input(
       cls := "form-check-input",
       tpe := "checkbox",
-      id := labelValue,
+      id  := labelValue
     ).render
 
     inputPart.checked = check
-
 
     inputPart.onclick = Repaint
 
@@ -79,27 +82,23 @@ object Toggle {
     lazy val html: Div = div(
       cls := s"form-check ${if (inline) "form-check-inline" else ""}",
       inputPart,
-      label(cls := "form-check-label text-light", `for` := labelValue, labelValue),
+      label(cls := "form-check-label text-light", `for` := labelValue, labelValue)
     ).render
   }
 
-  class ToggleFormRow(val labelValue: String,
-                      check: Boolean = false,
-                      onClick: js.Function1[MouseEvent, _] = Repaint)
-    extends Toggle {
+  class ToggleFormRow(val labelValue: String, check: Boolean = false, onClick: js.Function1[MouseEvent, _] = Repaint)
+      extends Toggle {
     private lazy val toggle = input(
-      `type` := "checkbox",
+      `type`  := "checkbox",
       `class` := "custom-control-input",
-      id := s"$labelValue-toggle"
+      id      := s"$labelValue-toggle"
     ).render
 
     toggle.checked = check
 
     toggle.onclick = onClick
 
-    /**
-      * @return the internal representation of the object under the html tag.
-      */
+    /** @return the internal representation of the object under the html tag. */
     override lazy val html: Div = div(
       `class` := "form-row",
       div(
@@ -109,7 +108,7 @@ object Toggle {
           this.toggle,
           label(
             `class` := "custom-control-label text-white",
-            `for` := this.toggle.id,
+            `for`   := this.toggle.id,
             this.labelValue
           )
         )
@@ -123,16 +122,14 @@ object Toggle {
     override def uncheck(): Unit = toggle.checked = false
   }
 
-  class ToggleWithButton(val labelValue: String,
-                        check: Boolean = false,
-                        onClick: js.Function1[MouseEvent, _] = Repaint)
-    extends Toggle {
+  class ToggleWithButton(val labelValue: String, check: Boolean = false, onClick: js.Function1[MouseEvent, _] = Repaint)
+      extends Toggle {
     private var _check = check
     private lazy val toggle = input(
-      `type` := "button",
+      `type`  := "button",
       `class` := "btn btn-sm bg-primary mr-2 text-white",
-      id := s"$labelValue-toggle",
-      value := s"toggle",
+      id      := s"$labelValue-toggle",
+      value   := s"toggle"
     ).render
 
     toggle.onclick = ev => {
@@ -140,9 +137,7 @@ object Toggle {
       onClick(ev)
     }
 
-    /**
-     * @return the internal representation of the object under the html tag.
-     */
+    /** @return the internal representation of the object under the html tag. */
     override lazy val html: Div = div(
       `class` := "form-row mt-2",
       div(
@@ -150,7 +145,7 @@ object Toggle {
         this.toggle,
         label(
           `class` := "text-white",
-          `for` := this.toggle.id,
+          `for`   := this.toggle.id,
           this.labelValue
         )
       )

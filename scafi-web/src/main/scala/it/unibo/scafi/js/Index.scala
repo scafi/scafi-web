@@ -29,26 +29,19 @@ object Index {
   /** Interpreter chosen. */
   @JSExportTopLevel("Lang")
   implicit val languageJsInterpreter: ScafiInterpreterJs[BasicWebIncarnation] =
-  new ScafiInterpreterJs("Lang")
-    with BlockGJs
-    with LanguageJs
-    with BlockTJs
-    with StandardSensorJs
-    with BuiltinsJs
+    new ScafiInterpreterJs("Lang") with BlockGJs with LanguageJs with BlockTJs with StandardSensorJs with BuiltinsJs
 
   val configuration: SupportConfiguration = SupportConfiguration(
     GridLikeNetwork(10, 10, 60, 60, 10),
     SpatialRadius(range = 70),
     deviceShape = DeviceConfiguration.standard,
-    seed = SimulationSeeds(),
+    seed = SimulationSeeds()
   )
 
   val updateTime = 50 // todo think to put into a configuration
 
   @JSExportTopLevel("Platform")
-  val support = new SimulationSupport(configuration)
-    with SimulationExecutionPlatform
-    with SimulationCommandInterpreter
+  val support = new SimulationSupport(configuration) with SimulationExecutionPlatform with SimulationCommandInterpreter
 
   lazy val editor: EditorSection = EditorSection(SkeletonPage.editorSection)
 
@@ -83,15 +76,16 @@ object Index {
   lazy val welcomeModal: Modal = Modal.textual(
     "Welcome to ScaFi: discover the power of the collective!",
     "ScaFi-web is an online playground for creating, sharing and embedding ScaFi aggregate programs that run in your browser.",
-    300)
+    300
+  )
 
-  def buildTour(controls: SimulationControlsSection): PopoverProgression.Builder = SkeletonPage
-    .popoverTourBuilder
+  def buildTour(controls: SimulationControlsSection): PopoverProgression.Builder = SkeletonPage.popoverTourBuilder
     .addNextPopover(
       attachTo = controls.loadButton.id,
       title = "Load code",
       text = "Every time you edit your code and want to load it onto the network, click here ...",
-      direction = Popover.Bottom)
+      direction = Popover.Bottom
+    )
     .addNextPopover(
       attachTo = controls.startButton.id,
       title = "Start the simulation",
@@ -149,12 +143,12 @@ object Index {
       }
       modal.show()
     }
-    
-    PageBus.publish(configuration) //tell to all component the new configuration installed on the frontend
+
+    PageBus.publish(configuration) // tell to all component the new configuration installed on the frontend
     val example = Seq(BasicExamples(), LibraryExamples(), MatrixLedExample(), MovementExamples(), HighLevelExamples())
-    //PageStructure.static()
+    // PageStructure.static()
     PageStructure.resizable()
-    if(mode == EditorSection.JavascriptMode) {
+    if (mode == EditorSection.JavascriptMode) {
       editor.setCode("", mode)
     } else {
       val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)

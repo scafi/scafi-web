@@ -57,7 +57,7 @@ object GlobalInitCompat {
     }
   }
 
-  private final def lookupPath(base: AbstractFile)(pathParts: Seq[String], directory: Boolean): AbstractFile = {
+  final private def lookupPath(base: AbstractFile)(pathParts: Seq[String], directory: Boolean): AbstractFile = {
     var file: AbstractFile = base
     for (dirPart <- pathParts.init) {
       file = file.lookupName(dirPart, directory = true)
@@ -76,9 +76,8 @@ object GlobalInitCompat {
 
       override def subdirectoryNamed(name: String) = absFile.subdirectoryNamed(name)
     }) {
-      override def getSubDir(packageDirName: String): Option[AbstractFile] = {
+      override def getSubDir(packageDirName: String): Option[AbstractFile] =
         Option(lookupPath(absFile)(packageDirName.split('/'), directory = true))
-      }
 
       override def findClassFile(className: String): Option[AbstractFile] = {
         val relativePath = FileUtils.dirPath(className) + ".class"
@@ -97,8 +96,8 @@ object GlobalInitCompat {
       )
 
       override lazy val platform: ThisPlatform = new GlobalPlatform {
-        override val global    = g
-        override val settings  = g.settings
+        override val global = g
+        override val settings = g.settings
         override def classPath = cp
       }
 
@@ -124,8 +123,8 @@ object GlobalInitCompat {
       )
 
       override lazy val platform: ThisPlatform = new GlobalPlatform {
-        override val global    = g
-        override val settings  = g.settings
+        override val global = g
+        override val settings = g.settings
         override def classPath = cp
       }
 

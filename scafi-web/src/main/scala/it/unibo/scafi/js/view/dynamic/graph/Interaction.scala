@@ -27,10 +27,10 @@ trait Interaction {
   /** @return The current selection of nodes, if any. */
   def selection: Option[Seq[String]]
 
-  /**
-    * Change current state of the cursor drag handling mode.
+  /** Change current state of the cursor drag handling mode.
     *
-    * @param s the new mode
+    * @param s
+    *   the new mode
     */
   def changeTo(s: State): Unit
 
@@ -56,7 +56,7 @@ object Interaction {
   case object Selection extends State
 
   class PhaserInteraction(val commandInterpreter: CommandInterpreter[_, _, SimulationCommand, SimulationCommand.Result])
-    extends Interaction {
+      extends Interaction {
     implicit val execution: Scheduler = Execution.timeoutBasedScheduler
 
     private var scene: Scene = _
@@ -95,7 +95,8 @@ object Interaction {
     override def selectionSource: Observable[Seq[String]] = selectionSubject.publish
 
     def initRectangle(): Unit = {
-      rectangleSelection = scene.add.rectangle(0, 0, 0, 0, fillColor = Color.Yellow, fillAlpha = rectangleAlpha).setOrigin(0)
+      rectangleSelection =
+        scene.add.rectangle(0, 0, 0, 0, fillColor = Color.Yellow, fillAlpha = rectangleAlpha).setOrigin(0)
       selectionContainer = scene.add.container(0, 0)
       mainContainer.add(selectionContainer)
       mainContainer.setInteractive()
@@ -104,44 +105,58 @@ object Interaction {
 
     /** Attach to the main [[Container]] an event handler for the [[DRAG_START]] operation. */
     def onDragStart(): Unit = {
-      mainContainer.on(DRAG_START, (_: Any, p: Pointer) => (state, selection) match {
-        case (Selection, None) =>
-          rectangleSelection.setPosition(p.worldX, p.worldY)
-        case (Selection, Some(_)) if rectangleSelection.getBounds().contains(p.worldX, p.worldY) =>
-          positionBeforeDrag = selectionWorldCoordinate
-        case (Selection, Some(_)) => resetSelection()
-          rectangleSelection.setPosition(p.worldX, p.worldY)
-        case (Pan, _) =>
-      })
+      mainContainer.on(
+        DRAG_START,
+        (_: Any, p: Pointer) =>
+          (state, selection) match {
+            case (Selection, None) =>
+              rectangleSelection.setPosition(p.worldX, p.worldY)
+            case (Selection, Some(_)) if rectangleSelection.getBounds().contains(p.worldX, p.worldY) =>
+              positionBeforeDrag = selectionWorldCoordinate
+            case (Selection, Some(_)) =>
+              resetSelection()
+              rectangleSelection.setPosition(p.worldX, p.worldY)
+            case (Pan, _) =>
+          }
+      )
     }
 
     /** Attach to the main [[Container]] an event handler for the [[DRAG_END]] operation. */
     def onDragEnd(): Unit = {
-      mainContainer.on(DRAG_END, (_: Any) => (state, selection) match {
-        case (Selection, None) =>
-          evaluateSelection()
-        case (Selection, _) => val positionChangedMap = selectionContainer.list[GameObjects.Arc]
-          .map(node => (node.id, (node.x + selectionContainer.x, node.y + selectionContainer.y)))
-          .toMap
-          commandInterpreter.execute(Move(positionChangedMap))
-        case (Pan, _) =>
-      })
+      mainContainer.on(
+        DRAG_END,
+        (_: Any) =>
+          (state, selection) match {
+            case (Selection, None) =>
+              evaluateSelection()
+            case (Selection, _) =>
+              val positionChangedMap = selectionContainer
+                .list[GameObjects.Arc]
+                .map(node => (node.id, (node.x + selectionContainer.x, node.y + selectionContainer.y)))
+                .toMap
+              commandInterpreter.execute(Move(positionChangedMap))
+            case (Pan, _) =>
+          }
+      )
     }
 
     /** Attach to the main [[Container]] an event handler for the [[DRAG]] operation. */
     def onDrag(): Unit = {
-      mainContainer.on(DRAG, (obj: Transform, p: Pointer, dx: JSNumber, dy: JSNumber, _: Any) =>
-        (state, selection) match {
-          case (Selection, None) =>
-            rectangleSelection.setSize(p.worldX - rectangleSelection.x, p.worldY - rectangleSelection.y)
-          case (Selection, Some(_)) =>
-            selectionContainer.x += (dx + positionBeforeDrag._1) - rectangleSelection.x
-            selectionContainer.y += (dy + positionBeforeDrag._2) - rectangleSelection.y
-            rectangleSelection.setPosition(positionBeforeDrag._1 + dx, positionBeforeDrag._2 + dy)
-          case (Pan, _) =>
-            obj.setPosition(dx, dy)
-          case _ =>
-        })
+      mainContainer.on(
+        DRAG,
+        (obj: Transform, p: Pointer, dx: JSNumber, dy: JSNumber, _: Any) =>
+          (state, selection) match {
+            case (Selection, None) =>
+              rectangleSelection.setSize(p.worldX - rectangleSelection.x, p.worldY - rectangleSelection.y)
+            case (Selection, Some(_)) =>
+              selectionContainer.x += (dx + positionBeforeDrag._1) - rectangleSelection.x
+              selectionContainer.y += (dy + positionBeforeDrag._2) - rectangleSelection.y
+              rectangleSelection.setPosition(positionBeforeDrag._1 + dx, positionBeforeDrag._2 + dy)
+            case (Pan, _) =>
+              obj.setPosition(dx, dy)
+            case _ =>
+          }
+      )
     }
 
     def evaluateSelection(): Unit = {
@@ -150,10 +165,10 @@ object Interaction {
       val elements = scene.physics.overlapRect(overlapX, overlapY, overlapWidth, overlapHeight, includeStatic = true)
       this.selection = Some(elements.map(_.gameObject.id).toSeq)
       this.selectionSubject.onNext(this.selection.get)
-      elements.map(body => {
+      elements.map { body =>
         val selected = scene.add.circle(body.center.x, body.center.y, body.halfWidth, selectionColor)
         selected.id = body.gameObject.id
-      }).foreach(selectionContainer.add(_))
+      }.foreach(selectionContainer.add(_))
 
       if (overlapWidth == 0 && overlapHeight == 0 && elements.nonEmpty) {
         popup.focusOn(selectionContainer.list[Transform with GameObject].head)

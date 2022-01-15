@@ -74,7 +74,7 @@ package object static {
   object UtilBootstrap extends js.Any
 
   UtilBootstrap
-  */
+   */
 
   // FontAwesome JS icons
   @js.native
@@ -86,7 +86,7 @@ package object static {
   // Phaser lib
   @js.native
   @JSImport("phaser", JSImport.Namespace)
-  object PhaserGlobal extends js.Any //global import phaser
+  object PhaserGlobal extends js.Any // global import phaser
 
   PhaserGlobal
 

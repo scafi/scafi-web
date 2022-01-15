@@ -9,7 +9,7 @@ import scala.collection.mutable
 /* from https://github.com/scalafiddle/scalafiddle-core */
 class LRUCache[T](name: String) {
   protected val cacheSize = Config.compilerCacheSize
-  private val cache       = mutable.ListMap.empty[Int, T]
+  private val cache = mutable.ListMap.empty[Int, T]
   val log = LoggerFactory.getLogger(getClass)
   def getOrUpdate(libs: Set[ExtLib], update: => T): T = {
     val hash = hashLibs(libs)
@@ -29,9 +29,8 @@ class LRUCache[T](name: String) {
     }
   }
 
-  def hashLibs(libs: Set[ExtLib]): Int = {
+  def hashLibs(libs: Set[ExtLib]): Int =
     libs.foldLeft(0)(_ ^ _.hashCode())
-  }
 
   def remove(libs: Set[ExtLib]): Unit = {
     log.debug(s"Removing from cache: $name")

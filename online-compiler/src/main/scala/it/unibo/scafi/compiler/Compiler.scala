@@ -10,21 +10,20 @@ import scala.reflect.io
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
 /* from https://github.com/scalafiddle/scalafiddle-core */
-/**
-  * Handles the interaction between scala-js-fiddle and
-  * scalac/scalajs-tools to compile and optimize code submitted by users.
+/** Handles the interaction between scala-js-fiddle and scalac/scalajs-tools to compile and optimize code submitted by
+  * users.
   */
 class Compiler(libManager: LibraryManager, code: String) { self =>
   private val fileName = "ScafiWeb.scala"
   val log = LoggerFactory.getLogger(getClass)
-  private val sjsLogger    = new Log4jLogger()
+  private val sjsLogger = new Log4jLogger()
   private val dependencyRE = """ *// \$FiddleDependency (.+)""".r
-  private val codeLines    = code.replaceAll("\r", "").split('\n')
-  private val extLibDefs = codeLines.collect {
-    case dependencyRE(dep) => dep
+  private val codeLines = code.replaceAll("\r", "").split('\n')
+  private val extLibDefs = codeLines.collect { case dependencyRE(dep) =>
+    dep
   }.toSet
 
-  private lazy val extLibs : Set[ExtLib] = {
+  private lazy val extLibs: Set[ExtLib] = {
     val userLibs = extLibDefs
       .map(lib => ExtLib(lib))
       .map(extLib =>
@@ -38,12 +37,10 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
     userLibs.toSet
   }
 
-  /**
-    * Converts a bunch of bytes into Scalac's weird VirtualFile class
-    */
+  /** Converts a bunch of bytes into Scalac's weird VirtualFile class */
   private def makeFile(src: Array[Byte]) = {
     val singleFile = new io.VirtualFile(fileName)
-    val output     = singleFile.output
+    val output = singleFile.output
     output.write(src)
     output.close()
     singleFile
@@ -53,7 +50,7 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
     val startTime = System.nanoTime()
     val compiler = AutoCompleteCache.getOrUpdate(
       extLibs, {
-        val vd       = new io.VirtualDirectory("(memory)", None)
+        val vd = new io.VirtualDirectory("(memory)", None)
         val settings = new Settings
         settings.outputDirs.setSingleOutput(vd)
         settings.processArgumentString("-Ypresentation-any-thread -Ypartial-unification")
@@ -63,10 +60,10 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
 
     compiler.reporter.reset()
     val startOffset = pos
-    val source      = code.take(startOffset) + "_CURSOR_ " + code.drop(startOffset)
-    val unit        = compiler.newCompilationUnit(source, fileName)
-    val richUnit    = new compiler.RichCompilationUnit(unit.source)
-    //log.debug(s"Source: ${source.take(startOffset)}${scala.Console.RED}|${scala.Console.RESET}${source.drop(startOffset)}")
+    val source = code.take(startOffset) + "_CURSOR_ " + code.drop(startOffset)
+    val unit = compiler.newCompilationUnit(source, fileName)
+    val richUnit = new compiler.RichCompilationUnit(unit.source)
+    // log.debug(s"Source: ${source.take(startOffset)}${scala.Console.RED}|${scala.Console.RESET}${source.drop(startOffset)}")
     compiler.unitOfFile(richUnit.source.file) = richUnit
     val results = compiler.completionsAt(richUnit.position(startOffset)).matchingResults()
 
@@ -120,9 +117,7 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
         val things = for {
           x <- vd.iterator.to[collection.immutable.Traversable]
           if x.name.endsWith(".sjsir")
-        } yield {
-          ScalaJSCompat.memIRFile(x.path, x.toByteArray)
-        }
+        } yield ScalaJSCompat.memIRFile(x.path, x.toByteArray)
         (errors, Some(things.toSeq))
       }
     } catch {
@@ -157,7 +152,7 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
     val libs = extLibs + ExtLib("semantics", "optimized", fullOpt.toString, false)
 
     try {
-      val linker     =  LinkerCache.getOrUpdate(libs, createLinker(linkerConfig))
+      val linker = LinkerCache.getOrUpdate(libs, createLinker(linkerConfig))
       val allIRFiles = libManager.linkerLibraries(extLibs) ++ userFiles
       ScalaJSCompat.link(linker, allIRFiles, sjsLogger)
     } catch {
@@ -175,7 +170,7 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
   def getInternalLog: Vector[String] = sjsLogger.internalLogLines
 
   class Log4jLogger(minLevel: Level = Level.Debug) extends Logger {
-    var logLines         = Vector.empty[String]
+    var logLines = Vector.empty[String]
     var internalLogLines = Vector.empty[String]
 
     def log(level: Level, message: => String): Unit = if (level >= minLevel) {
@@ -186,9 +181,8 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
     }
 
     def success(message: => String): Unit = info(message)
-    def trace(t: => Throwable): Unit = {
+    def trace(t: => Throwable): Unit =
       self.log.error("Compilation error", t)
-    }
   }
 
 }

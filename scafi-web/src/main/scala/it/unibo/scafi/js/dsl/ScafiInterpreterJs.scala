@@ -7,11 +7,13 @@ import it.unibo.scafi.js.dsl.typeclass.BoundedJs
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportAll
 @JSExportAll
-class ScafiInterpreterJs[+I <: Incarnation](val exportedName : String)(implicit val incarnation: I) {
+class ScafiInterpreterJs[+I <: Incarnation](val exportedName: String)(implicit val incarnation: I) {
   import incarnation._
   private val adapter = new BasicInterpreter()
   class BasicInterpreter extends AggregateProgram {
-    override def main(): Any = throw new IllegalStateException("This method should not be called as the aggregate program only works as API provider.")
+    override def main(): Any = throw new IllegalStateException(
+      "This method should not be called as the aggregate program only works as API provider."
+    )
   }
   private class RoundVMWrapper() extends RoundVM {
     import adapter._
@@ -26,7 +28,8 @@ class ScafiInterpreterJs[+I <: Incarnation](val exportedName : String)(implicit 
     override def foldedEval[A](expr: => A)(id: incarnation.ID): Option[A] = vm.foldedEval(expr)(id)
     override def localSense[A](name: incarnation.CNAME): A = vm.localSense(name)
     override def neighbourSense[A](name: incarnation.CNAME): A = vm.neighbourSense(name)
-    override def nest[A](slot: incarnation.Slot)(write: Boolean, inc: Boolean)(expr: => A): A = vm.nest(slot)(write, inc)(expr)
+    override def nest[A](slot: incarnation.Slot)(write: Boolean, inc: Boolean)(expr: => A): A =
+      vm.nest(slot)(write, inc)(expr)
     override def locally[A](a: => A): A = vm.locally(a)
     override def alignedNeighbours(): List[incarnation.ID] = vm.alignedNeighbours()
     override def elicitAggregateFunctionTag(): Any = vm.elicitAggregateFunctionTag()
@@ -40,12 +43,10 @@ class ScafiInterpreterJs[+I <: Incarnation](val exportedName : String)(implicit 
   class SharedInterpreter extends BasicInterpreter {
     this.vm = new RoundVMWrapper()
   }
-  def adaptForScafi(fun : js.Function0[Any]) : js.Function1[CONTEXT,EXPORT] = context => {
-    adapter.round(context, fun())
-  }
-  def adaptForScafi(code : String) : js.Function1[CONTEXT, EXPORT] = adaptForScafi(rawToFunction(code, exportedName))
+  def adaptForScafi(fun: js.Function0[Any]): js.Function1[CONTEXT, EXPORT] = context => adapter.round(context, fun())
+  def adaptForScafi(code: String): js.Function1[CONTEXT, EXPORT] = adaptForScafi(rawToFunction(code, exportedName))
 
-  protected implicit def boundedConversion[A](bound : BoundedJs[A]) : incarnation.Builtins.Bounded[A] = {
+  implicit protected def boundedConversion[A](bound: BoundedJs[A]): incarnation.Builtins.Bounded[A] = {
     new incarnation.Builtins.Bounded[A] {
       override def top: A = bound.top
       override def bottom: A = bound.bottom
@@ -55,12 +56,12 @@ class ScafiInterpreterJs[+I <: Incarnation](val exportedName : String)(implicit 
 }
 
 object ScafiInterpreterJs {
-  def rawToFunction(code : String, dslName : String) : js.Function0[Any] = {
+  def rawToFunction(code: String, dslName: String): js.Function0[Any] = {
     val wrappedCode = s"""() => {
-                         | with($dslName) {
-                         |   ${code};
-                         | }
-                         |}""".stripMargin
+      | with($dslName) {
+      |   $code;
+      | }
+      |}""".stripMargin
     js.eval(wrappedCode).asInstanceOf[js.Function0[Any]]
   }
 }

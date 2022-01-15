@@ -3,7 +3,7 @@ package it.unibo.scafi.js.code
 import it.unibo.scafi.js.controller.local.DeviceConfiguration
 
 object MovementExamples {
-  private val examples : Seq[Example] = Seq(
+  private val examples: Seq[Example] = Seq(
     Example.create("Change velocity") {
       """//using Actuation
         |mux(mid().toInt < 50) { velocity set Cartesian(1, 0) } { velocity set Polar(2, Math.PI) }""".stripMargin
@@ -72,5 +72,5 @@ object MovementExamples {
         |velocity set flockVelocity""".stripMargin
     }
   )
-  def apply() : ExampleGroup = ExampleGroup("Movement", examples)
+  def apply(): ExampleGroup = ExampleGroup("Movement", examples)
 }

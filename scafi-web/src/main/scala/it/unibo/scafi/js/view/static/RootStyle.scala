@@ -45,19 +45,19 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   "#control-mode-container" - (
     position.relative,
-    top(- 55 px),
+    top(-55 px),
     width(0 px),
-    left( 50 %%)
+    left(50 %%)
   )
   ".simplebar-scrollbar::before" - (backgroundColor(gray))
 
   ".carousel-control" - (filter := "invert(1);")
 
-  ".gutter" -(
+  ".gutter" - (
     backgroundRepeat.noRepeat,
     backgroundPosition := "50%"
   )
-  ".gutter.gutter-horizontal" -(
+  ".gutter.gutter-horizontal" - (
     height(contentHeight),
     backgroundImage := s"${StringIcon.horizontalDivider}"
   )
@@ -76,11 +76,15 @@ object RootStyle extends StyleSheet.Standalone {
   val smallPrimaryBtnClass: String = primaryBtnClass("btn-sm")
   def smallPrimaryBtnClass(and: String): String = smallPrimaryBtnClass + " " + and
 
-  case class Measure(navHeight: Length[Int],
-                     pageContentHeight: Length[Int],
-                     contentHeight: Length[Int],
-                     visualizationHeight: Length[Int], editorHeight: Length[Int],
-                     demoSelectionHeight: Length[Int], utilsVisualizationHeight: Length[Int])
+  case class Measure(
+      navHeight: Length[Int],
+      pageContentHeight: Length[Int],
+      contentHeight: Length[Int],
+      visualizationHeight: Length[Int],
+      editorHeight: Length[Int],
+      demoSelectionHeight: Length[Int],
+      utilsVisualizationHeight: Length[Int]
+  )
 
   def withNav(nav: Int = standardNavHeight): RootStyle = {
     val measure = Measure(

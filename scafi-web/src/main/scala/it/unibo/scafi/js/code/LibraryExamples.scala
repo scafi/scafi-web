@@ -6,15 +6,19 @@ import it.unibo.scafi.js.utils.GlobalStore
 import scala.scalajs.js
 
 object LibraryExamples {
-  private val sourceSensor = DeviceConfiguration(js.Dictionary("source" -> false, "matrix" -> DeviceConfiguration.standardMatrix))
-  private val sourceTarget = Seq("1" -> js.Dictionary("source" -> (true : Any)), "100" -> js.Dictionary("target"-> (true : Any)))
-  private val channel = DeviceConfiguration(DeviceConfiguration.standard.sensors,
-    js.Dictionary(sourceTarget:_*)
+  private val sourceSensor = DeviceConfiguration(
+    js.Dictionary("source" -> false, "matrix" -> DeviceConfiguration.standardMatrix)
   )
-  private val initialValues : Seq[(String, js.Dictionary[Any])] = (40 until 45) map { id => id.toString -> js.Dictionary("obstacle" -> (true : Any)) }
-  private val channelWithObstacle = DeviceConfiguration(DeviceConfiguration.standard.sensors, js.Dictionary((initialValues ++ sourceTarget):_*))
+  private val sourceTarget =
+    Seq("1" -> js.Dictionary("source" -> (true: Any)), "100" -> js.Dictionary("target" -> (true: Any)))
+  private val channel = DeviceConfiguration(DeviceConfiguration.standard.sensors, js.Dictionary(sourceTarget: _*))
+  private val initialValues: Seq[(String, js.Dictionary[Any])] = (40 until 45) map { id =>
+    id.toString -> js.Dictionary("obstacle" -> (true: Any))
+  }
+  private val channelWithObstacle =
+    DeviceConfiguration(DeviceConfiguration.standard.sensors, js.Dictionary((initialValues ++ sourceTarget): _*))
 
-  private val examples : Seq[Example] = Seq(
+  private val examples: Seq[Example] = Seq(
     Example.create("Spread across the gradient", sourceSensor) {
       """//using StandardSensors, BlockG
         |G2(sense[Boolean]("source"))(0.0)(_ + nbrRange())(nbrRange)""".stripMargin
@@ -86,11 +90,11 @@ object LibraryExamples {
         |broadcast(source, state)""".stripMargin
     },
     Example.create("Block S") {
-        """// using BlockS, StandardSensors, Actuation
-          |val area = 200
-          |val leader = S(area, nbrRange)
-          |(leader, mux(leader) { ledAll to "red" } { ledAll to "white" })""".stripMargin
+      """// using BlockS, StandardSensors, Actuation
+        |val area = 200
+        |val leader = S(area, nbrRange)
+        |(leader, mux(leader) { ledAll to "red" } { ledAll to "white" })""".stripMargin
     }
   )
-  def apply() : ExampleGroup = ExampleGroup("Libraries", examples)
+  def apply(): ExampleGroup = ExampleGroup("Libraries", examples)
 }
