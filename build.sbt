@@ -1,11 +1,7 @@
 import sbt.Keys.target
-import scalajsbundler.{JSDOMNodeJSEnv, Webpack}
-// Resolvers
-resolvers += Resolver.typesafeRepo("releases")
-resolvers += "Local Maven" at baseDirectory.value.toURI.toURL + "/libs/repository"
 // Constants
-val scalaVersionsForCrossCompilation = Seq(/*"2.11.12",*/ "2.12.2", "2.13.1") //drop support for 2.11?
-val akkaVersion = "2.5.32" // NOTE: Akka 2.4.0 REQUIRES Java 8! TODO check if it create conflicts
+val scalaVersionsForCrossCompilation = Seq("2.12.2", "2.13.1")
+val akkaVersion = "2.5.32"
 val scalaTestVersion = "3.1.1"
 val scafiVersion = "0.3.3+339-43a886c1-SNAPSHOT"
 // Managed dependencies
@@ -14,19 +10,13 @@ val akkaHttp = "com.typesafe.akka" %% "akka-http" % "10.2.2"
 val akkaRemote = "com.typesafe.akka" %% "akka-remote" % akkaVersion
 val akkaStream = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 val akkaLogging = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
-val bcel = "org.apache.bcel" % "bcel" % "6.4.1"
 val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
-val slf4jlog4 = "org.slf4j" % "slf4j-log4j12" % "1.7.26"
-val log4 = "log4j" % "log4j" % "1.2.17"
-/*
- * - Leverage SONATYPE_USERNAME and SONATYPE_PASSWORD for authentication in Sonatype
- * - Through sbt-dynver (via sbt-release-early), project version is dynamically set based on commit
- */
+
 inThisBuild(List(
   sonatypeProfileName := "it.unibo.scafi", // Your profile name of the sonatype account
   publishMavenStyle := true, // ensure POMs are generated and pushed
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := { _ => false }, // no repositories show up in the POM file
   licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   homepage := Some(url("https://scafi.github.io/web")),
@@ -43,14 +33,13 @@ inThisBuild(List(
     Developer(id = "mviroli", name = "Mirko Viroli", email = "mirko.viroli@unibo.it", url = url("http://mirkoviroli.apice.unibo.it"))
   ),
   releaseEarlyWith := SonatypePublisher,
-  //releaseEarlyEnableLocalReleases := true,
   publishTo := Some(
     if (isSnapshot.value)
       Opts.resolver.sonatypeSnapshots
     else
       Opts.resolver.sonatypeStaging
   ),
-  crossScalaVersions := scalaVersionsForCrossCompilation, // "2.13.0-M1"
+  crossScalaVersions := scalaVersionsForCrossCompilation,
   scalaVersion := crossScalaVersions.value.head, // default version
 ))
 
@@ -58,12 +47,12 @@ lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 
 lazy val commonSettings = Seq(
   organization := "it.unibo.scafi",
-  compileScalastyle := scalastyle.in(Compile).toTask("").value,
-  (compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value,
-  (assemblyJarName in assembly) := s"${name.value}_${CrossVersion.binaryScalaVersion(scalaVersion.value)}-${version.value}-assembly.jar",
-  assemblyMergeStrategy in assembly := {
+  compileScalastyle := (Compile / scalastyle).toTask("").value,
+  Compile / compile := ((Compile / compile) dependsOn compileScalastyle).value,
+  assembly / assemblyJarName := s"${name.value}_${CrossVersion.binaryScalaVersion(scalaVersion.value)}-assembly.jar",
+  assembly / assemblyMergeStrategy := {
     case x =>
-      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      val oldStrategy = (assembly / assemblyMergeStrategy).value
       oldStrategy(x)
   }
 )
@@ -103,10 +92,10 @@ lazy val `scafi-web` = project
       "it.unibo.scafi" %%% "scafi-commons" % scafiVersion,
       "it.unibo.scafi" %%% "scafi-simulator" % scafiVersion,
     ),
-    version in installJsdom := "12.0.0",
-    requireJsDomEnv in Test := true,
+    installJsdom / version := "12.0.0",
+    Test / requireJsDomEnv := true,
     webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
-    npmDependencies in Compile ++= Seq(
+    Compile / npmDependencies ++= Seq(
       "bootstrap" -> "4.6.0",
       "codemirror" -> "5.59.2",
       "@fortawesome/fontawesome-free" -> "5.15.2",
@@ -123,7 +112,7 @@ lazy val `scafi-web` = project
       "style-loader" -> "1.2.1"
     ),
     webpackConfigFile := Some(baseDirectory.value / "src" / "main" / "resources" / "dev.webpack.config.js"),
-    webpackConfigFile in Test := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),
+    Test / webpackConfigFile := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),
   )
 //allow to load the dependecies
 def runtimeProject(p: Project, scalaJSVersion: String): Project = {
@@ -181,12 +170,12 @@ lazy val `online-compiler` = project.
         (LocalProject("scafi-web") / Compile / target).value / s"scala-${major}" / "scalajs-bundler" / "main"
       ).toSeq.filter(file => file.getName.contains("scafi-web-opt-bundle"))
     } dependsOn (Compile / compile)).taskValue,
-    (Compile / compile) := ((compile in Compile) dependsOn (`scafi-web` / Compile / fullOptJS / webpack)).value,
-    (Compile / resources) ++= Seq(
+    Compile / compile := ((Compile / compile) dependsOn (`scafi-web` / Compile / fullOptJS / webpack)).value,
+    Compile / resources ++= Seq(
       (LocalProject("scafi-web") / Compile / packageBin).value,
     ),
-    (Compile / resources) ++= (LocalProject("runtime1x") / Compile / managedClasspath).value.map(_.data),
-    (Compile / resources) ++= (LocalProject("scafi-web") / Compile / resources).value,
+    Compile / resources ++= (LocalProject("runtime1x") / Compile / managedClasspath).value.map(_.data),
+    Compile / resources ++= (LocalProject("scafi-web") / Compile / resources).value,
   )
 
 addCommandAlias("runService", ";project scafi-web; fullOptJS::webpack; project online-compiler; run")
