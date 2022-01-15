@@ -3,9 +3,7 @@ package it.unibo.scafi.js.facade.phaser.namespaces.core
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 
-/**
- * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Core.Events.html]]
- */
+/** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Core.Events.html]] */
 @js.native
 @JSGlobal("Phaser.Core.Events")
 object CoreEventsNamespace extends js.Object {

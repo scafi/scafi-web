@@ -14,22 +14,17 @@ class KeyboardBindings(interaction: Interaction) {
 //  private val keys = List(ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE)
   var scene: Nullable[Scene] = _
 
-  PageBus.listen {
-    case SupportConfiguration(_, _, deviceShape, _, _) =>
-      sensors = deviceShape
-        .sensors
-        .filter {
-          case (_, _: Boolean) => true
-          case _ => false
-        }
-        .map { case (name, _) => name }.toSeq
+  PageBus.listen { case SupportConfiguration(_, _, deviceShape, _, _) =>
+    sensors = deviceShape.sensors.filter {
+      case (_, _: Boolean) => true
+      case _               => false
+    }.map { case (name, _) => name }.toSeq
 //      initSensorKeys()
   }
 
-  def init(scene: Scene): Unit = {
+  def init(scene: Scene): Unit =
     this.scene = scene
 //    initSensorKeys()
-  }
 
 //  private def initSensorKeys(): Unit = {
 //    this.scene.foreach(scene => {

@@ -19,20 +19,24 @@ object ThemeSwitcher {
 
   def onLight(action: => Unit): CancelableFuture[Unit] = GlobalStore.listen[Theme]("theme") {
     case theme if theme.value == Light.value => action
-    case _ =>
+    case _                                   =>
   }
 
   def onDark(action: => Unit): CancelableFuture[Unit] = GlobalStore.listen[Theme]("theme") {
     case theme if theme.value == Dark.value => action
-    case _ =>
+    case _                                  =>
   }
 
   def render(rightSideBar: Form): Unit = {
     val isLight = theme.value == Light.value
-    val toggle = Toggle("Dark / Light", isLight, _ => {
-      theme = theme.switch
-      install(theme)
-    })
+    val toggle = Toggle(
+      "Dark / Light",
+      isLight,
+      _ => {
+        theme = theme.switch
+        install(theme)
+      }
+    )
     toggle.html.classList.add("pr-2")
     rightSideBar.insertBefore(toggle.html, rightSideBar.childNodes(0))
     install(theme)
@@ -42,8 +46,8 @@ object ThemeSwitcher {
     GlobalStore.put("theme", theme)
     theme.value match {
       case Light.value if !exist(lightStyle.id) => document.head.appendChild(lightStyle)
-      case Dark.value if exist(lightStyle.id) => $(s"#${lightStyle.id}").remove()
-      case _ =>
+      case Dark.value if exist(lightStyle.id)   => $(s"#${lightStyle.id}").remove()
+      case _                                    =>
     }
   }
 

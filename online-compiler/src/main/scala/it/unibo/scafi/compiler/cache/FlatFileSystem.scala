@@ -1,6 +1,7 @@
 package it.unibo.scafi.compiler.cache
 
 import akka.actor.ActorSystem
+import com.google.javascript.jscomp.jarjar.com.google.common.io.Files.getFileExtension
 import org.xerial.snappy.Snappy
 import upickle.default._
 import xerial.larray.mmap.MMapMode
@@ -21,13 +22,11 @@ class FlatFileSystem(data: MappedLByteArray, val jars: Seq[FlatJar], val index: 
 
   def exists(path: String) = index.contains(path)
 
-  def load(flatJar: FlatJar, path: String): Array[Byte] = {
+  def load(flatJar: FlatJar, path: String): Array[Byte] =
     load(jars.find(_.name == flatJar.name).get.files.find(_.path == path).get)
-  }
 
-  def load(path: String): Array[Byte] = {
+  def load(path: String): Array[Byte] =
     load(index(path))
-  }
 
   def load(file: FlatFile): Array[Byte] = {
     val address = data.address + file.offset
@@ -52,29 +51,27 @@ object FlatFileSystem {
 
   def apply(location: Path): FlatFileSystem = {
     location.toFile.mkdirs()
-    val jars                         = readMetadata(location)
+    val jars = readMetadata(location)
     val index: Map[String, FlatFile] = createIndex(jars)
-    val data                         = LArray.mmap(location.resolve("data").toFile, MMapMode.READ_ONLY)
+    val data = LArray.mmap(location.resolve("data").toFile, MMapMode.READ_ONLY)
     new FlatFileSystem(data, jars, index)
   }
 
-  private def createIndex(jars: Seq[FlatJar]): Map[String, FlatFile] = {
+  private def createIndex(jars: Seq[FlatJar]): Map[String, FlatFile] =
     jars.flatMap(_.files.map(file => (file.path, file)))(collection.breakOut)
-  }
 
-  private def readMetadata(location: Path): Seq[FlatJar] = {
+  private def readMetadata(location: Path): Seq[FlatJar] =
     read[Seq[FlatJar]](Source.fromFile(location.resolve("index.json").toFile, "UTF-8").getLines.mkString)
-  }
 
   private val validExtensions = Set("class", "sjsir")
-  private def validFile(entry: ZipEntry) = {
+  private def validFile(entry: ZipEntry) =
     !entry.isDirectory &&
-    validExtensions.contains(com.google.common.io.Files.getFileExtension(entry.getName))
-  }
+      validExtensions.contains(getFileExtension(entry.getName))
 
   def build(location: Path, jars: Seq[(String, InputStream)]): FlatFileSystem = {
     // if metadata already exists, read it in
-    val existingJars = if (location.resolve("index.json").toFile.exists()) readMetadata(location) else Seq.empty[FlatJar]
+    val existingJars =
+      if (location.resolve("index.json").toFile.exists()) readMetadata(location) else Seq.empty[FlatJar]
 
     val newJars = jars.filterNot(p => existingJars.exists(_.name == p._1))
 
@@ -82,14 +79,14 @@ object FlatFileSystem {
     location.toFile.mkdirs()
 
     val dataFile = location.resolve("data").toFile
-    val fos      = new FileOutputStream(dataFile, true)
-    var offset   = dataFile.length()
+    val fos = new FileOutputStream(dataFile, true)
+    var offset = dataFile.length()
 
     // read through all new JARs, append contents to data and create metadata
     val addedJars = newJars.map { jarPath =>
       val name = jarPath._1
       log.debug(s"Extracting JAR $name")
-      val fis       = jarPath._2
+      val fis = jarPath._2
       val jarStream = new ZipInputStream(fis)
       val entries = Iterator
         .continually(jarStream.getNextEntry)
@@ -98,7 +95,7 @@ object FlatFileSystem {
 
       val files = entries.map { entry =>
         // read and compress the file
-        val content    = Streamable.bytes(jarStream)
+        val content = Streamable.bytes(jarStream)
         val compressed = Snappy.compress(content)
         fos.write(compressed)
         val ff = FlatFile(entry.getName, offset, compressed.length, content.length)
@@ -111,7 +108,7 @@ object FlatFileSystem {
     fos.close()
 
     val finalJars = existingJars ++ addedJars
-    val json      = write(finalJars)
+    val json = write(finalJars)
     Files.write(location.resolve("index.json"), java.util.Arrays.asList(json), StandardCharsets.UTF_8)
 
     val data = LArray.mmap(location.resolve("data").toFile, MMapMode.READ_ONLY)

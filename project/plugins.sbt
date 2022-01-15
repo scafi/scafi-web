@@ -1,4 +1,6 @@
 logLevel := Level.Warn
+// Scala Fmt plugin
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
 
 // Create Eclipse project definitions
 addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "5.2.4")
@@ -22,11 +24,11 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.7")
 
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.2")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.1.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.7.1")
 
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.0.0")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.18.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.20.0")
 
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.0.0"
 

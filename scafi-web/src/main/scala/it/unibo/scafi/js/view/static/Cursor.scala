@@ -1,11 +1,12 @@
 package it.unibo.scafi.js.view.static
 
-/**
- * An enumeration used to defined all type of html cursor
- *
- * @see See [[https://www.w3schools.com/cssref/pr_class_cursor.asp]]
- * @param html the cursor style value
- */
+/** An enumeration used to defined all type of html cursor
+  *
+  * @see
+  *   See [[https://www.w3schools.com/cssref/pr_class_cursor.asp]]
+  * @param html
+  *   the cursor style value
+  */
 sealed abstract class Cursor(val html: String)
 
 object Cursor {

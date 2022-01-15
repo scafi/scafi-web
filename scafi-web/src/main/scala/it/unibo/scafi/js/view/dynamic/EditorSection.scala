@@ -42,24 +42,26 @@ object EditorSection {
 
     def convertToFull(code: String): String = {
       val (libsCode, line) = code match {
-        case pattern(libs) if (libs.nonEmpty) =>
+        case pattern(libs) if libs.nonEmpty =>
           val libsCode = s"with ${libs.replaceAll("""\s*,\s*""", " with ")}"
           val line = pattern.findAllIn(code).group(0)
           (libsCode, line)
         case _ => ("", "")
       }
       val body = code.replaceAll(line, "")
-      val bodyShifted = body.split("\n")
+      val bodyShifted = body
+        .split("\n")
         .filter(_.nonEmpty)
         .map(line => "\t\t" + line)
-        .filter(_.nonEmpty).mkString("\n")
-      s"""class MyProgram extends AggregateProgram ${libsCode} {
-         |  override def main() : Any = {
-         |  ${bodyShifted}
-         |  }
-         |}
-         |val program = new MyProgram
-         |""".stripMargin
+        .filter(_.nonEmpty)
+        .mkString("\n")
+      s"""class MyProgram extends AggregateProgram $libsCode {
+        |  override def main() : Any = {
+        |  $bodyShifted
+        |  }
+        |}
+        |val program = new MyProgram
+        |""".stripMargin
     }
   }
 
@@ -69,22 +71,26 @@ object EditorSection {
   }
 
   def modeFromLang(lang: String): Mode = lang match {
-    case ScalaModeFull.lang => ScalaModeFull
-    case ScalaModeEasy.lang => ScalaModeEasy
+    case ScalaModeFull.lang  => ScalaModeFull
+    case ScalaModeEasy.lang  => ScalaModeEasy
     case JavascriptMode.lang => JavascriptMode
   }
 
-  private class EditorSectionImpl(editorZone: Div, defaultMode: Mode = ScalaModeEasy)
-    extends EditorSection {
+  private class EditorSectionImpl(editorZone: Div, defaultMode: Mode = ScalaModeEasy) extends EditorSection {
     var mode: Mode = GlobalStore.get[Mode]("mode") match {
       case Failure(exception) => defaultMode
-      case Success(mode) => mode
+      case Success(mode)      => mode
     }
-    private val modeSelection = new ModeSelection("editor-header", mode.lang match {
-      case ScalaModeEasy.lang => false
-      case ScalaModeFull.lang => true
-    })
-    private lazy val popup: Modal = Modal.okCancel("Warning!", "The mode change will erase all your code, are you sure?",
+    private val modeSelection = new ModeSelection(
+      "editor-header",
+      mode.lang match {
+        case ScalaModeEasy.lang => false
+        case ScalaModeFull.lang => true
+      }
+    )
+    private lazy val popup: Modal = Modal.okCancel(
+      "Warning!",
+      "The mode change will erase all your code, are you sure?",
       onOk = () => {
         this.setCode("", ScalaModeEasy)
         popup.hide()
@@ -96,15 +102,17 @@ object EditorSection {
       }
     )
     val editor = GlobalStore.get[Doc]("doc") match {
-      case Success(doc) => val config = new EditorConfiguration(doc.getValue(), mode.codeMirrorMode, "native", true, "material")
+      case Success(doc) =>
+        val config = new EditorConfiguration(doc.getValue(), mode.codeMirrorMode, "native", true, "material")
         val editor = CodeMirror(editorZone, config)
         editor.doc.setHistory(doc.getHistory())
         editor
-      case Failure(exception) => val config = new EditorConfiguration("", mode.codeMirrorMode, "native", true, "material")
-         CodeMirror(editorZone, config)
+      case Failure(exception) =>
+        val config = new EditorConfiguration("", mode.codeMirrorMode, "native", true, "material")
+        CodeMirror(editorZone, config)
     }
-    ThemeSwitcher.onDark{ editor.setOption("theme", "material") }
-    ThemeSwitcher.onLight{ editor.setOption("theme", "default") }
+    ThemeSwitcher.onDark(editor.setOption("theme", "material"))
+    ThemeSwitcher.onLight(editor.setOption("theme", "default"))
 
     GlobalStore.put("doc", editor.doc)
     modeSelection.onClick = () => {
@@ -121,7 +129,7 @@ object EditorSection {
       mode.lang match {
         case ScalaModeEasy.lang => modeSelection.off()
         case ScalaModeFull.lang => modeSelection.on()
-        case _ =>
+        case _                  =>
       }
       editor.setValue(code)
       GlobalStore.put("mode", mode)
@@ -131,24 +139,23 @@ object EditorSection {
 
     override def getScript(): Script = mode.lang match {
       case JavascriptMode.lang => Javascript(getRaw())
-      case ScalaModeFull.lang => Scala(getRaw())
-      case ScalaModeEasy.lang => ScalaEasy(getRaw())
+      case ScalaModeFull.lang  => Scala(getRaw())
+      case ScalaModeEasy.lang  => ScalaEasy(getRaw())
     }
 
     override def getRaw(): String = editor.getValue()
   }
 
-  def apply(div: Div): EditorSection = {
+  def apply(div: Div): EditorSection =
     new EditorSectionImpl(div)
-  }
 
-  class ModeSelection(id: String, enabled : Boolean) {
+  class ModeSelection(id: String, enabled: Boolean) {
     private val mode = $(s"#$id")
     private val toggle = Toggle("advanced", enabled, e => onClick())
     toggle.html.classList.add("ml-2")
     mode.append(toggle.html)
     def isChecked(): Boolean = toggle.enabled
-    var onClick : () => Unit = () => {}
+    var onClick: () => Unit = () => {}
     def off(): Unit = toggle.uncheck()
     def on(): Unit = toggle.check()
   }

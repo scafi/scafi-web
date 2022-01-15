@@ -1,8 +1,8 @@
 package it.unibo.scafi.js.model
 //TODO think if it is necessary to throws or not an exception
-case class NaiveGraph(nodes : Set[Node], vertices : Set[Vertex]) extends Graph {
+case class NaiveGraph(nodes: Set[Node], vertices: Set[Vertex]) extends Graph {
   private lazy val internalMap = nodes.map(node => node.id -> node).toMap
-  //require(vertices.forall(vertex => contains(vertex.from) && contains(vertex.to))) //TODO this safety check is very slow, think how to manage this
+  // require(vertices.forall(vertex => contains(vertex.from) && contains(vertex.to))) //TODO this safety check is very slow, think how to manage this
   private lazy val neighbourMap = vertices
     .map(vertex => vertex.from -> internalMap(vertex.to))
     .groupBy(_._1)

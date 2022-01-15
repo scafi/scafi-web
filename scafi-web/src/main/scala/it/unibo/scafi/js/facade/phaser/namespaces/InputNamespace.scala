@@ -8,9 +8,7 @@ import org.scalajs.dom.raw.HTMLCanvasElement
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSGlobal, JSName}
 
-/**
-  * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.html]]
-  */
+/** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.html]] */
 @js.native
 @JSGlobal("Phaser.Input")
 object InputNamespace extends js.Any {
@@ -18,15 +16,11 @@ object InputNamespace extends js.Any {
   val Events: InputEventsNamespace.type = js.native
   val Keyboard: KeyboardNamespace.type = js.native
 
-  /**
-    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Mouse.html]]
-    */
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Mouse.html]] */
   @js.native
   object Mouse extends js.Object {
 
-    /**
-      * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Mouse.MouseManager.html]]
-      */
+    /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Mouse.MouseManager.html]] */
     @js.native
     trait MouseManager extends js.Object {
       /* todo */
@@ -36,15 +30,11 @@ object InputNamespace extends js.Any {
 
   }
 
-  /**
-    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Touch.html]]
-    */
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Touch.html]] */
   @js.native
   object Touch extends js.Object {
 
-    /**
-      * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Touch.TouchManager.html]]
-      */
+    /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Touch.TouchManager.html]] */
     @js.native
     trait TouchManager extends js.Object {
       /* todo */
@@ -55,9 +45,7 @@ object InputNamespace extends js.Any {
   import Phaser._
 
   /* CLASSES */
-  /**
-    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.InputManager.html]]
-    */
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.InputManager.html]] */
   @js.native
   class InputManager(val game: Phaser.Game = js.native, conf: js.Object) extends js.Object {
     /* members */
@@ -94,8 +82,12 @@ object InputNamespace extends js.Any {
 
     def destroy(): Unit = js.native
 
-    def hitTest(pointer: Pointer, gameobjects: js.Array[GameObjects.GameObject],
-                camera: Cameras.Scene2D.Camera, output: js.Array[GameObjects.GameObject] = js.native): Unit = js.native
+    def hitTest(
+        pointer: Pointer,
+        gameobjects: js.Array[GameObjects.GameObject],
+        camera: Cameras.Scene2D.Camera,
+        output: js.Array[GameObjects.GameObject] = js.native
+    ): Unit = js.native
 
     def pointWithinHitArea(gameObject: GameObjects.GameObject, x: JSNumber, y: JSNumber): Boolean = js.native
 
@@ -108,9 +100,7 @@ object InputNamespace extends js.Any {
     def updateInputPlugins(tpe: Int, pointers: js.Array[Pointer]): Unit = js.native
   }
 
-  /**
-    * #see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Pointer.html]]
-    */
+  /** #see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.Pointer.html]] */
   @js.native
   trait Pointer extends js.Object {
     /* members */
@@ -125,9 +115,7 @@ object InputNamespace extends js.Any {
     var isDown: Boolean = js.native
   }
 
-  /**
-    * @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.InputPlugin.html]]
-    */
+  /** @see See [[https://photonstorm.github.io/phaser3-docs/Phaser.Input.InputPlugin.html]] */
   @js.native
   trait InputPlugin extends js.Object with Phaser.Events.EventEmitter {
     /* fields */

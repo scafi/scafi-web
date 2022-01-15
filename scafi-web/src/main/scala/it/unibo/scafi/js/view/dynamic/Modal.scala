@@ -40,28 +40,28 @@ trait Modal extends HtmlRenderable[Element] {
   def headerStyle: String = ""
 
   var onClose: () => Unit = () => hide()
-  lazy val modalDialog : Element = div(
+  lazy val modalDialog: Element = div(
     style := s"min-width: ${minBound}px",
-    cls := "modal-dialog",
-    role := "document",
+    cls   := "modal-dialog",
+    role  := "document",
     div(
       cls := "modal-content bg-secondary text-light",
       div(cls := "modal-header", style := headerStyle, title, closeButton),
-      div(cls := "modal-body", style := bodyStyle, body),
+      div(cls := "modal-body", style   := bodyStyle, body),
       div(cls := "modal-footer", style := footerStyle, footer)
     )
   ).render
   override lazy val html: Element = div(
-    role := "dialog",
-    cls := "modal",
+    role     := "dialog",
+    cls      := "modal",
     tabindex := "-1",
-    id := this.modalId,
+    id       := this.modalId,
     modalDialog
   ).render
 
   def appendOnRoot(): Unit = {
-   document.body.appendChild(html)
-    $(s"#${modalId}").on("hidden.bs.modal", () => onClose())
+    document.body.appendChild(html)
+    $(s"#$modalId").on("hidden.bs.modal", () => onClose())
   }
 }
 
@@ -69,31 +69,39 @@ object Modal {
 
   case class BaseModal(title: Element, body: Seq[Element], footer: Seq[Element], minBound: Double) extends Modal {}
 
-  case class ZeroPaddingModal(title: Element, body: Seq[Element], footer: Seq[Element], minBound: Double) extends Modal {
+  case class ZeroPaddingModal(title: Element, body: Seq[Element], footer: Seq[Element], minBound: Double)
+      extends Modal {
     override def bodyStyle: String = "padding : 0 !important"
 
     override def footerStyle: String = "padding : 0 !important"
   }
 
-  /**
-    * Generate a pure textual modal popup window, with a title and a footer.
+  /** Generate a pure textual modal popup window, with a title and a footer.
     *
-    * @param title the text of the title
-    * @param body  the text of the body
-    * @param width the minimum bound of the width of the window
-    * @return the generated modal
+    * @param title
+    *   the text of the title
+    * @param body
+    *   the text of the body
+    * @param width
+    *   the minimum bound of the width of the window
+    * @return
+    *   the generated modal
     */
   def textual(title: String, body: String, width: Double): BaseModal =
     textualWithFooter(title, body, width)(Option.empty)
 
-  /**
-    * Generate a textual modal which lets also set a component to put in the footer.
+  /** Generate a textual modal which lets also set a component to put in the footer.
     *
-    * @param title  the text of the title
-    * @param body   the text of the body
-    * @param width  the minimum bound of the width of the window
-    * @param footer the component to put in the footer
-    * @return the generated modal
+    * @param title
+    *   the text of the title
+    * @param body
+    *   the text of the body
+    * @param width
+    *   the minimum bound of the width of the window
+    * @param footer
+    *   the component to put in the footer
+    * @return
+    *   the generated modal
     */
   def textualWithFooter(title: String, body: String, width: Double)(footer: Option[Element]): BaseModal = BaseModal(
     title = h6(cls := "modal-tile", title).render,
@@ -102,14 +110,18 @@ object Modal {
     minBound = width
   )
 
-  /**
-    * Generate a modal window with to buttons, OK and Cancel.
+  /** Generate a modal window with to buttons, OK and Cancel.
     *
-    * @param title    the text of the title
-    * @param body     the text of the body
-    * @param onOk     what to do when OK button is pressed
-    * @param onCancel what to do when cancel button is pressed
-    * @return the generated modal
+    * @param title
+    *   the text of the title
+    * @param body
+    *   the text of the body
+    * @param onOk
+    *   what to do when OK button is pressed
+    * @param onCancel
+    *   what to do when cancel button is pressed
+    * @return
+    *   the generated modal
     */
   def okCancel(title: String, body: String, onOk: () => Unit, onCancel: () => Unit): Modal = {
     val ok = button(cls := "btn btn-warning", "Ok").render

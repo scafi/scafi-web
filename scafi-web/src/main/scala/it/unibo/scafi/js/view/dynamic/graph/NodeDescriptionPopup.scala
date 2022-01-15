@@ -18,32 +18,31 @@ import scalatags.JsDom.all.s
 
 import scala.scalajs.js
 
-
 trait NodeDescriptionPopup {
   type GameNode = Transform with GameObject
-  def focusOn(node : GameNode) : Unit
-  def refresh(node : Node) : Unit
-  def selectedId : Option[String]
+  def focusOn(node: GameNode): Unit
+  def refresh(node: Node): Unit
+  def selectedId: Option[String]
 }
 
 object NodeDescriptionPopup {
-  def apply(container: Container, scene : Scene) : NodeDescriptionPopup = new NodeDescriptionPopupImpl(container, scene)
+  def apply(container: Container, scene: Scene): NodeDescriptionPopup = new NodeDescriptionPopupImpl(container, scene)
 
-  private class NodeDescriptionPopupImpl(container: Container, scene : Scene) extends NodeDescriptionPopup {
+  private class NodeDescriptionPopupImpl(container: Container, scene: Scene) extends NodeDescriptionPopup {
     type Path = BasicWebIncarnation#Path
     type Export = BasicWebIncarnation#EXPORT
     private val width = 200
     private val heigth = 150
-    var selectedId : Option[String] = None
+    var selectedId: Option[String] = None
     private val sensorList = ContentList()
     private val exportTree = ContentTree()
     private val carouselContent = CarouselContent(CarouselItem(sensorList, true), CarouselItem(exportTree))
     private val modal = CarouselModal(carouselContent, width, heigth)
-    modal.html.removeAttribute("class") //otherwise, it isn't visible in phase
-    modal.html.setAttribute("width", width.toString) //otherwise doesn't work the horizontal scroll
+    modal.html.removeAttribute("class") // otherwise, it isn't visible in phase
+    modal.html.setAttribute("width", width.toString) // otherwise doesn't work the horizontal scroll
     modal.modalDialog.style.maxWidth = "100vw"
-    val gameElement = scene.add.dom(0,0,modal.html)
-    val domContainer = scene.add.container(0,0, js.Array(gameElement))
+    val gameElement = scene.add.dom(0, 0, modal.html)
+    val domContainer = scene.add.container(0, 0, js.Array(gameElement))
 
     container.add(domContainer)
     gameElement.visible = false
@@ -52,22 +51,24 @@ object NodeDescriptionPopup {
       selectedId = None
     }
 
-    $(s"#${modal.carouselInnerId}").resizable(js.Dynamic.literal(
-      "handleSelector" -> s"#${modal.resizeId}",
-      "onDrag" -> this.onDragHandler
-    ))
+    $(s"#${modal.carouselInnerId}").resizable(
+      js.Dynamic.literal(
+        "handleSelector" -> s"#${modal.resizeId}",
+        "onDrag" -> this.onDragHandler
+      )
+    )
 
     def refresh(node: Node): Unit = {
       updateTitle("node : " + node.id)
-      val sensorsContent = node.labels
-        .map { case (name, value) => name -> LabelRender.normalizeValue(value) }
-        .map { case (name, value) => s"$name : $value"}
+      val sensorsContent = node.labels.map { case (name, value) => name -> LabelRender.normalizeValue(value) }.map {
+        case (name, value) => s"$name : $value"
+      }
 
-      val exports =  node.labels.collect { case (name, value : Export) => value }
+      val exports = node.labels.collect { case (name, value: Export) => value }
         .flatMap(value => value.paths.toSeq)
 
       val exportsTreeMap = exports
-        .filter(! _._1.isRoot)
+        .filter(!_._1.isRoot)
         .map { case (path, value) => path.pull() -> (path, value) }
         .groupBy(_._1)
         .mapValues(paths => paths.map(_._2))
@@ -77,7 +78,7 @@ object NodeDescriptionPopup {
       exportTree.refreshContents(buildTreeFrom(root, exportsTreeMap))
       sensorList.refreshContents(sensorsContent)
     }
-    def focusOn(node : Transform with GameObject) : Unit = {
+    def focusOn(node: Transform with GameObject): Unit = {
       gameElement.x = node.x
       gameElement.y = node.y
       gameElement.visible = true
@@ -85,27 +86,27 @@ object NodeDescriptionPopup {
       PageBus.publish(ForceRepaint)
     }
 
-    private def updateTitle(title : String) = modal.title.innerHTML = title
+    private def updateTitle(title: String) = modal.title.innerHTML = title
 
-    lazy val onDragHandler = (e : Any, el : JQuery, newWidth : Double, newHeight : Double, opt : Any) =>  {
+    lazy val onDragHandler = (e: Any, el: JQuery, newWidth: Double, newHeight: Double, opt: Any) => {
       el.width(if (newWidth < width) width else newWidth)
-      el.height(if(newHeight < heigth) heigth else newHeight)
+      el.height(if (newHeight < heigth) heigth else newHeight)
       false
     }
 
-    private def buildTreeFrom(root : Option[(Path, Any)],
-                              map : Map[Path, Iterable[(Path, Any)]]) : Tree[String, String] = root match {
-      case Some(node) =>
-        Tree.fromMap[Path, Any](node, map)
-          .map[String, String] { case (k, v) => pathToString(k) -> v.toString }
-      case None => Tree[String, String]("root", "no data", Seq.empty)
-    }
+    private def buildTreeFrom(root: Option[(Path, Any)], map: Map[Path, Iterable[(Path, Any)]]): Tree[String, String] =
+      root match {
+        case Some(node) =>
+          Tree
+            .fromMap[Path, Any](node, map)
+            .map[String, String] { case (k, v) => pathToString(k) -> v.toString }
+        case None => Tree[String, String]("root", "no data", Seq.empty)
+      }
 
-    private def pathToString(path : Path) : String = if(path.isRoot) {
+    private def pathToString(path: Path): String = if (path.isRoot) {
       "P:/"
     } else {
       path.head.toString + "/"
     }
   }
 }
-

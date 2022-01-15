@@ -11,12 +11,16 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportAll
 import scala.util.{Failure, Success, Try}
 
-/**
-  * an interpreter used to eval and act command sent by a input side (e.g. GUI, console,..:).
-  * It change the local state of the simulator.
+/** an interpreter used to eval and act command sent by a input side (e.g. GUI, console,..:). It change the local state
+  * of the simulator.
   */
 trait SimulationCommandInterpreter
-  extends CommandInterpreter[SpatialSimulation#SpaceAwareSimulator, SimulationSideEffect, SimulationCommand, SimulationCommand.Result] {
+    extends CommandInterpreter[
+      SpatialSimulation#SpaceAwareSimulator,
+      SimulationSideEffect,
+      SimulationCommand,
+      SimulationCommand.Result
+    ] {
   self: SimulationSupport =>
 
   import self.incarnation._
@@ -24,15 +28,14 @@ trait SimulationCommandInterpreter
   def execute(command: SimulationCommand): Future[Result] = Future.successful {
     command match {
       case ChangeSensor(sensor, ids, value) => onChangeSensorValue(sensor, ids, value)
-      case Move(positionMap) => onMove(positionMap)
-      case ToggleSensor(sensor, nodes) => onToggle(sensor, nodes)
-      case _ => Unkown
+      case Move(positionMap)                => onMove(positionMap)
+      case ToggleSensor(sensor, nodes)      => onToggle(sensor, nodes)
+      case _                                => Unkown
     }
   }
 
   private def onMove(positionMap: Map[String, (Double, Double)]): Result = {
-    val toScafiBackend = positionMap
-      .mapValues { case (x, y) => new Point2D(x, y) }
+    val toScafiBackend = positionMap.mapValues { case (x, y) => new Point2D(x, y) }
       .mapValues(self.systemConfig.coordinateMapping.toBackend)
     toScafiBackend.foreach { case (id, position: P) => backend.setPosition(id, position) }
     sideEffectsStream.onNext(PositionChanged(toScafiBackend))
@@ -48,16 +51,18 @@ trait SimulationCommandInterpreter
 
   private def onToggle(sensor: String, ids: Set[String]): Result = {
     val sensors = ids
-      .map(id => id -> Try {
-        backend.localSensor[Any](sensor)(id)
-      })
+      .map(id =>
+        id -> Try {
+          backend.localSensor[Any](sensor)(id)
+        }
+      )
       .map {
         case (id, Success(value: Boolean)) => id -> Success(value)
-        case (id, _) => id -> Failure(new IllegalArgumentException("non boolean value"))
+        case (id, _)                       => id -> Failure(new IllegalArgumentException("non boolean value"))
       }
-    val toggleSensors = sensors
-      .collect { case (id, Success(value)) => id -> value }
-      .groupBy { case (_, value) => value }
+    val toggleSensors = sensors.collect { case (id, Success(value)) => id -> value }.groupBy { case (_, value) =>
+      value
+    }
     val sensorMap = toggleSensors.values
       .flatMap(set => set.map { case (id, value) => id -> Map(sensor -> !value) })
       .toMap
@@ -70,10 +75,10 @@ trait SimulationCommandInterpreter
 
 object SimulationCommandInterpreter {
 
-  /**
-    * a facade used to send command via javascript console.
+  /** a facade used to send command via javascript console.
     *
-    * @param interpreter the wrapped instance of the interpreter
+    * @param interpreter
+    *   the wrapped instance of the interpreter
     */
   @JSExportAll
   class JsConsole(interpreter: SimulationCommandInterpreter) {
