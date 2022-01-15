@@ -1,4 +1,6 @@
 logLevel := Level.Warn
+// Scala Fmt plugin
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
 
 // Create Eclipse project definitions
 addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "5.2.4")

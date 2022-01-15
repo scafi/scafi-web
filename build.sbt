@@ -1,13 +1,13 @@
 import sbt.Keys.target
 import scalajsbundler.{JSDOMNodeJSEnv, Webpack}
 // Resolvers
-resolvers += Resolver.sonatypeRepo("snapshots")
 resolvers += Resolver.typesafeRepo("releases")
 resolvers += "Local Maven" at baseDirectory.value.toURI.toURL + "/libs/repository"
 // Constants
 val scalaVersionsForCrossCompilation = Seq(/*"2.11.12",*/ "2.12.2", "2.13.1") //drop support for 2.11?
 val akkaVersion = "2.5.32" // NOTE: Akka 2.4.0 REQUIRES Java 8! TODO check if it create conflicts
 val scalaTestVersion = "3.1.1"
+val scafiVersion = "0.3.3+339-43a886c1-SNAPSHOT"
 // Managed dependencies
 val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaHttp = "com.typesafe.akka" %% "akka-http" % "10.2.2"
@@ -30,6 +30,7 @@ inThisBuild(List(
   pomIncludeRepository := { _ => false }, // no repositories show up in the POM file
   licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   homepage := Some(url("https://scafi.github.io/web")),
+  resolvers += Resolver.sonatypeRepo("snapshots"),
   scmInfo := Some(
     ScmInfo(
       url("https://github.com/scafi/scafi-web"),
@@ -98,9 +99,9 @@ lazy val `scafi-web` = project
       "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
       "io.monix" %%% "monix-reactive" % "3.2.2",
       "org.querki" %%% "jquery-facade" % "2.0",
-      "it.unibo.scafi" %%% "scafi-core" % "0.3.4-dev",
-      "it.unibo.scafi" %%% "scafi-commons" % "0.3.4-dev",
-      "it.unibo.scafi" %%% "scafi-simulator" % "0.3.4-dev",
+      "it.unibo.scafi" %%% "scafi-core" % scafiVersion,
+      "it.unibo.scafi" %%% "scafi-commons" % scafiVersion,
+      "it.unibo.scafi" %%% "scafi-simulator" % scafiVersion,
     ),
     version in installJsdom := "12.0.0",
     requireJsDomEnv in Test := true,

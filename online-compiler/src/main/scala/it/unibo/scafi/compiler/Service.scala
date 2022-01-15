@@ -13,9 +13,11 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.StreamConverters
 import it.unibo.scafi.compiler.cache.CodeCache
 import org.slf4j.LoggerFactory
+
 import java.util.UUID
-import scala.concurrent.ExecutionContextExecutor
-import scala.io.{Codec, Source}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.duration.{Duration, DurationInt}
+import scala.io.{Codec, Source, StdIn}
 import scala.util.{Failure, Success, Try}
 
 object Service {
@@ -110,7 +112,14 @@ object Service {
     val allRoutes = Seq(index, jsCode, compiledPage, fullCode, easyCode, pureCodeRequest) ++ resourceLike
     val cors = new CORSHandler {}
     val route = cors.corsHandler(concat(allRoutes:_*))
-    val bindingFuture = Http().newServerAt(host, port).bind(route)
-    bindingFuture.isCompleted
+    val server = Http().newServerAt(host, port).bind(route)
+    // Close the server when it receive enter
+    StdIn.readLine()
+    // Unbind from the port and shut down when done
+    val end = server
+      .flatMap(_.unbind())
+      .flatMap(_ => system.terminate())
+    // Waits the end
+    Await.result(end, Duration.Inf)
   }
 }
