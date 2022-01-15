@@ -49,11 +49,11 @@ lazy val commonSettings = Seq(
   organization := "it.unibo.scafi",
   compileScalastyle := (Compile / scalastyle).toTask("").value,
   Compile / compile := ((Compile / compile) dependsOn compileScalastyle).value,
-  assembly / assemblyJarName := s"${name.value}_${CrossVersion.binaryScalaVersion(scalaVersion.value)}-assembly.jar",
+  assembly / assemblyJarName := s"${name.value}.jar",
   assembly / assemblyMergeStrategy := {
-    case x =>
-      val oldStrategy = (assembly / assemblyMergeStrategy).value
-      oldStrategy(x)
+    case PathList("reference.conf") => MergeStrategy.concat
+    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+    case x => MergeStrategy.first
   }
 )
 
