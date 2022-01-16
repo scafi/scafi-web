@@ -30,6 +30,7 @@ class WebIncarnationTest extends AnyFunSpec with Matchers with NetworkSupport {
         .get
       updatedResult.root[Int]() shouldBe (result.root[Int]() + 1)
     }
+
     it("should support nbr and foldhood construct") {
       val middleElement = "5"
       val neighbours = 5 //at the end, the middle node tend to have four neighbours plus itself
@@ -41,6 +42,7 @@ class WebIncarnationTest extends AnyFunSpec with Matchers with NetworkSupport {
         .exists { case (_, value) => value.root[Int]() == neighbours}
       assert(neighboursResult)
     }
+
     it("should support mid construct") {
       val nodes = webEngine.ids
       val program = new WebIncarnation.AggregateProgram {
@@ -52,6 +54,7 @@ class WebIncarnationTest extends AnyFunSpec with Matchers with NetworkSupport {
         .toSet
       nodes shouldBe mids
     }
+
     it("should support sense construct") {
       val sensorName = "source"
       webEngine.addSensor(sensorName, false)
@@ -67,6 +70,7 @@ class WebIncarnationTest extends AnyFunSpec with Matchers with NetworkSupport {
       assert(sensorValues.contains("1" -> false))
       assert(sensorValues.contains("5" -> true))
     }
+
     it("should support mux construct") {
       val sensorName = "source"
       webEngine.addSensor(sensorName, false)

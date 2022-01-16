@@ -72,6 +72,7 @@ class SimulationExecutionTest extends SupportTesterLike {
         }
       }
     }
+
     it("daemon delta change frequency") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
       val delta = 50

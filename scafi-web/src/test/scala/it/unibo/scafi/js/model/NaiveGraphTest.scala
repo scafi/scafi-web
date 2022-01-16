@@ -15,6 +15,7 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
       nodes shouldBe graph.nodes
       vertices shouldBe graph.vertices
     }
+
     it("has correct neighbours") {
       val nodes = Set(node("1"), node("2"), node("3"))
       val vertices = Set(Vertex("1", "2"), Vertex("1", "3"))
@@ -36,12 +37,15 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
     it("apply works as expected ") {
       standardGraph("1") shouldBe node("1")
     }
+
     it("apply throws exception if the id isn't present") {
       assertThrows[NoSuchElementException]{standardGraph("bibo")}
     }
+
     it("get return node if the node is present") {
       standardGraph.get("1") shouldBe Some(node("1"))
     }
+
     it("get return None if the node isn't present") {
       standardGraph.get("bibo") shouldBe None
     }

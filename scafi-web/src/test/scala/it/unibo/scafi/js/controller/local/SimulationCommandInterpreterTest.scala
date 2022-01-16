@@ -13,6 +13,7 @@ class SimulationCommandInterpreterTest extends SupportTesterLike {
       newGraph.map(graph => (graph(node).position.x, graph(node).position.y))
         .map(newPosition => newPosition shouldBe position)
     }
+
     it("able to eval change command adding new sensor") {
       val node = "1"
       val sensor = "new"

@@ -21,24 +21,29 @@ class CookieTest extends AsyncFunSpec with Matchers {
       assert(Cookie.has(entry))
       assert(Cookie.get(entry).contains(data))
     }
+
     it("should be removed from the page") {
       Cookie.store(entry, data)
       Cookie.remove(entry)
       assert(!Cookie.has(entry))
       assert(Cookie.get(entry).isEmpty)
     }
+
     it("should returns only stored cookie") {
       Cookie.has(emptyEntry) shouldBe false
     }
+
     it("should be able to remove all cookies") {
       Cookie.clear()
       Cookie.all() shouldBe Map.empty
     }
+
     it("should returns all cookie in a map representation") {
       val cookies = Map("key1" -> "value1", "key2" -> "value2")
       cookies.foreach { case (k, d) => Cookie.store(k, d)}
       assert(Cookie.all() == cookies)
     }
+
     it("should store cookie with temporal limit") {
       Cookie.storeWithTemporalLimit(entry, data, duration)
       assert(Cookie.has(entry))

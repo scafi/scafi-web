@@ -24,6 +24,7 @@ class JavascriptDslTest extends AnyFunSpec with Matchers with NetworkSupport {
       val (_, jsExport) = webEngine.exec(dsl.adaptForScafi(jsProgram))
       jsExport.root[Int]() shouldBe scalaExport.root[Int]()
     }
+
     it("has rep construct") {
       val program = dsl.adaptForScafi(rawToFunction("rep(() => 0, x => x + 1)"))
       val executions = 100
@@ -34,11 +35,13 @@ class JavascriptDslTest extends AnyFunSpec with Matchers with NetworkSupport {
         .toList
       executionOnOne shouldBe (1 to executionOnOne.size).toList
     }
+
     it("has mid construct") {
       val program = dsl.adaptForScafi(rawToFunction("mid()"))
       val (id, export) = webEngine.exec(program)
       id shouldBe export.root[ID]()
     }
+
     it("has nbr and foldhood construct") {
       val program = rawToFunction("foldhood(() => 0, (x, y) => x + y, () => nbr(() => 1))")
       val iterations = 100
@@ -49,6 +52,7 @@ class JavascriptDslTest extends AnyFunSpec with Matchers with NetworkSupport {
       assert(foldResults.contains("2" -> 4))
       assert(foldResults.contains("5" -> 5))
     }
+
     it("has sense construct") {
       val sensor = "source"
       webEngine.addSensor(sensor, false)
@@ -61,6 +65,7 @@ class JavascriptDslTest extends AnyFunSpec with Matchers with NetworkSupport {
       sensors.contains("1" -> false)
       sensors.contains("5" -> true)
     }
+
     it("has aggregate construct") {
       val program = dsl.adaptForScafi(rawToFunction(s"aggregate(() => 10)"))
       val (_, export) = webEngine.exec(program)
