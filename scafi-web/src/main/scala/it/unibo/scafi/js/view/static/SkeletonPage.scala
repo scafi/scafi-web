@@ -178,14 +178,12 @@ object SkeletonPage {
   )
 
   lazy val selectModeButton: Label = label(
-//    `class` := "btn btn-secondary active",
     `class` := primaryBtnClass,
     input(
       `type` := "radio",
       name   := PanMoveModeFormName,
       id     := MoveModeFormValue,
       value  := MoveModeFormValue
-//      checked := true
     ),
     i(
       id          := "move-toggle",
@@ -196,7 +194,6 @@ object SkeletonPage {
 
   lazy val panModeButton: Label = label(
     `class` := primaryBtnClass("active"),
-//    `class` := "btn btn-secondary",
     input(
       `type`  := "radio",
       name    := PanMoveModeFormName,

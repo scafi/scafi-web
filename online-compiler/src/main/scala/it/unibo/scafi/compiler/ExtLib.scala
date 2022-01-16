@@ -19,7 +19,7 @@ trait URLLib {
       case (av :: atail, bv :: btail) =>
         if (av == bv) {
           compare(atail, btail)
-        } else if(av > bv) {
+        } else if (av > bv) {
 
           1
         } else {
