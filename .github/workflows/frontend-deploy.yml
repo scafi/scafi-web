@@ -13,9 +13,6 @@ jobs:
         jvm_version: [ 11 ]
     runs-on: ${{ matrix.os }}
     env:
-      # if needed, define Java options for both official sbt and sbt-extras
-      # JAVA_OPTS: -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
-      # JVM_OPTS: -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
       JAVA_VERSION: ${{ matrix.jvm_version }}
       OS: ${{ matrix.os }}
       TERM: dumb
