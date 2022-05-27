@@ -44,11 +44,13 @@ class LibraryManager(val depLibs: Seq[ExtLib]) {
     }
   }
 
-  def baseLibs: Seq[(String, InputStream)] = Seq(
-    resourceStream(s"/scala-library-${Config.scalaVersion}.jar", s"/scala-library.jar"),
-    resourceStream(s"/scala-reflect-${Config.scalaVersion}.jar", s"/scala-reflect.jar"),
-    resourceStream(s"/scalajs-library_${Config.scalaMainVersion}-${Config.scalaJSVersion}.jar")
-  )
+  def baseLibs: Seq[(String, InputStream)] = {
+    Seq(
+      resourceStream(s"/scala-library-${Config.scalaVersion}.jar", s"/scala-library.jar"),
+      resourceStream(s"/scala-reflect-${Config.scalaVersion}.jar", s"/scala-reflect.jar"),
+      resourceStream(s"/scalajs-library_${Config.scalaMainVersion}-${Config.scalaJSVersion}.jar")
+    )
+  }
 
   def scafiWebDependencies: Seq[(String, InputStream)] = {
     def loadFromJar: List[String] = {
