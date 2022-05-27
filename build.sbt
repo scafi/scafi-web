@@ -1,9 +1,9 @@
 import sbt.Keys.target
 // Constants
-val scalaVersionsForCrossCompilation = Seq("2.12.2", "2.13.1")
+val scalaProjectVersion = "2.12.10"
 val akkaVersion = "2.5.32"
 val scalaTestVersion = "3.1.1"
-val scafiVersion = "0.3.3+339-43a886c1-SNAPSHOT"
+val scafiVersion = "1.1.0"
 // Managed dependencies
 val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaHttp = "com.typesafe.akka" %% "akka-http" % "10.2.2"
@@ -39,8 +39,7 @@ inThisBuild(List(
     else
       Opts.resolver.sonatypeStaging
   ),
-  crossScalaVersions := scalaVersionsForCrossCompilation,
-  scalaVersion := crossScalaVersions.value.head, // default version
+  scalaVersion := scalaProjectVersion, // default version
 ))
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
@@ -63,7 +62,7 @@ lazy val noPublishSettings = Seq(
   publishLocal := {}
 )
 
-lazy val scafi = project.in(file("."))
+lazy val `scafi-web` = project.in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .aggregate(`online-compiler`)
   .settings(commonSettings: _*)
@@ -75,11 +74,11 @@ lazy val scafi = project.in(file("."))
     unidocProjectFilter in(ScalaUnidoc, unidoc) := inAnyProject
   )
 
-lazy val `scafi-web` = project
+lazy val frontend = project
   .enablePlugins(ScalaJSBundlerPlugin)
   //.dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
   .settings(
-    name := "scafi-web",
+    name := "frontend",
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "1.0.0",
@@ -116,15 +115,14 @@ lazy val `scafi-web` = project
   )
 //allow to load the dependecies
 def runtimeProject(p: Project, scalaJSVersion: String): Project = {
-  p.dependsOn(`scafi-web`).settings(
+  p.dependsOn(frontend).settings(
     libraryDependencies ++= Seq(
       "org.scala-js" %% "scalajs-library" % scalaJSVersion,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scala-js" %% "scalajs-library" % scalaJSVersion,
       "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
       "org.scala-js" %% "scalajs-linker" % scalaJSVersion,
-    ),
-    crossScalaVersions := scalaVersionsForCrossCompilation
+    )
   )
 }
 lazy val runtime1x = runtimeProject(project, scalaJSVersion)
@@ -167,15 +165,15 @@ lazy val `online-compiler` = project.
     Compile / resourceGenerators += (Def.task {
       val major = scalaVersion.value.take(4) //works only for scala version > 10
       IO.listFiles(
-        (LocalProject("scafi-web") / Compile / target).value / s"scala-${major}" / "scalajs-bundler" / "main"
-      ).toSeq.filter(file => file.getName.contains("scafi-web-opt-bundle"))
+        (LocalProject("frontend") / Compile / target).value / s"scala-${major}" / "scalajs-bundler" / "main"
+      ).toSeq.filter(file => file.getName.contains("frontend-opt-bundle"))
     } dependsOn (Compile / compile)).taskValue,
-    Compile / compile := ((Compile / compile) dependsOn (`scafi-web` / Compile / fullOptJS / webpack)).value,
+    Compile / compile := ((Compile / compile) dependsOn (`frontend` / Compile / fullOptJS / webpack)).value,
     Compile / resources ++= Seq(
-      (LocalProject("scafi-web") / Compile / packageBin).value,
+      (LocalProject("frontend") / Compile / packageBin).value,
     ),
     Compile / resources ++= (LocalProject("runtime1x") / Compile / managedClasspath).value.map(_.data),
-    Compile / resources ++= (LocalProject("scafi-web") / Compile / resources).value,
+    Compile / resources ++= (LocalProject("frontend") / Compile / resources).value,
   )
 
-addCommandAlias("runService", ";project scafi-web; fullOptJS::webpack; project online-compiler; run")
+addCommandAlias("runService", ";project frontend; fullOptJS::webpack; project online-compiler; run")

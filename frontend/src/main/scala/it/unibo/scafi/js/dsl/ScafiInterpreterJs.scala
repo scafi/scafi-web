@@ -39,6 +39,8 @@ class ScafiInterpreterJs[+I <: Incarnation](val exportedName: String)(implicit v
     override def mergeExport: Any = vm.mergeExport
     override def saveFunction[T](f: => T): Unit = vm.saveFunction(f)
     override def loadFunction[T](): () => T = vm.loadFunction()
+    override def context: CONTEXT = vm.context
+    override def status: VMStatus = vm.status
   }
   class SharedInterpreter extends BasicInterpreter {
     this.vm = new RoundVMWrapper()

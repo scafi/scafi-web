@@ -30,7 +30,7 @@ trait BasicWebIncarnation
     override def toString(data: String): String = data
     override def fromString(s: String): String = s
   }
-  override def CNAMEfromString(s: String): String = s
+  override def cnameFromString(s: String): String = s
 
   @transient implicit override val linearID: Linearizable[ID] = new Linearizable[ID] {
     override def toNum(v: ID): Int = Integer.parseInt(v)

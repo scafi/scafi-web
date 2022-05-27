@@ -28,7 +28,7 @@ object Service {
   val defaultPort = 8080
   val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(defaultPort) // todo put in configuration
   val host = "0.0.0.0" // todo put in configuration
-  val indexJs = "scafi-web-opt-bundle.js"
+  val indexJs = "frontend-opt-bundle.js"
   val commonsCode = "common.js"
   val pageDef: String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
   val page: String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index-server.html")).mkString
