@@ -41,7 +41,7 @@ jobs:
         uses: coursier/cache-action@v5
       - name: Build project scafi-web project with SBT
         shell: bash
-        run:  sbt -v "project scafi-web; fullOptJS::webpack"
+        run:  sbt -v "project frontend; fullOptJS::webpack"
       - name: Adjust folders for deployment
         shell: bash
         run: .github/scripts/adjust-deployment.sh
