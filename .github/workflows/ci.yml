@@ -1,4 +1,4 @@
-name: ScafiWeb frontend deploy
+name: ScafiWeb Test
 
 on:
     push:
