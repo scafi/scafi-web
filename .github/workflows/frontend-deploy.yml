@@ -44,6 +44,8 @@ jobs:
         run: sbt "project online-compiler; assembly"
       - name: Adjust folders for deployment
         run: .github/scripts/adjust-deployment.sh
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -55,8 +57,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+
       - name: Upload compiler service to Docker Hub
         run: .github/scripts/docker-release.sh
 
