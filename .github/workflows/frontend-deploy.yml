@@ -58,6 +58,11 @@ jobs:
         with:
           limit-access-to-actor: true
           limit-access-to-users: cric96
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASS }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       - name: Upload compiler service to Docker Hub
         shell: bash
         run: .github/scripts/docker-release.sh
