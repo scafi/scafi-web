@@ -12,9 +12,6 @@ jobs:
         os: [ ubuntu-latest ]
         jvm_version: [ 11 ]
     runs-on: ${{ matrix.os }}
-    env:
-      JAVA_VERSION: ${{ matrix.jvm_version }}
-      OS: ${{ matrix.os }}
     steps:
       # Checkout the repository
       - name: Checkout
@@ -23,7 +20,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
       - name: Fetch tags
-        shell: bash
         run: git fetch --tags -f
       - name: Setup Scala with Java ${{ matrix.jvm_version }}
         uses: olafurpg/setup-scala@v10
@@ -39,7 +35,6 @@ jobs:
         run: sbt "project online-compiler; assembly"
 
       - name: Adjust folders for deployment
-        shell: bash
         run: .github/scripts/adjust-deployment.sh
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -63,6 +58,5 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       - name: Upload compiler service to Docker Hub
-        shell: bash
         run: .github/scripts/docker-release.sh
 
