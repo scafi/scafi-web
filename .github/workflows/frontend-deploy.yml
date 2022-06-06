@@ -2,8 +2,6 @@ name: ScafiWeb frontend deploy
 
 on:
     push:
-        tags:        
-          - '*' 
 jobs:
   Build:
     strategy:
