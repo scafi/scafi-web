@@ -36,6 +36,8 @@ jobs:
         run: git fetch --tags -f
       - name: Setup Scala
         uses: olafurpg/setup-scala@v11
+      - name: Coursier cache
+        uses: coursier/cache-action@v5
       - name: Build project scafi-web project with SBT
         run:  sbt -v "project frontend; fullOptJS::webpack"
       - name: Build compiler
