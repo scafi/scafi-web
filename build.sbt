@@ -13,34 +13,42 @@ val akkaLogging = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
 
-inThisBuild(List(
-  sonatypeProfileName := "it.unibo.scafi", // Your profile name of the sonatype account
-  publishMavenStyle := true, // ensure POMs are generated and pushed
-  Test / publishArtifact := false,
-  pomIncludeRepository := { _ => false }, // no repositories show up in the POM file
-  licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
-  homepage := Some(url("https://scafi.github.io/web")),
-  resolvers += Resolver.sonatypeRepo("snapshots"),
-  scmInfo := Some(
-    ScmInfo(
-      url("https://github.com/scafi/scafi-web"),
-      "scm:git:git@github.org:scafi/scafi-web.git"
-    )
-  ),
-  developers := List(
-    Developer(id = "metaphori", name = "Roberto Casadei", email = "roby.casadei@unibo.it", url = url("http://robertocasadei.apice.unibo.it")),
-    Developer(id = "cric96", name = "Gianluca Aguzzi", email = "gianluca.aguzzi@unibo.it", url = url("https://cric96.github.io/")),
-    Developer(id = "mviroli", name = "Mirko Viroli", email = "mirko.viroli@unibo.it", url = url("http://mirkoviroli.apice.unibo.it"))
-  ),
-  releaseEarlyWith := SonatypePublisher,
-  publishTo := Some(
-    if (isSnapshot.value)
-      Opts.resolver.sonatypeSnapshots
-    else
-      Opts.resolver.sonatypeStaging
-  ),
-  scalaVersion := scalaProjectVersion, // default version
-))
+inThisBuild(
+  List(
+    sonatypeProfileName := "it.unibo.scafi", // Your profile name of the sonatype account
+    publishMavenStyle := true, // ensure POMs are generated and pushed
+    Test / publishArtifact := false,
+    pomIncludeRepository := { _ => false }, // no repositories show up in the POM file
+    licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
+    homepage := Some(url("https://scafi.github.io/web")),
+    resolvers += Resolver.sonatypeRepo("snapshots"),
+    scmInfo := Some(
+      ScmInfo(
+        url("https://github.com/scafi/scafi-web"),
+        "scm:git:git@github.org:scafi/scafi-web.git"
+      )
+    ),
+    developers := List(
+      Developer(
+        id = "metaphori",
+        name = "Roberto Casadei",
+        email = "roby.casadei@unibo.it",
+        url = url("http://robertocasadei.apice.unibo.it")
+      ),
+      Developer(
+        id = "cric96",
+        name = "Gianluca Aguzzi",
+        email = "gianluca.aguzzi@unibo.it",
+        url = url("https://cric96.github.io/")
+      )
+    ),
+    releaseEarlyWith := SonatypePublisher,
+    publishTo := Some(
+      if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging
+    ),
+    scalaVersion := scalaProjectVersion // default version
+  )
+)
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 
@@ -62,7 +70,8 @@ lazy val noPublishSettings = Seq(
   publishLocal := {}
 )
 
-lazy val `scafi-web` = project.in(file("."))
+lazy val `scafi-web` = project
+  .in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .aggregate(`online-compiler`)
   .settings(commonSettings: _*)
@@ -71,12 +80,12 @@ lazy val `scafi-web` = project.in(file("."))
     // Prevents aggregated project (root) to be published
     packagedArtifacts := Map.empty,
     crossScalaVersions := Nil, // NB: Nil to prevent double publishing!
-    unidocProjectFilter in(ScalaUnidoc, unidoc) := inAnyProject
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
   )
 
 lazy val frontend = project
   .enablePlugins(ScalaJSBundlerPlugin)
-  //.dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
+  // .dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
   .settings(
     name := "frontend",
     scalaJSUseMainModuleInitializer := true,
@@ -84,16 +93,18 @@ lazy val frontend = project
       "org.scala-js" %%% "scalajs-dom" % "1.0.0",
       "org.scalatest" %%% "scalatest" % "3.2.0" % "test",
       "com.lihaoyi" %%% "scalatags" % "0.9.1",
+      "com.lihaoyi" %%% "upickle" % "1.6.0",
       "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
       "io.monix" %%% "monix-reactive" % "3.2.2",
       "org.querki" %%% "jquery-facade" % "2.0",
       "it.unibo.scafi" %%% "scafi-core" % scafiVersion,
       "it.unibo.scafi" %%% "scafi-commons" % scafiVersion,
-      "it.unibo.scafi" %%% "scafi-simulator" % scafiVersion,
+      "it.unibo.scafi" %%% "scafi-simulator" % scafiVersion
     ),
     installJsdom / version := "12.0.0",
     Test / requireJsDomEnv := true,
-    webpackBundlingMode := BundlingMode.LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
+    webpackBundlingMode := BundlingMode
+      .LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
     Compile / npmDependencies ++= Seq(
       "bootstrap" -> "4.6.0",
       "codemirror" -> "5.59.2",
@@ -111,26 +122,27 @@ lazy val frontend = project
       "style-loader" -> "1.2.1"
     ),
     webpackConfigFile := Some(baseDirectory.value / "src" / "main" / "resources" / "dev.webpack.config.js"),
-    Test / webpackConfigFile := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js"),
+    Test / webpackConfigFile := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js")
   )
 //allow to load the dependecies
 def runtimeProject(p: Project, scalaJSVersion: String): Project = {
-  p.dependsOn(frontend).settings(
-    libraryDependencies ++= Seq(
-      "org.scala-js" %% "scalajs-library" % scalaJSVersion,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.scala-js" %% "scalajs-library" % scalaJSVersion,
-      "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
-      "org.scala-js" %% "scalajs-linker" % scalaJSVersion,
+  p.dependsOn(frontend)
+    .settings(
+      libraryDependencies ++= Seq(
+        "org.scala-js" %% "scalajs-library" % scalaJSVersion,
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+        "org.scala-js" %% "scalajs-library" % scalaJSVersion,
+        "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
+        "org.scala-js" %% "scalajs-linker" % scalaJSVersion
+      )
     )
-  )
 }
 lazy val runtime1x = runtimeProject(project, scalaJSVersion)
 
-lazy val `online-compiler` = project.
-  enablePlugins(JavaAppPackaging).
-  dependsOn(runtime1x).
-  settings(
+lazy val `online-compiler` = project
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(runtime1x)
+  .settings(
     commonSettings,
     libraryDependencies ++= Seq(
       "io.get-coursier" %% "coursier" % "1.0.3",
@@ -140,40 +152,44 @@ lazy val `online-compiler` = project.
       "org.apache.maven" % "maven-artifact" % "3.3.9",
       "org.xerial.snappy" % "snappy-java" % "1.1.2.6",
       "org.xerial.larray" %% "larray" % "0.4.0",
-      "net.logstash.logback" % "logstash-logback-encoder" % "5.0", //logging
-      "ch.qos.logback" % "logback-classic" % "1.2.3", //logging
-      akkaLogging, akkaHttp, akkaActor, akkaStream
+      "net.logstash.logback" % "logstash-logback-encoder" % "5.0", // logging
+      "ch.qos.logback" % "logback-classic" % "1.2.3", // logging
+      akkaLogging,
+      akkaHttp,
+      akkaActor,
+      akkaStream
     ),
     scalacOptions ++= Seq(
       "-Xlint",
       "-unchecked",
       "-deprecation",
-      "-feature",
+      "-feature"
     ),
     Compile / resourceGenerators += (Def.task {
       // store build a / version property file
       val file = (Compile / resourceManaged).value / "version.properties"
       val contents =
         s"""
-           |version=${version.value}
-           |scalaVersion=${scalaVersion.value}
-           |scalaJSVersion=$scalaJSVersion
-           |""".stripMargin
+          |version=${version.value}
+          |scalaVersion=${scalaVersion.value}
+          |scalaJSVersion=$scalaJSVersion
+          |""".stripMargin
       IO.write(file, contents)
       Seq(file)
     } dependsOn (Compile / compile)).taskValue,
     Compile / resourceGenerators += (Def.task {
-      val major = scalaVersion.value.take(4) //works only for scala version > 10
+      val major = scalaVersion.value.take(4) // works only for scala version > 10
       IO.listFiles(
-        (LocalProject("frontend") / Compile / target).value / s"scala-${major}" / "scalajs-bundler" / "main"
-      ).toSeq.filter(file => file.getName.contains("frontend-opt-bundle"))
+        (LocalProject("frontend") / Compile / target).value / s"scala-$major" / "scalajs-bundler" / "main"
+      ).toSeq
+        .filter(file => file.getName.contains("frontend-opt-bundle"))
     } dependsOn (Compile / compile)).taskValue,
     Compile / compile := ((Compile / compile) dependsOn (`frontend` / Compile / fullOptJS / webpack)).value,
     Compile / resources ++= Seq(
-      (LocalProject("frontend") / Compile / packageBin).value,
+      (LocalProject("frontend") / Compile / packageBin).value
     ),
     Compile / resources ++= (LocalProject("runtime1x") / Compile / managedClasspath).value.map(_.data),
-    Compile / resources ++= (LocalProject("frontend") / Compile / resources).value,
+    Compile / resources ++= (LocalProject("frontend") / Compile / resources).value
   )
 
 addCommandAlias("runService", ";project frontend; fullOptJS::webpack; project online-compiler; run")
