@@ -154,8 +154,7 @@ class LibraryManager(val depLibs: Seq[ExtLib]) {
     var lock: FileLock = null
     try {
       while (lock == null) {
-        try
-          lock = lockChannel.tryLock()
+        try lock = lockChannel.tryLock()
         catch {
           case e: OverlappingFileLockException =>
             lock = null

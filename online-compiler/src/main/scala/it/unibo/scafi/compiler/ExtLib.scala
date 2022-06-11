@@ -13,7 +13,7 @@ trait URLLib {
 
     @tailrec
     def compare(a: List[Int], b: List[Int]): Int = (a, b) match {
-      case (Nil, Nil)        => 0
+      case (Nil, Nil) => 0
       case (av :: tail, Nil) => 1
       case (Nil, bv :: tail) => -1
       case (av :: atail, bv :: btail) =>

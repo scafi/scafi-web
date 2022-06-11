@@ -104,9 +104,9 @@ class Compiler(libManager: LibraryManager, code: String) { self =>
         .infos
         .map { info =>
           val label = info.severity.toString match {
-            case "ERROR"   => "error: "
+            case "ERROR" => "error: "
             case "WARNING" => "warning: "
-            case "INFO"    => ""
+            case "INFO" => ""
           }
           Position.formatMessage(info.pos, label + info.msg, false)
         }
