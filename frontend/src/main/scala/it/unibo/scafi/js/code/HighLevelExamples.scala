@@ -3,23 +3,6 @@ package it.unibo.scafi.js.code
 import it.unibo.scafi.js.controller.local.DeviceConfiguration
 
 object HighLevelExamples {
-  trait Heater {
-    def temp: Double
-    def turnOn: Unit
-    def turnOff: Unit
-  }
-  case class FakeHeater(baseline: Double) extends Heater {
-    private var _temp = baseline
-    private var on: Boolean = false
-
-    override def temp: Double = {
-      _temp += (if (on) { 0.1 }
-                else { -0.1 })
-      _temp
-    }
-    def turnOn: Unit = on = true
-    def turnOff: Unit = on = false
-  }
 
   private val examples = Seq(
     Example.create("Pattern SCR") {
