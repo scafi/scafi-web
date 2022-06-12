@@ -28,14 +28,15 @@ trait SimulationCommandInterpreter
   def execute(command: SimulationCommand): Future[Result] = Future.successful {
     command match {
       case ChangeSensor(sensor, ids, value) => onChangeSensorValue(sensor, ids, value)
-      case Move(positionMap)                => onMove(positionMap)
-      case ToggleSensor(sensor, nodes)      => onToggle(sensor, nodes)
-      case _                                => Unkown
+      case Move(positionMap) => onMove(positionMap)
+      case ToggleSensor(sensor, nodes) => onToggle(sensor, nodes)
+      case _ => Unkown
     }
   }
 
   private def onMove(positionMap: Map[String, (Double, Double)]): Result = {
-    val toScafiBackend = positionMap.mapValues { case (x, y) => new Point2D(x, y) }
+    val toScafiBackend = positionMap
+      .mapValues { case (x, y) => new Point2D(x, y) }
       .mapValues(self.systemConfig.coordinateMapping.toBackend)
     toScafiBackend.foreach { case (id, position: P) => backend.setPosition(id, position) }
     sideEffectsStream.onNext(PositionChanged(toScafiBackend))
@@ -58,7 +59,7 @@ trait SimulationCommandInterpreter
       )
       .map {
         case (id, Success(value: Boolean)) => id -> Success(value)
-        case (id, _)                       => id -> Failure(new IllegalArgumentException("non boolean value"))
+        case (id, _) => id -> Failure(new IllegalArgumentException("non boolean value"))
       }
     val toggleSensors = sensors.collect { case (id, Success(value)) => id -> value }.groupBy { case (_, value) =>
       value

@@ -15,8 +15,8 @@ case class CarouselModal(carousel: CarouselContent, minBound: Double, innerHeigh
   val carouselId: String = "controls-modal"
   val carouselInnerId: String = "inner-carousel"
   private val carouselInner = div(
-    cls   := "carousel-inner overflow-auto",
-    id    := carouselInnerId,
+    cls := "carousel-inner overflow-auto",
+    id := carouselInnerId,
     style := s"height : ${innerHeight}px",
     carousel.contents.map(_.html)
   ).render
@@ -27,8 +27,8 @@ case class CarouselModal(carousel: CarouselContent, minBound: Double, innerHeigh
 
   private val carouselSection: Div = div(
     attr("data-interval") := "false",
-    cls                   := "carousel slide",
-    id                    := carouselId,
+    cls := "carousel slide",
+    id := carouselId,
     carouselInner,
     resizableIcon
   ).render
@@ -45,17 +45,17 @@ case class CarouselModal(carousel: CarouselContent, minBound: Double, innerHeigh
     |""".stripMargin
 
   private val nextSlide = a(
-    cls                := "carousel-control",
-    href               := s"#$carouselId",
-    role               := "button",
+    cls := "carousel-control",
+    href := s"#$carouselId",
+    role := "button",
     attr("data-slide") := "next",
     span(cls := "carousel-control-next-icon")
   )
 
   private val prevSlide = a(
-    cls                := "carousel-control",
-    href               := s"#$carouselId",
-    role               := "button",
+    cls := "carousel-control",
+    href := s"#$carouselId",
+    role := "button",
     attr("data-slide") := "prev",
     span(cls := "carousel-control-prev-icon")
   )

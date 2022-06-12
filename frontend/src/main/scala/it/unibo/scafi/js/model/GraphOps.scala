@@ -4,8 +4,7 @@ import it.unibo.scafi.space.Point3D
 
 /** define a set of operations used to alter nodes inside a graph */
 trait NodeOperation {
-  /** Remove the node selected from the graph. If the node isn't in the graph, return the current graph
-    */
+  /** Remove the node selected from the graph. If the node isn't in the graph, return the current graph */
   def removeNode(node: String): Graph
 
   /** Insert the node in the graph. If the node is already in the graph, this method return a new version of graph with
@@ -61,11 +60,11 @@ object GraphOps {
 
       override def unlink(vertex: Vertex): Graph = graph match {
         case g: VertexOperation => g.link(vertex)
-        case _                  => NaiveGraph(graph.nodes, graph.vertices - vertex)
+        case _ => NaiveGraph(graph.nodes, graph.vertices - vertex)
       }
       override def link(vertex: Vertex): Graph = graph match {
         case g: VertexOperation => g.unlink(vertex)
-        case _                  => NaiveGraph(graph.nodes, graph.vertices + vertex)
+        case _ => NaiveGraph(graph.nodes, graph.vertices + vertex)
       }
 
       override def replaceNeighbours(node: String, neighbours: Set[String]): Graph = graph match {
@@ -88,7 +87,7 @@ object GraphOps {
 
       override def insertNodes(node: Seq[Node]): Graph = graph match {
         case g: BulkNodeOperation => g.insertNodes(node)
-        case _                    => NaiveGraph((graph.nodes -- node) ++ node, graph.vertices)
+        case _ => NaiveGraph((graph.nodes -- node) ++ node, graph.vertices)
       }
     }
   }

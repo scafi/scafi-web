@@ -7,14 +7,14 @@ import scala.scalajs.js
 object BasicExamples {
   private def sense(sensor: String) = s"""sense[Boolean]("$sensor")"""
   private val oneSensor = DeviceConfiguration(
-    js.Dictionary("sensor" -> false, "matrix" -> DeviceConfiguration.standardMatrix)
+    Map("sensor" -> false, "matrix" -> DeviceConfiguration.standardMatrix)
   )
   private val gradient = DeviceConfiguration(
-    js.Dictionary("sensor" -> false, "matrix" -> DeviceConfiguration.standardMatrix),
-    js.Dictionary("1" -> js.Dictionary("sensor" -> true))
+    Map("sensor" -> false, "matrix" -> DeviceConfiguration.standardMatrix),
+    Map("1" -> Map("sensor" -> true))
   )
   private val twoSensor = DeviceConfiguration(
-    js.Dictionary("sensor1" -> true, "sensor2" -> true, "matrix" -> DeviceConfiguration.standardMatrix)
+    Map("sensor1" -> true, "sensor2" -> true, "matrix" -> DeviceConfiguration.standardMatrix)
   )
   private val dollar = '$'
   private val examples = Seq(

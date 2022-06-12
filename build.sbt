@@ -93,7 +93,7 @@ lazy val frontend = project
       "org.scala-js" %%% "scalajs-dom" % "1.0.0",
       "org.scalatest" %%% "scalatest" % "3.2.0" % "test",
       "com.lihaoyi" %%% "scalatags" % "0.9.1",
-      "com.lihaoyi" %%% "upickle" % "1.6.0",
+      "com.lihaoyi" %%% "upickle" % "2.0.0",
       "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
       "io.monix" %%% "monix-reactive" % "3.2.2",
       "org.querki" %%% "jquery-facade" % "2.0",

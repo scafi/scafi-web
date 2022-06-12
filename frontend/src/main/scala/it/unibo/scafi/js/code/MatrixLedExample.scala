@@ -8,7 +8,7 @@ import org.scalajs.dom.ext.Color
 import scala.scalajs.js
 
 object MatrixLedExample {
-  val bigMatrix = DeviceConfiguration(js.Dictionary("matrix" -> MatrixLed.fill(5, Color.White.toHex)))
+  val bigMatrix = DeviceConfiguration(Map("matrix" -> MatrixLed.fill(5, Color.White.toHex)))
   private val examples: Seq[Example] = Seq(
     Example.create("Turn on matrix with colors") {
       """//using Actuation

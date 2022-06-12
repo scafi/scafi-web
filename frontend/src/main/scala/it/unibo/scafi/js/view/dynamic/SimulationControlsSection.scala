@@ -35,7 +35,7 @@ class SimulationControlsSection {
       case Some(d: Daemon) =>
         Some(d.stop().toDaemon(0, velocitySelector.batchSize))
       case Some(t: TickBased) => Some(t.withBatchSize(velocitySelector.batchSize))
-      case other              => other
+      case other => other
     }
   }
   stopButton.onclick = _ => stopCurrentSimulation()
@@ -60,7 +60,7 @@ class SimulationControlsSection {
       case Some(ticker: TickBased) =>
         ticker.withBatchSize(velocitySelector.batchSize).tick() onComplete {
           case Failure(exc) => ErrorModal.showError(exc.toString)
-          case _            =>
+          case _ =>
         }
       case _ =>
     }
@@ -74,7 +74,7 @@ class SimulationControlsSection {
     (tick :: stopButton :: startButton :: Nil) foreach { el => el.disabled = true }
     velocitySelector.init()
     PageBus.listen {
-      case code @ ScaFi(_)              => loadScript(code)
+      case code @ ScaFi(_) => loadScript(code)
       case config: SupportConfiguration => stopCurrentSimulation()
     }
     loadButton.onclick = event => loadScript(editor.getScript())
@@ -111,7 +111,7 @@ class SimulationControlsSection {
 
   private def clearSimulationExecution(execution: SimulationExecution): SimulationExecution = execution match {
     case ex: Daemon => ex.stop().withBatchSize(velocitySelector.batchSize)
-    case a          => a
+    case a => a
   }
 
   private case class VelocitySelector(slow: Int, normal: Int, fast: Int) extends HtmlRenderable[Element] {
@@ -119,16 +119,16 @@ class SimulationControlsSection {
     val active: String = GlobalStore.getOrElseUpdate(globalLabel, "slow")
     var onChangeRadio: () => Unit = () => {}
     var batchSize: Int = active match {
-      case "slow"   => slow
+      case "slow" => slow
       case "normal" => normal
-      case "fast"   => fast
+      case "fast" => fast
     }
 
     override val html: Element = label(
       "speed",
       cls := "ml-2 font-weight-bold text-white",
       div(
-        cls                 := "ml-2 btn-group btn-group-toggle",
+        cls := "ml-2 btn-group btn-group-toggle",
         attr("data-toggle") := "buttons",
         label(
           cls := s"btn btn-sm btn-secondary ${activeLabel("slow")}",
@@ -156,7 +156,7 @@ class SimulationControlsSection {
 
     private def activeLabel(s: String): String = s match {
       case `active` => "active"
-      case _        => ""
+      case _ => ""
     }
 
     private def addListener(name: String, value: Int): Unit = {

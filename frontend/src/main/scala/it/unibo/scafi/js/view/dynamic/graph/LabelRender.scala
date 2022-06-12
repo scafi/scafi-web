@@ -35,7 +35,8 @@ object LabelRender {
         world: Graph,
         scene: Scene
     ): Output = {
-      val result = elements.map { case (_, value) => normalizeValue(value) }
+      val result = elements
+        .map { case (_, value) => normalizeValue(value) }
         .mkString("\n")
       val style =
         textCache.headOption.map { case (_, p) => new TextStyle(p.getTextMetrics()) }.getOrElse(new TextStyle())
@@ -71,10 +72,11 @@ object LabelRender {
     ): Output = {
       val (fontSize, width) = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName) match {
         case Success(VisualizationSetting(fontSize, nodeWidth)) => (fontSize, nodeWidth: JSNumber)
-        case Failure(_)                                         => (fallBackSize, node.width)
+        case Failure(_) => (fallBackSize, node.width)
       }
       val textLabel = elements.filterNot { case (name, _) => except.contains(name) }
-      val result = textLabel.map { case (name, value) => normalizeValue(value) }
+      val result = textLabel
+        .map { case (name, value) => normalizeValue(value) }
         .mkString("\n")
       val text = cache.getOrElseUpdate(
         node.id,
@@ -131,9 +133,12 @@ object LabelRender {
         world: Graph,
         scene: Scene
     ): Output = {
-      val exp = elements.collect { case ("export", e: BasicWebIncarnation#EXPORT) => e }.map {
-        _.root[Any]()
-      }.collectFirst { case e: Boolean => e }
+      val exp = elements
+        .collect { case ("export", e: BasicWebIncarnation#EXPORT) => e }
+        .map {
+          _.root[Any]()
+        }
+        .collectFirst { case e: Boolean => e }
       exp match {
         case None => Seq.empty
         case Some(value) =>
@@ -179,9 +184,9 @@ object LabelRender {
     ): Output = {
       val fullMatrix = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName) match {
         case Success(VisualizationSetting(_, nodeSize)) => (nodeSize: Double)
-        case Failure(_)                                 => fallBackSize
+        case Failure(_) => fallBackSize
       }
-      val result = elements.collectFirst { case ("matrix", MatrixLed(m)) => ("matrix", m) }
+      val result = elements.collectFirst { case ("matrix", elem @ MatrixLed.MatrixMap(m, _)) => ("matrix", elem) }
       result match {
         case Some((label, matrix)) =>
           val matrixSize = fullMatrix / 2.0
@@ -208,19 +213,19 @@ object LabelRender {
   def normalizeValue(any: Any): String = {
     val realValue = any match {
       case e: BasicWebIncarnation#EXPORT => removeActuationFrom(e.root[Any]())
-      case other                         => other
+      case other => other
     }
     realValue match {
       case value: Double => "%.2f".format(value)
-      case value: Int    => value.toString
-      case other         => other.toString
+      case value: Int => value.toString
+      case other => other.toString
     }
   }
 
   private def removeActuationFrom(e: Any): String = e match {
     case e: ActuationData => ""
-    case e: Iterable[_]   => e.filterNot(_.isInstanceOf[ActuationData]).toString()
-    case e: Product       => e.productIterator.toList.filterNot(_.isInstanceOf[ActuationData]).mkString("(", ",", ")")
-    case e: Any           => e.toString
+    case e: Iterable[_] => e.filterNot(_.isInstanceOf[ActuationData]).toString()
+    case e: Product => e.productIterator.toList.filterNot(_.isInstanceOf[ActuationData]).mkString("(", ",", ")")
+    case e: Any => e.toString
   }
 }

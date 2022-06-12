@@ -1,22 +1,23 @@
 package it.unibo.scafi.js.code
 
 import it.unibo.scafi.js.controller.local.DeviceConfiguration
+import it.unibo.scafi.js.controller.local.DeviceConfiguration.DeviceKind
 import it.unibo.scafi.js.utils.GlobalStore
 
 import scala.scalajs.js
 
 object LibraryExamples {
   private val sourceSensor = DeviceConfiguration(
-    js.Dictionary("source" -> false, "matrix" -> DeviceConfiguration.standardMatrix)
+    Map("source" -> false, "matrix" -> DeviceConfiguration.standardMatrix)
   )
-  private val sourceTarget =
-    Seq("1" -> js.Dictionary("source" -> (true: Any)), "100" -> js.Dictionary("target" -> (true: Any)))
-  private val channel = DeviceConfiguration(DeviceConfiguration.standard.sensors, js.Dictionary(sourceTarget: _*))
-  private val initialValues: Seq[(String, js.Dictionary[Any])] = (40 until 45) map { id =>
-    id.toString -> js.Dictionary("obstacle" -> (true: Any))
+  private val sourceTarget: Seq[(String, Map[String, DeviceKind])] =
+    Seq("1" -> Map("source" -> true), "100" -> Map("target" -> true))
+  private val channel = DeviceConfiguration(DeviceConfiguration.standard.sensors, Map(sourceTarget: _*))
+  private val initialValues: Seq[(String, Map[String, DeviceKind])] = (40 until 45) map { id =>
+    id.toString -> Map("obstacle" -> (true: DeviceKind))
   }
   private val channelWithObstacle =
-    DeviceConfiguration(DeviceConfiguration.standard.sensors, js.Dictionary((initialValues ++ sourceTarget): _*))
+    DeviceConfiguration(DeviceConfiguration.standard.sensors, Map((initialValues ++ sourceTarget): _*))
 
   private val examples: Seq[Example] = Seq(
     Example.create("Spread across the gradient", sourceSensor) {

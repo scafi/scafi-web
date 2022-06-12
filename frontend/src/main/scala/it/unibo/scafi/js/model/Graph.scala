@@ -31,7 +31,7 @@ case class Node(id: String, position: Point3D, labels: Map[String, Any] = Map.em
   override def equals(other: Any): Boolean = other match {
     case that: Node =>
       (that canEqual this) &&
-      id == that.id
+        id == that.id
     case _ => false
   }
 

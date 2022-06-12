@@ -165,10 +165,12 @@ object Interaction {
       val elements = scene.physics.overlapRect(overlapX, overlapY, overlapWidth, overlapHeight, includeStatic = true)
       this.selection = Some(elements.map(_.gameObject.id).toSeq)
       this.selectionSubject.onNext(this.selection.get)
-      elements.map { body =>
-        val selected = scene.add.circle(body.center.x, body.center.y, body.halfWidth, selectionColor)
-        selected.id = body.gameObject.id
-      }.foreach(selectionContainer.add(_))
+      elements
+        .map { body =>
+          val selected = scene.add.circle(body.center.x, body.center.y, body.halfWidth, selectionColor)
+          selected.id = body.gameObject.id
+        }
+        .foreach(selectionContainer.add(_))
 
       if (overlapWidth == 0 && overlapHeight == 0 && elements.nonEmpty) {
         popup.focusOn(selectionContainer.list[Transform with GameObject].head)

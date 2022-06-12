@@ -1,14 +1,16 @@
 package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.config.GridSettings
-import it.unibo.scafi.js.JsConversion
+import it.unibo.scafi.js.controller.local.DeviceConfiguration.DeviceKind
 import it.unibo.scafi.js.model.MatrixLed
-import it.unibo.scafi.js.utils.{GlobalStore, JSNumber}
+import it.unibo.scafi.js.model.MatrixLed.MatrixMap
+import it.unibo.scafi.js.utils.GlobalStore
 import it.unibo.scafi.space.Point3D
 import org.scalajs.dom.ext.Color
+import upickle.default._
 
-import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
+import scala.scalajs.js.|
 import scala.util.Try
 
 /** the configuration used to initialize/ evolve a locale aggregate simulation.
@@ -32,65 +34,23 @@ case class SupportConfiguration(
     deviceShape: DeviceConfiguration,
     seed: SimulationSeeds,
     coordinateMapping: CoordinateMapping = Identity
-) extends JsConversion {
-  override def toJs(): js.Object = { // very fragile... need some alternatives
-    js.Dynamic.literal(
-      "network" -> network.toJs(),
-      "neighbour" -> neighbour.toJs(),
-      "deviceShape" -> deviceShape.toJs(),
-      "seed" -> seed.toJs(),
-      "coordinateMapping" -> coordinateMapping.toJs()
-    )
-  }
-}
-
+)
 object SupportConfiguration {
-  private def as[A](o: js.Dynamic): A = o.asInstanceOf[A]
+  implicit def supportConfigurationRW: ReadWriter[SupportConfiguration] = macroRW[SupportConfiguration]
 
-  private def loadNetwork(obj: js.Dynamic): NetworkConfiguration = {
-    as[String](obj.tpe) match {
-      case "random" => RandomNetwork(as[JSNumber](obj.min), as[JSNumber](obj.max), as[Int](obj.howMany))
-      case "grid" =>
-        GridLikeNetwork(
-          as[Int](obj.rows),
-          as[Int](obj.cols),
-          as[JSNumber](obj.stepX),
-          as[JSNumber](obj.stepY),
-          as[JSNumber](obj.tolerance)
-        )
-    }
-  }
+  def storeGlobal(config: SupportConfiguration): Unit = GlobalStore.put("configuration", write(config))
 
-  private def loadDeviceShape(obj: js.Dynamic): DeviceConfiguration =
-    DeviceConfiguration(as[js.Dictionary[Any]](obj.sensors), as[js.Dictionary[js.Dictionary[Any]]](obj.initialValues))
-
-  private def loadSeed(obj: js.Dynamic): SimulationSeeds =
-    SimulationSeeds(as[JSNumber](obj.config), as[JSNumber](obj.simulation), as[JSNumber](obj.random))
-
-  private def loadNeighbour(obj: js.Dynamic): NeighbourConfiguration =
-    SpatialRadius(as[Double](obj.radius))
-
-  private def loadMapping(obj: js.Dynamic): CoordinateMapping = Identity
-
-  // very fragile... need some alternatives
-  def loadFrom(obj: js.Dynamic): Try[SupportConfiguration] = Try {
-    SupportConfiguration(
-      loadNetwork(obj.network),
-      loadNeighbour(obj.neighbour),
-      loadDeviceShape(obj.deviceShape),
-      loadSeed(obj.seed),
-      loadMapping(obj.coordinateMapping)
-    )
-  }
-
-  def storeGlobal(config: SupportConfiguration): Unit = GlobalStore.put("configuration", config.toJs())
-
-  def loadGlobal(): Try[SupportConfiguration] = GlobalStore.get[js.Dynamic]("configuration").flatMap(loadFrom)
+  def loadGlobal(): Try[SupportConfiguration] =
+    GlobalStore.get[String]("configuration").flatMap(elem => Try(read[SupportConfiguration](elem)))
 }
 
 /** top level trait to describe a network configuration that tells how node are placed in the world. */
-sealed trait NetworkConfiguration extends JsConversion
-
+sealed trait NetworkConfiguration
+object NetworkConfiguration {
+  implicit def networkConfigRW: ReadWriter[NetworkConfiguration] = macroRW[NetworkConfiguration]
+  implicit def randomNetwork: ReadWriter[RandomNetwork] = macroRW[RandomNetwork]
+  implicit def gridLikeNetwork: ReadWriter[GridLikeNetwork] = macroRW[GridLikeNetwork]
+}
 /** randomly placed nodes restricted in a defined bounds.
   *
   * @param min
@@ -102,10 +62,7 @@ sealed trait NetworkConfiguration extends JsConversion
   */
 @JSExportTopLevel("RandomNetwork")
 @JSExportAll
-case class RandomNetwork(min: JSNumber, max: JSNumber, howMany: Int) extends NetworkConfiguration {
-  override def toJs(): js.Object =
-    js.Dynamic.literal("tpe" -> "random", "min" -> min, "max" -> max, "howMany" -> howMany)
-}
+case class RandomNetwork(min: Double, max: Double, howMany: Int) extends NetworkConfiguration
 
 /** a grid link network configuration
   *
@@ -122,22 +79,17 @@ case class RandomNetwork(min: JSNumber, max: JSNumber, howMany: Int) extends Net
   */
 @JSExportTopLevel("GridLikeNetwork")
 @JSExportAll
-case class GridLikeNetwork(rows: Int, cols: Int, stepX: JSNumber, stepY: JSNumber, tolerance: JSNumber)
+case class GridLikeNetwork(rows: Int, cols: Int, stepX: Double, stepY: Double, tolerance: Double)
     extends NetworkConfiguration {
   def toGridSettings: GridSettings = GridSettings(cols, rows, stepX, stepY, tolerance)
-
-  override def toJs(): js.Object = js.Dynamic.literal(
-    "tpe" -> "grid",
-    "rows" -> rows,
-    "cols" -> cols,
-    "stepX" -> stepX,
-    "stepY" -> stepX,
-    "tolerance" -> tolerance
-  )
 }
 
 /** a top level trait that describe the policy of neighbour in a network. */
-trait NeighbourConfiguration extends JsConversion
+sealed trait NeighbourConfiguration
+object NeighbourConfiguration {
+  implicit def neighbourConfigurationRW: ReadWriter[NeighbourConfiguration] = macroRW[NeighbourConfiguration]
+  implicit def spatialRadiusRW: ReadWriter[SpatialRadius] = macroRW[SpatialRadius]
+}
 
 /** a euclidean strategy that link two nodes based on the distance between them.
   *
@@ -146,9 +98,7 @@ trait NeighbourConfiguration extends JsConversion
   */
 @JSExportTopLevel("SpatialRadius")
 @JSExportAll
-case class SpatialRadius(range: Double) extends NeighbourConfiguration {
-  override def toJs(): js.Object = js.Dynamic.literal("radius" -> range)
-}
+case class SpatialRadius(range: Double) extends NeighbourConfiguration
 
 /** describe the set of sensor installed on each node.
   *
@@ -162,30 +112,44 @@ case class SpatialRadius(range: Double) extends NeighbourConfiguration {
 @JSExportTopLevel("DeviceConfiguration")
 @JSExportAll
 case class DeviceConfiguration(
-    sensors: js.Dictionary[Any],
-    initialValues: js.Dictionary[js.Dictionary[Any]] = js.Dictionary()
-) extends JsConversion {
-  override def toJs(): js.Object = js.Dynamic.literal(
-    "sensors" -> sensors,
-    "initialValues" -> initialValues
-  )
-}
+    sensors: Map[String, DeviceKind],
+    initialValues: Map[String, Map[String, DeviceKind]] = Map.empty
+) {}
 
 @JSExportTopLevel("DeviceConfigurationObject")
 @JSExportAll
 object DeviceConfiguration {
+  type DeviceKind = String | Double | MatrixLed | Boolean
+  upickle.default
+  implicit def deviceConfigurationRW: ReadWriter[DeviceConfiguration] = macroRW[DeviceConfiguration]
+  implicit def deviceKindRW: ReadWriter[DeviceKind] = upickle.default
+    .readwriter[ujson.Value]
+    .bimap[DeviceKind](
+      elem => {
+        def tryWith[T: Writer] = Try(elem.asInstanceOf[T]).map(elem => writeJs(elem))
+        tryWith[MatrixMap].orElse(tryWith[Boolean]).orElse(tryWith[Double]).orElse(tryWith[String]).get
+      },
+      json => {
+        def summon[T: Reader]: Try[T] = Try(read[T](json))
+        summon[MatrixMap]
+          .orElse(summon[Boolean])
+          .orElse(summon[Double])
+          .orElse(summon[String])
+          .get
+          .asInstanceOf[DeviceKind]
+      }
+    )
   val standardDimension = 3
   val standardColor = Color("#bb86fc")
   val standardMatrix = MatrixLed.fill(standardDimension, standardColor.toHex)
   /** @return a configuration in which exist the sensor "source" and "obstacle". */
   def standard: DeviceConfiguration = DeviceConfiguration(
-    js.Dictionary("matrix" -> standardMatrix, "source" -> false, "obstacle" -> false, "target" -> false)
+    Map[String, DeviceKind]("matrix" -> standardMatrix, "source" -> false, "obstacle" -> false, "target" -> false)
   )
 
   /** @return a configuration without any sensor. */
-  def none: DeviceConfiguration = DeviceConfiguration(js.Dictionary("matrix" -> standardMatrix))
+  def none: DeviceConfiguration = DeviceConfiguration(Map("matrix" -> standardMatrix))
 }
-
 /** a set of seed used to initialize, configure and execute an aggregate simulation.
   *
   * @param configSeed
@@ -197,19 +161,16 @@ object DeviceConfiguration {
   */
 @JSExportTopLevel("SimulationSeed")
 case class SimulationSeeds(
-    @JSExport configSeed: JSNumber = System.currentTimeMillis(),
-    @JSExport simulationSeed: JSNumber = System.currentTimeMillis(),
-    @JSExport randomSensorSeed: JSNumber = System.currentTimeMillis()
-) extends JsConversion {
-  override def toJs(): js.Object = js.Dynamic.literal(
-    "config" -> configSeed,
-    "simulation" -> simulationSeed,
-    "random" -> randomSensorSeed
-  )
+    @JSExport configSeed: Double = System.currentTimeMillis(),
+    @JSExport simulationSeed: Double = System.currentTimeMillis(),
+    @JSExport randomSensorSeed: Double = System.currentTimeMillis()
+)
+object SimulationSeeds {
+  implicit def simulationSeeds: ReadWriter[SimulationSeeds] = macroRW[SimulationSeeds]
 }
 
 /** a logic using to alter the coordinate between frontend space and backed space. */
-sealed trait CoordinateMapping extends JsConversion {
+sealed trait CoordinateMapping {
   /** alter a backend position in the frontend space. */
   def toWeb(point: Point3D): Point3D
 
@@ -217,10 +178,13 @@ sealed trait CoordinateMapping extends JsConversion {
   def toBackend(point: Point3D): Point3D
 }
 
-object Identity extends CoordinateMapping {
+object CoordinateMapping {
+  implicit def coordinateMappingRW: ReadWriter[CoordinateMapping] = macroRW[CoordinateMapping]
+  implicit def identityRW: ReadWriter[Identity.type] = macroRW[Identity.type]
+}
+
+case object Identity extends CoordinateMapping {
   override def toWeb(point: Point3D): Point3D = point
 
   override def toBackend(point: Point3D): Point3D = point
-
-  override def toJs(): js.Object = js.Dynamic.literal("tpe" -> "identity")
 }

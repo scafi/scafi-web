@@ -7,9 +7,9 @@ import java.util.UUID
 class Loader(element: Element) {
   private val idLoader = UUID.randomUUID().toString
   val loader = div(
-    id    := idLoader,
-    cls   := "spinner-grow text-light",
-    role  := "status",
+    id := idLoader,
+    cls := "spinner-grow text-light",
+    role := "status",
     style := "width: 5rem; height: 5rem;",
     span(cls := "sr-only")
   ).render

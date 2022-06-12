@@ -71,15 +71,15 @@ object EditorSection {
   }
 
   def modeFromLang(lang: String): Mode = lang match {
-    case ScalaModeFull.lang  => ScalaModeFull
-    case ScalaModeEasy.lang  => ScalaModeEasy
+    case ScalaModeFull.lang => ScalaModeFull
+    case ScalaModeEasy.lang => ScalaModeEasy
     case JavascriptMode.lang => JavascriptMode
   }
 
   private class EditorSectionImpl(editorZone: Div, defaultMode: Mode = ScalaModeEasy) extends EditorSection {
     var mode: Mode = GlobalStore.get[Mode]("mode") match {
       case Failure(exception) => defaultMode
-      case Success(mode)      => mode
+      case Success(mode) => mode
     }
     private val modeSelection = new ModeSelection(
       "editor-header",
@@ -129,7 +129,7 @@ object EditorSection {
       mode.lang match {
         case ScalaModeEasy.lang => modeSelection.off()
         case ScalaModeFull.lang => modeSelection.on()
-        case _                  =>
+        case _ =>
       }
       editor.setValue(code)
       GlobalStore.put("mode", mode)
@@ -139,8 +139,8 @@ object EditorSection {
 
     override def getScript(): Script = mode.lang match {
       case JavascriptMode.lang => Javascript(getRaw())
-      case ScalaModeFull.lang  => Scala(getRaw())
-      case ScalaModeEasy.lang  => ScalaEasy(getRaw())
+      case ScalaModeFull.lang => Scala(getRaw())
+      case ScalaModeEasy.lang => ScalaEasy(getRaw())
     }
 
     override def getRaw(): String = editor.getValue()

@@ -20,12 +20,12 @@ object SensorsMenu {
     private var sensors: js.Dictionary[Toggle] = js.Dictionary()
 
     private lazy val dropdownButton = button(
-      cls            := smallPrimaryBtnClass("ml-1 dropdown-toggle"),
-      `type`         := "button",
-      id             := "dropdownMenuButton",
+      cls := smallPrimaryBtnClass("ml-1 dropdown-toggle"),
+      `type` := "button",
+      id := "dropdownMenuButton",
       data("toggle") := "dropdown",
-      aria.haspopup  := true,
-      aria.expanded  := false,
+      aria.haspopup := true,
+      aria.expanded := false,
       "Sensors"
     ).render
 
@@ -42,17 +42,22 @@ object SensorsMenu {
 
     PageBus.listen { case SupportConfiguration(_, _, device, _, _) =>
       sensorsGroup.textContent = ""
-      sensors = device.sensors.collect { case (name, _: Boolean) =>
-        name -> Toggle.button(
-          labelValue = name,
-          onClick = (e: MouseEvent) => {
-            val ids = interaction.selection.map(_.toSet).getOrElse(Set())
-            interaction.commandInterpreter.execute(ToggleSensor(name, ids))
-            Toggle.Repaint(e)
-          }
-        )
-      }
-      sensors.map { case (_, toggle) => toggle }
+      val onOffSensors = device.sensors
+        .mapValues(_.asInstanceOf[Any])
+        .collect { case (name, _: Boolean) =>
+          name -> Toggle.button(
+            labelValue = name,
+            onClick = (e: MouseEvent) => {
+              val ids = interaction.selection.map(_.toSet).getOrElse(Set())
+
+              interaction.commandInterpreter.execute(ToggleSensor(name, ids))
+              Toggle.Repaint(e)
+            }
+          )
+        }
+      sensors = js.Dictionary(onOffSensors.toSeq: _*)
+      sensors
+        .map { case (_, toggle) => toggle }
         .foreach(toggle => sensorsGroup.appendChild(toggle.html))
     }
   }

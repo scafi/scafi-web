@@ -56,22 +56,21 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(
     }
     config.deviceShape.sensors.foreach { case (sensorName, value) => backend.addSensor(sensorName, value) }
 
-    for ((id, sensorValues) <- config.deviceShape.initialValues) {
+    for ((id, sensorValues) <- config.deviceShape.initialValues)
       for ((sensorName, sensorValue) <- sensorValues)
         backend.chgSensorValue(sensorName, Set(id), sensorValue)
-    }
     systemConfig = config
     backend
   }
 
   private def mapSideEffect(graph: Graph, sideEffect: SimulationSideEffect): Graph = {
     (sideEffect, graph) match {
-      case (NewConfiguration, _)                 => produceGraphFromNetwork()
-      case (Invalidated, _)                      => produceGraphFromNetwork()
-      case (ExportProduced(elements), graph)     => updateGraphWithExports(elements, graph)
+      case (NewConfiguration, _) => produceGraphFromNetwork()
+      case (Invalidated, _) => produceGraphFromNetwork()
+      case (ExportProduced(elements), graph) => updateGraphWithExports(elements, graph)
       case (PositionChanged(positionMap), graph) => updateGraphWithPosition(positionMap, graph)
-      case (SensorChanged(sensorMap), graph)     => updateGraphWithSensor(sensorMap, graph)
-      case _                                     => produceGraphFromNetwork()
+      case (SensorChanged(sensorMap), graph) => updateGraphWithSensor(sensorMap, graph)
+      case _ => produceGraphFromNetwork()
     }
   }
 
@@ -81,7 +80,7 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(
       .map { case (id, export) => (backend.devs(id), export) }
       .map {
         case (dev, Some(export)) => (dev, dev.lsns + (EXPORT_LABEL -> export))
-        case (dev, None)         => (dev, dev.lsns)
+        case (dev, None) => (dev, dev.lsns)
       }
       .map { case (dev, labels) => Node(dev.id, dev.pos, labels) }
       .toSet
@@ -98,9 +97,12 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(
   }
 
   private def updateGraphWithPosition(positionMap: Map[ID, Point3D], graph: Graph): Graph = {
-    val nodesUpdated = positionMap.map { case (id, pos) => pos -> graph(id) }.map { case (pos, node) =>
-      node.copy(position = pos)
-    }.toSeq
+    val nodesUpdated = positionMap
+      .map { case (id, pos) => pos -> graph(id) }
+      .map { case (pos, node) =>
+        node.copy(position = pos)
+      }
+      .toSeq
     NaiveGraph(
       graph.insertNodes(nodesUpdated).nodes,
       computeVertices()

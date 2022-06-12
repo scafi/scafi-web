@@ -26,9 +26,9 @@ trait ActuationLib {
     case class LedSelect(cell: LedGroup) {
       def to(color: Color | String | LedMode): MatrixOps = (color: Any) match {
         case s: String => MatrixOps(getColorFrom(s), cell)
-        case c: Color  => MatrixOps(c, cell)
-        case off       => MatrixOps(Color.Black, cell)
-        case on        => MatrixOps(Color.White, cell)
+        case c: Color => MatrixOps(c, cell)
+        case off => MatrixOps(Color.Black, cell)
+        case on => MatrixOps(Color.White, cell)
       }
     }
 
@@ -42,14 +42,14 @@ trait ActuationLib {
     def led(i: Int, j: Int): LedSelect = LedSelect(One(i, j))
 
     private def getColorFrom(s: String): Color = s match {
-      case "white"   => Color.White
-      case "red"     => Color.Red
-      case "green"   => Color.Green
-      case "blue"    => Color.Blue
-      case "yellow"  => Color.Yellow
-      case "cyan"    => Color.Cyan
+      case "white" => Color.White
+      case "red" => Color.Red
+      case "green" => Color.Green
+      case "blue" => Color.Blue
+      case "yellow" => Color.Yellow
+      case "cyan" => Color.Cyan
       case "magenta" => Color.Magenta
-      case hex       => Color.apply(hex)
+      case hex => Color.apply(hex)
     }
 
     sealed trait VelocityComponent

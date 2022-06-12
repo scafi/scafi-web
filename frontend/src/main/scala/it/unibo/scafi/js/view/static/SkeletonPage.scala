@@ -14,8 +14,7 @@ import scalacss.ScalatagsCss._
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
-/** The skeleton page of this web site. It contains the main dom elements: editor, visualization and configuration.
-  */
+/** The skeleton page of this web site. It contains the main dom elements: editor, visualization and configuration. */
 object SkeletonPage {
   // TODO find a good way to model bootstrap class (with a dedicated module?)
   /** The root style of the web page. */
@@ -29,7 +28,7 @@ object SkeletonPage {
 
   /** Select part to choose an aggregate program. */
   lazy val selectionProgram: Select = select(
-    id  := "select-program",
+    id := "select-program",
     cls := "form-control bg-dark text-light"
   ).render
   private val modeSelectionId = "advanced-toggle";
@@ -43,7 +42,7 @@ object SkeletonPage {
 
   /** Editor header that contains the program and mode selector */
   lazy val editorHeader: Div = div(
-    id  := "editor-header",
+    id := "editor-header",
     cls := "input-group input-group-sm pt-1 pb-1",
     div(
       cls := "input-group-prepend",
@@ -85,8 +84,8 @@ object SkeletonPage {
 
   /** Section in which is rendered the graph that represent the aggregate system. */
   lazy val visualizationSection: Div = div(
-    id       := "visualization-pane",
-    cls      := "border border-secondary",
+    id := "visualization-pane",
+    cls := "border border-secondary",
     tabindex := 0
   ).render
 
@@ -95,10 +94,10 @@ object SkeletonPage {
     div(
       cls := "dropdown",
       span(
-        cls            := "btn btn-outline-light mr-2 my-sm-0 dropdown-toggle",
+        cls := "btn btn-outline-light mr-2 my-sm-0 dropdown-toggle",
         data("toggle") := "dropdown",
-        aria.haspopup  := true,
-        aria.expanded  := false,
+        aria.haspopup := true,
+        aria.expanded := false,
         span(cls := "fas fa-cogs fa-lg pr-2", aria.hidden := true),
         "Settings"
       ),
@@ -108,26 +107,26 @@ object SkeletonPage {
       )
     ),
     a(
-      cls    := "btn btn-outline-light mr-2 my-sm-0",
-      href   := "https://scafi.github.io/",
+      cls := "btn btn-outline-light mr-2 my-sm-0",
+      href := "https://scafi.github.io/",
       target := "_blank",
-      rel    := "noopener noreferrer",
+      rel := "noopener noreferrer",
       i(cls := "fas fa-globe fa-lg pr-2", aria.hidden := true),
       "Website"
     ),
     a(
-      cls    := "btn btn-outline-light my-2 my-sm-0",
-      href   := "https://github.com/scafi/scafi",
+      cls := "btn btn-outline-light my-2 my-sm-0",
+      href := "https://github.com/scafi/scafi",
       target := "_blank",
-      rel    := "noopener noreferrer",
+      rel := "noopener noreferrer",
       i(cls := "fab fa-github fa-lg pr-2", aria.hidden := true),
       "Repository"
     ),
     a(
-      cls    := "btn btn-outline-light ml-2 my-sm-0",
-      href   := "https://youtu.be/E-EoFmm5tuc",
+      cls := "btn btn-outline-light ml-2 my-sm-0",
+      href := "https://youtu.be/E-EoFmm5tuc",
       target := "_blank",
-      rel    := "noopener noreferrer",
+      rel := "noopener noreferrer",
       i(cls := "fab fa-youtube fa-lg", aria.hidden := true)
     )
   ).render
@@ -135,7 +134,7 @@ object SkeletonPage {
   /** Section used to configure the backend (it is support specific) */
   lazy val backendConfig: Div = div(
     cls := "bg-dark",
-    id  := "backend-config-section",
+    id := "backend-config-section",
     h3(cls := "text-light", "Backend configuration")
   ).render
 
@@ -159,7 +158,7 @@ object SkeletonPage {
 
   private def pageContainer: TypedTag[Div] = div(
     cls := "row m-0 bg-dark pt-3",
-    id  := "page-container",
+    id := "page-container",
     backendConfig,
     editor,
     visualization
@@ -170,7 +169,7 @@ object SkeletonPage {
 
   private def visualization: TypedTag[Div] = div(
     cls := "bg-dark",
-    id  := "visualization-section",
+    id := "visualization-section",
     controlsDiv,
     visualizationOptionDiv,
     visualizationSection,
@@ -181,13 +180,13 @@ object SkeletonPage {
     `class` := primaryBtnClass,
     input(
       `type` := "radio",
-      name   := PanMoveModeFormName,
-      id     := MoveModeFormValue,
-      value  := MoveModeFormValue
+      name := PanMoveModeFormName,
+      id := MoveModeFormValue,
+      value := MoveModeFormValue
     ),
     i(
-      id          := "move-toggle",
-      cls         := "fas fa-mouse-pointer fa-lg",
+      id := "move-toggle",
+      cls := "fas fa-mouse-pointer fa-lg",
       aria.hidden := true
     )
   ).render
@@ -195,15 +194,15 @@ object SkeletonPage {
   lazy val panModeButton: Label = label(
     `class` := primaryBtnClass("active"),
     input(
-      `type`  := "radio",
-      name    := PanMoveModeFormName,
-      id      := PanModeFormValue,
-      value   := PanModeFormValue,
+      `type` := "radio",
+      name := PanMoveModeFormName,
+      id := PanModeFormValue,
+      value := PanModeFormValue,
       checked := true
     ),
     i(
-      id          := "pan-toggle",
-      cls         := "fas fa-hand-paper fa-lg",
+      id := "pan-toggle",
+      cls := "fas fa-hand-paper fa-lg",
       aria.hidden := true
     )
   ).render
@@ -211,12 +210,12 @@ object SkeletonPage {
   // toggle as button group
   lazy val panMoveMode: Div = div(
     cls := "btn-floating-group text-center pt-2",
-    id  := PanMoveModeFormName + "-container",
+    id := PanMoveModeFormName + "-container",
     div(
-      cls            := "btn-group btn-group-toggle",
-      id             := PanMoveModeFormName,
+      cls := "btn-group btn-group-toggle",
+      id := PanMoveModeFormName,
       data("toggle") := "buttons",
-      aria.label     := "Change control mode",
+      aria.label := "Change control mode",
       panModeButton,
       selectModeButton
     )

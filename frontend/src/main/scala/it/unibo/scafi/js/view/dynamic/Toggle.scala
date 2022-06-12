@@ -66,7 +66,7 @@ object Toggle {
     private val inputPart = input(
       cls := "form-check-input",
       tpe := "checkbox",
-      id  := labelValue
+      id := labelValue
     ).render
 
     inputPart.checked = check
@@ -89,9 +89,9 @@ object Toggle {
   class ToggleFormRow(val labelValue: String, check: Boolean = false, onClick: js.Function1[MouseEvent, _] = Repaint)
       extends Toggle {
     private lazy val toggle = input(
-      `type`  := "checkbox",
+      `type` := "checkbox",
       `class` := "custom-control-input",
-      id      := s"$labelValue-toggle"
+      id := s"$labelValue-toggle"
     ).render
 
     toggle.checked = check
@@ -108,7 +108,7 @@ object Toggle {
           this.toggle,
           label(
             `class` := "custom-control-label text-white",
-            `for`   := this.toggle.id,
+            `for` := this.toggle.id,
             this.labelValue
           )
         )
@@ -126,10 +126,10 @@ object Toggle {
       extends Toggle {
     private var _check = check
     private lazy val toggle = input(
-      `type`  := "button",
+      `type` := "button",
       `class` := "btn btn-sm bg-primary mr-2 text-white",
-      id      := s"$labelValue-toggle",
-      value   := s"toggle"
+      id := s"$labelValue-toggle",
+      value := s"toggle"
     ).render
 
     toggle.onclick = ev => {
@@ -145,7 +145,7 @@ object Toggle {
         this.toggle,
         label(
           `class` := "text-white",
-          `for`   := this.toggle.id,
+          `for` := this.toggle.id,
           this.labelValue
         )
       )

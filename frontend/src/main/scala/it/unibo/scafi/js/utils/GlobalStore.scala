@@ -21,7 +21,7 @@ object GlobalStore {
   def get[A](name: String): Try[A] = {
     Try(store.selectDynamic(name).asInstanceOf[A]).flatMap {
       case obj if js.isUndefined(obj) => Failure(new IllegalArgumentException("object not in global scope"))
-      case other                      => Success(other)
+      case other => Success(other)
     }
   }
   def getOrElse[A](name: String, orElse: A): A =
@@ -34,5 +34,4 @@ object GlobalStore {
         orElse
     }
   }
-
 }

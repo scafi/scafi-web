@@ -64,7 +64,8 @@ object NodeDescriptionPopup {
         case (name, value) => s"$name : $value"
       }
 
-      val exports = node.labels.collect { case (name, value: Export) => value }
+      val exports = node.labels
+        .collect { case (name, value: Export) => value }
         .flatMap(value => value.paths.toSeq)
 
       val exportsTreeMap = exports

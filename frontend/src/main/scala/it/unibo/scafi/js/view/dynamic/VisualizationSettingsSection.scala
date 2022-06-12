@@ -85,10 +85,10 @@ object VisualizationSettingsSection {
     override def neighbourhoodEnabled: Boolean = neighbourhoodSection.enabled
 
     override def sensorEnabled(name: String): Boolean = name match {
-      case "id"                           => idEnabledSection.enabled
+      case "id" => idEnabledSection.enabled
       case SimulationSupport.EXPORT_LABEL => exportSection.enabled
-      case "matrix"                       => true // enable by default
-      case _                              => false
+      case "matrix" => true // enable by default
+      case _ => false
     }
 
     visualizationDropMenu.appendChild(nodeSizeTag.html)
@@ -115,11 +115,11 @@ object VisualizationSettingsSection {
   ) extends HtmlRenderable[Div] {
     private val inputTag = input(
       `type` := "range",
-      cls    := "form-range",
-      min    := minValue,
-      max    := maxValue,
-      value  := initialValue,
-      step   := 2
+      cls := "form-range",
+      min := minValue,
+      max := maxValue,
+      value := initialValue,
+      step := 2
     ).render
     /** @return the internal representation of the object under the html tag. */
     override lazy val html: Div = div(

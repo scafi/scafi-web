@@ -81,9 +81,9 @@ class PhaserGraphSection(
       newBound.foreach(bound => adjustScene(bound, scene))
       newBound = None
       model match {
-        case (Some(graph), true)  => onNewGraph(graph, scene)
+        case (Some(graph), true) => onNewGraph(graph, scene)
         case (Some(graph), false) => onSameGraph(graph, scene)
-        case _                    =>
+        case _ =>
       }
     }
   )
@@ -91,7 +91,7 @@ class PhaserGraphSection(
   override def apply(v1: Graph): Unit = model = (Some(v1), true)
 
   PageBus.listen {
-    case ForceRepaint                                                    => model = model.copy(_2 = true)
+    case ForceRepaint => model = model.copy(_2 = true)
     case SupportConfiguration(_ @RandomNetwork(min, max, _), _, _, _, _) => newBound = Some(Bound(min, min, max, max))
     case SupportConfiguration(_ @GridLikeNetwork(row, col, stepX, stepY, _), _, _, _, _) =>
       newBound = Some(Bound(0, 0, (row - 1) * stepX, (col - 1) * stepY))
@@ -175,9 +175,12 @@ class PhaserGraphSection(
         ._2
     }
 
-    nodes.map { case (node, gameObj) => gameObj -> (node.labels.toSeq :+ ("id" -> node.id)) }.map {
-      case (node, labels) => node -> labels.filter(sensor => settings.sensorEnabled(sensor._1))
-    }.flatMap { case (node, labels) => renderNodeLabels(node, labels) }
+    nodes
+      .map { case (node, gameObj) => gameObj -> (node.labels.toSeq :+ ("id" -> node.id)) }
+      .map { case (node, labels) =>
+        node -> labels.filter(sensor => settings.sensorEnabled(sensor._1))
+      }
+      .flatMap { case (node, labels) => renderNodeLabels(node, labels) }
       .foreach(labelContainer.add(_))
 
   }

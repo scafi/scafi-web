@@ -42,20 +42,20 @@ trait Modal extends HtmlRenderable[Element] {
   var onClose: () => Unit = () => hide()
   lazy val modalDialog: Element = div(
     style := s"min-width: ${minBound}px",
-    cls   := "modal-dialog",
-    role  := "document",
+    cls := "modal-dialog",
+    role := "document",
     div(
       cls := "modal-content bg-secondary text-light",
       div(cls := "modal-header", style := headerStyle, title, closeButton),
-      div(cls := "modal-body", style   := bodyStyle, body),
+      div(cls := "modal-body", style := bodyStyle, body),
       div(cls := "modal-footer", style := footerStyle, footer)
     )
   ).render
   override lazy val html: Element = div(
-    role     := "dialog",
-    cls      := "modal",
+    role := "dialog",
+    cls := "modal",
     tabindex := "-1",
-    id       := this.modalId,
+    id := this.modalId,
     modalDialog
   ).render
 

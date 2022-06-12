@@ -20,8 +20,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js
 import scala.util.{Success, Try}
 
-/** the execution platform of a local simulation in web browser. Currently it supports only javascript execution.
-  */
+/** the execution platform of a local simulation in web browser. Currently it supports only javascript execution. */
 trait SimulationExecutionPlatform
     extends ExecutionPlatform[SpatialSimulation#SpaceAwareSimulator, SimulationSideEffect, SimulationExecution] {
   self: SimulationSupport with SideEffects =>
@@ -44,8 +43,8 @@ trait SimulationExecutionPlatform
         Try(sideEffectExecution(aggregateClass.program))
       }
     case ScalaEasy(code) => remoteRequest(code, easyCompilationUrl)
-    case Scala(code)     => remoteRequest(code, standardCompilation)
-    case _               => Future.failed(new IllegalArgumentException("lang not supported"))
+    case Scala(code) => remoteRequest(code, standardCompilation)
+    case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
   private def sideEffectExecution(program: js.Function1[CONTEXT, EXPORT]): TickBased = {
     val execution: (Int => Future[Unit]) = batchSize => {
@@ -66,9 +65,9 @@ trait SimulationExecutionPlatform
   private def toExportMap(exports: Seq[(ID, EXPORT)]): Seq[(ID, Iterable[Any])] = {
     exports.map { case (id, e) => id -> e.root[Any]() }.collect {
       case (id, a: ActuationData) => (id, Seq(a))
-      case (id, a: Iterable[_])   => (id, a)
-      case (id, a: Product)       => (id, a.productIterator.toSeq)
-      case (id, a: Any)           => (id, Seq(a))
+      case (id, a: Iterable[_]) => (id, a)
+      case (id, a: Product) => (id, a.productIterator.toSeq)
+      case (id, a: Any) => (id, Seq(a))
     }
   }
 

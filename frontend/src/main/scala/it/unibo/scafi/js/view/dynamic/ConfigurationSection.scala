@@ -1,14 +1,18 @@
 package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.controller.AggregateSystemSupport
+import it.unibo.scafi.js.controller.local.DeviceConfiguration.DeviceKind
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.facade.simplebar.SimpleBar
 import it.unibo.scafi.js.model.MatrixLed
+import it.unibo.scafi.js.model.MatrixLed.MatrixMap
+import it.unibo.scafi.js.utils.GlobalStore
 import it.unibo.scafi.js.view.dynamic.ConfigurationSection._
 import it.unibo.scafi.js.view.static.RootStyle.smallPrimaryBtnClass
 import org.scalajs.dom.html.{Button, Div, Select}
 import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
+import upickle.default._
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -57,7 +61,7 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
   var elements: js.Array[Any] = js.Array()
   PageBus.listen { case config: SupportConfiguration =>
     lastConfiguration = config
-    configureFromConfig(config)
+    configureFromConfig(lastConfiguration)
   }
 
   def updateDeviceShape(shape: DeviceConfiguration): Unit = {
@@ -73,7 +77,7 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
     container.textContent = ""
     container.appendChild(mainDiv)
     val elements = mode match {
-      case Grid   => gridValue
+      case Grid => gridValue
       case Random => randomValue
     }
 
@@ -88,26 +92,30 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
 
   private def load(mode: Mode): Unit = {
     val netSettings = mode match {
-      case Grid   => GridLikeNetwork(rows.intValue, cols.intValue, stepX.intValue, stepY.intValue, tolerance.intValue)
+      case Grid => GridLikeNetwork(rows.intValue, cols.intValue, stepX.intValue, stepY.intValue, tolerance.intValue)
       case Random => RandomNetwork(min.intValue, max.intValue, howMany.intValue)
     }
-    val sensorMap = js.Dictionary[Any](sensors.map(_.nameAndValue): _*)
-    sensorMap.put("matrix", matrix.getMatrix())
+    val sensorMap: Map[String, DeviceKind] = Map(sensors.map(_.nameAndValue): _*)
+    val completeMap: Map[String, DeviceKind] = sensorMap.updated("matrix", matrix.getMatrix())
     val configuration = SupportConfiguration(
       netSettings,
       SpatialRadius(radius.intValue),
-      DeviceConfiguration(sensorMap),
+      DeviceConfiguration(completeMap),
       SimulationSeeds()
     )
     evolve(configuration)
   }
-
   private def configureFromConfig(conf: SupportConfiguration): Unit = {
-    val newMatrix = conf.deviceShape.sensors.collectFirst { case (label, MatrixLed(m)) => label -> m }
+    val newMatrix = conf.deviceShape.sensors.collectFirst {
+      case (label, m) if m.isInstanceOf[MatrixMap] => label -> m.asInstanceOf[MatrixMap]
+    }
     val matrixLabel = newMatrix.map(_._1).getOrElse("")
-    sensors = conf.deviceShape.sensors.filterNot { case (a, b) => a == matrixLabel }.map { case (k, v) =>
-      new SensorInputText(k, v.toString)
-    }.toList
+    sensors = conf.deviceShape.sensors
+      .filterNot { case (a, b) => a == matrixLabel }
+      .map { case (k, v) =>
+        new SensorInputText(k, v.toString)
+      }
+      .toList
     conf.network match {
       case GridLikeNetwork(_rows, _cols, _stepX, _stepY, _tollerance) =>
         rows.intValue = _rows
@@ -124,7 +132,7 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
     }
     matrix = newMatrix match {
       case Some((_, m)) => MatrixInput(m.dimension, m.get(0, 0).getOrElse(DeviceConfiguration.standardColor.toHex))
-      case None         => matrix
+      case None => matrix
     }
     init(getModeFromSelect(selectMode))
     conf.neighbour match {
@@ -144,27 +152,29 @@ object ConfigurationSection {
 
   private class SensorInputText(name: String = "", default: String = "") {
     private val nameTag = input(
-      `type`      := "text",
+      `type` := "text",
       placeholder := "name",
-      cls         := "form-control mr-1 bg-dark text-light",
-      value       := name
+      cls := "form-control mr-1 bg-dark text-light",
+      value := name
     ).render
     private val valueTag =
       input(`type` := "text", placeholder := "value", cls := "form-control bg-dark text-light", value := default).render
     val closeButton: Button = button(cls := "btn-sm btn-danger ml-1", span(cls := "text-light", "X")).render
 
-    private def booleanFromString(value: String): Try[Boolean] = value match {
-      case "true"  => Success(true)
+    private def booleanFromString(value: String): Try[DeviceKind] = value match {
+      case "true" => Success(true)
       case "false" => Success(false)
-      case _       => Failure(new IllegalArgumentException)
+      case _ => Failure(new IllegalArgumentException)
     }
 
-    def nameAndValue: (String, Any) = (nameTag.value, parseValue)
+    def nameAndValue: (String, DeviceKind) = (nameTag.value, parseValue)
 
-    def parseValue: Any = Try(valueTag.value.toInt).recoverWith { case _ => Try(valueTag.value.toDouble) }.recoverWith {
-      case _ => booleanFromString(valueTag.value)
-    }
-      .getOrElse(valueTag.value)
+    def parseValue: DeviceKind = Try[DeviceKind](valueTag.value.toInt)
+      .recoverWith { case _ => Try[DeviceKind](valueTag.value.toDouble) }
+      .recoverWith { case _ =>
+        booleanFromString(valueTag.value)
+      }
+      .getOrElse((valueTag.value: DeviceKind))
 
     val render: Div = div(
       cls := "input-group-sm mb-2 mt-2",
@@ -196,10 +206,10 @@ object ConfigurationSection {
 
   private case class MatrixInput(dimension: Int, color: String) {
     private val dimensionTag = input(
-      `type`      := "text",
+      `type` := "text",
       placeholder := "dimension",
-      cls         := "form-control mr-1 bg-dark text-light",
-      value       := dimension
+      cls := "form-control mr-1 bg-dark text-light",
+      value := dimension
     ).render
     private val colorTag =
       input(`type` := "text", placeholder := "color", cls := "form-control bg-dark text-light", value := color).render
@@ -230,7 +240,7 @@ object ConfigurationSection {
 
   private def modeFromString(mode: String): Mode = mode match {
     case "random" => Random
-    case "grid"   => Grid
+    case "grid" => Grid
   }
 
   private def getModeFromSelect(select: Select): Mode = {

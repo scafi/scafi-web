@@ -17,7 +17,8 @@ class ExampleChooser(
     examples.map(example => option(value := example.name, example.name).render).toList
 
   examples.appendChild(option(value := "", selected, disabled, hidden, "Choose an example..").render)
-  optionGroups.map { case (groupName, examples) => optgroup(attr("label") := groupName, examples).render }
+  optionGroups
+    .map { case (groupName, examples) => optgroup(attr("label") := groupName, examples).render }
     .foreach(group => examples.appendChild(group))
   examples.onchange = _ => {
     val option = options(examples.selectedIndex - 1) // due the first option
