@@ -1,6 +1,6 @@
 package it.unibo.scafi.js
-
-import it.unibo.scafi.js.code._
+import upickle.default._
+import it.unibo.scafi.js.code.{ExampleGroup, _}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
 import it.unibo.scafi.js.dsl.semantics._
@@ -76,32 +76,6 @@ object Index {
     300
   )
 
-  def buildTour(controls: SimulationControlsSection): PopoverProgression.Builder = SkeletonPage.popoverTourBuilder
-    .addNextPopover(
-      attachTo = controls.loadButton.id,
-      title = "Load code",
-      text = "Every time you edit your code and want to load it onto the network, click here ...",
-      direction = Popover.Bottom
-    )
-    .addNextPopover(
-      attachTo = controls.startButton.id,
-      title = "Start the simulation",
-      text = "... and then start the simulation here"
-    )
-    .addNextPopover(
-      attachTo = controls.stopButton.id,
-      title = "Stop the simulation",
-      text = "You can stop the simulation with this button to restart it later."
-    )
-    .addNextPopover(
-      attachTo = controls.tick.id,
-      title = "Tick-by-tick progression",
-      text = "You can also progress in the simulation tick-by-tick using this button."
-    )
-    // TODO add batch description
-    // TODO add period description
-    .andFinally(() => Cookie.store("visited", "true"))
-
   def scafiInitialization(mode: EditorSection.Mode): Unit = {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
@@ -129,7 +103,7 @@ object Index {
     // force repaint
     support.invalidate()
     SkeletonPage.visualizationSection.focus()
-    val tour = buildTour(controls).start()
+    val tour = Tour(controls).start()
     PopoverProgression.ResetButton.render(tour, SkeletonPage.navRightSide)
     if (!Cookie.get("visited").exists(_.toBoolean)) {
       val modal = welcomeModal
@@ -140,15 +114,14 @@ object Index {
       }
       modal.show()
     }
-
     PageBus.publish(configuration) // tell to all component the new configuration installed on the frontend
-    val example = Seq(BasicExamples(), LibraryExamples(), MatrixLedExample(), MovementExamples(), HighLevelExamples())
-    // PageStructure.static()
     PageStructure.resizable()
     if (mode == EditorSection.JavascriptMode) {
       editor.setCode("", mode)
     } else {
-      val exampleChooser = new ExampleChooser(SkeletonPage.selectionProgram, example, configurationSection, editor)
+      ExampleProvider
+        .race(ExampleProvider.fromGlobal(), ExampleProvider.fromRemote())
+        .foreach(examples => new ExampleChooser(SkeletonPage.selectionProgram, examples, configurationSection, editor))
     }
   }
   @JSExportTopLevel("ScafiBackend")

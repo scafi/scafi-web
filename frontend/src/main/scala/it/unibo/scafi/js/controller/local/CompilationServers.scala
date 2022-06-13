@@ -18,7 +18,6 @@ object CompilationServers {
   }
 
   def isReachable(server: String): Boolean = {
-    println(server)
     val xhr = new XMLHttpRequest()
     xhr.open(
       "GET", // todo, put head
