@@ -2,7 +2,7 @@ package it.unibo.scafi.js.code
 
 import it.unibo.scafi.js.utils.GlobalStore
 import org.scalajs.dom.ext.Ajax
-
+import org.scalajs.dom
 import scala.concurrent.{ExecutionContext, Future}
 import upickle.default._
 
@@ -14,6 +14,7 @@ trait ExampleProvider {
 
 object ExampleProvider {
   private val storeKey = "examples"
+  private val examplesPath = s"${dom.window.location.href}config/examples.json"
   /** Combine provider by requesting the example in order. the first provider that returns a sequence of example
     * provider successfully complete the future
     * @param providers
@@ -24,7 +25,7 @@ object ExampleProvider {
 
   def fromRemote()(implicit context: ExecutionContext): ExampleProvider = new ExampleProvider {
     override def getExamples: Future[Seq[ExampleGroup]] = Ajax
-      .get("/config/examples.json")
+      .get(examplesPath)
       .map(_.responseText)
       .andThen { case Success(value) => GlobalStore.put(storeKey, value) }
       .map(result => read[Seq[ExampleGroup]](result))
