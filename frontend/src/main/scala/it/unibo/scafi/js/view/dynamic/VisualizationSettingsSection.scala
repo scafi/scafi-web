@@ -30,9 +30,11 @@ object VisualizationSettingsSection {
       override val sensorsMenu: SensorsMenu,
       visualizationDropMenu: Div
   ) extends VisualizationSettingsSection {
-    private val labelsEnabledGlobal = "labelEnabled"
-    private val labels = GlobalStore.getOrElseUpdate(
-      labelsEnabledGlobal,
+    private val labelsEnabledKey = new GlobalStore.Key {
+      type Data = js.Dictionary[Boolean]
+      override val value = "labelEnabled"
+    }
+    private val labels = GlobalStore.getOrElseUpdate(labelsEnabledKey)(
       js.Dictionary(
         "id" -> true,
         "neighborhood" -> true,
@@ -52,8 +54,7 @@ object VisualizationSettingsSection {
     private val minNodeSize = 4
     private val maxNodeSize = 20
     private val standardNodeSize = 7
-    val initialConfig = GlobalStore.getOrElseUpdate(
-      VisualizationSetting.globalName,
+    private val initialConfig = GlobalStore.getOrElseUpdate(VisualizationSetting.key)(
       VisualizationSetting(standardFontSize, standardNodeSize)
     )
     private val fontSizeTag = NumericVizInput(
@@ -62,8 +63,8 @@ object VisualizationSettingsSection {
       maxFontSize,
       initialConfig.fontSize,
       font => {
-        val config = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName).get
-        GlobalStore.put(VisualizationSetting.globalName, config.changeFont(font))
+        val config = GlobalStore.get(VisualizationSetting.key).get
+        GlobalStore.put(VisualizationSetting.key)(config.changeFont(font))
       }
     )
     private val nodeSizeTag = NumericVizInput(
@@ -72,8 +73,8 @@ object VisualizationSettingsSection {
       maxNodeSize,
       initialConfig.nodeSize,
       node => {
-        val config = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName).get
-        GlobalStore.put(VisualizationSetting.globalName, config.changeNode(node))
+        val config = GlobalStore.get(VisualizationSetting.key).get
+        GlobalStore.put(VisualizationSetting.key)(config.changeNode(node))
       }
     )
 
@@ -99,9 +100,9 @@ object VisualizationSettingsSection {
     settingDiv.appendChild(sensorsMenu.html)
 
     private def onLabelChange(e: MouseEvent, name: String): Unit = {
-      val labelsMap = GlobalStore.get[js.Dictionary[Boolean]](labelsEnabledGlobal).get
+      val labelsMap = GlobalStore.get(labelsEnabledKey).get
       labelsMap.put(name, !labelsMap(name))
-      GlobalStore.put(labelsEnabledGlobal, labelsMap)
+      GlobalStore.put(labelsEnabledKey)(labelsMap)
       Toggle.Repaint(e)
     }
   }

@@ -70,7 +70,7 @@ object LabelRender {
         world: Graph,
         scene: Scene
     ): Output = {
-      val (fontSize, width) = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName) match {
+      val (fontSize, width) = GlobalStore.get(VisualizationSetting.key) match {
         case Success(VisualizationSetting(fontSize, nodeWidth)) => (fontSize, nodeWidth: JSNumber)
         case Failure(_) => (fallBackSize, node.width)
       }
@@ -182,7 +182,7 @@ object LabelRender {
         world: Graph,
         scene: Scene
     ): Output = {
-      val fullMatrix = GlobalStore.get[VisualizationSetting](VisualizationSetting.globalName) match {
+      val fullMatrix = GlobalStore.get(VisualizationSetting.key) match {
         case Success(VisualizationSetting(_, nodeSize)) => (nodeSize: Double)
         case Failure(_) => fallBackSize
       }

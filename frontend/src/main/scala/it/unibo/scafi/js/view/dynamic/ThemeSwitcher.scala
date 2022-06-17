@@ -10,19 +10,22 @@ import scalatags.JsDom.all
 import scala.scalajs.js
 
 object ThemeSwitcher {
-
   import all._
 
+  private val keyTheme = new GlobalStore.Key {
+    override type Data = Theme
+    override val value: String = "theme"
+  }
   private val lightStyle = link(id := "light", rel := "stylesheet", href := "style/light.css").render
 
-  private var theme: Theme = GlobalStore.get[Theme]("theme").getOrElse(Dark)
+  private var theme: Theme = GlobalStore.get(keyTheme).getOrElse(Dark)
 
-  def onLight(action: => Unit): CancelableFuture[Unit] = GlobalStore.listen[Theme]("theme") {
+  def onLight(action: => Unit): CancelableFuture[Unit] = GlobalStore.listen(keyTheme) {
     case theme if theme.value == Light.value => action
     case _ =>
   }
 
-  def onDark(action: => Unit): CancelableFuture[Unit] = GlobalStore.listen[Theme]("theme") {
+  def onDark(action: => Unit): CancelableFuture[Unit] = GlobalStore.listen(keyTheme) {
     case theme if theme.value == Dark.value => action
     case _ =>
   }
@@ -43,7 +46,7 @@ object ThemeSwitcher {
   }
 
   private def install(theme: Theme): Unit = {
-    GlobalStore.put("theme", theme)
+    GlobalStore.put(keyTheme)(theme)
     theme.value match {
       case Light.value if !exist(lightStyle.id) => document.head.appendChild(lightStyle)
       case Dark.value if exist(lightStyle.id) => $(s"#${lightStyle.id}").remove()

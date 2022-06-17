@@ -57,7 +57,7 @@ class PhaserGraphSection(
   private lazy val sceneHandler: types.scenes.CreateSceneFromObjectConfig = types.scenes.callbacks(
     preload = scene => labelRenders.foreach(_.onInit(scene)),
     create = (scene, _) => {
-      GlobalStore.listen[Any](VisualizationSetting.globalName)(_ => PageBus.publish(ForceRepaint))
+      GlobalStore.listen(VisualizationSetting.key)(_ => PageBus.publish(ForceRepaint))
       val mainCamera = scene.cameras.main
       mainCamera.zoom = 1
       Debug("scene", scene)

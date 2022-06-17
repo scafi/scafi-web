@@ -36,12 +36,16 @@ case class SupportConfiguration(
     coordinateMapping: CoordinateMapping = Identity
 )
 object SupportConfiguration {
+  val key = new GlobalStore.Key {
+    override type Data = String
+    override val value: String = "configuration"
+  }
   implicit def supportConfigurationRW: ReadWriter[SupportConfiguration] = macroRW[SupportConfiguration]
 
-  def storeGlobal(config: SupportConfiguration): Unit = GlobalStore.put("configuration", write(config))
+  def storeGlobal(config: SupportConfiguration): Unit = GlobalStore.put(key)(write(config))
 
   def loadGlobal(): Try[SupportConfiguration] =
-    GlobalStore.get[String]("configuration").flatMap(elem => Try(read[SupportConfiguration](elem)))
+    GlobalStore.get(key).flatMap(elem => Try(read[SupportConfiguration](elem)))
 }
 
 /** top level trait to describe a network configuration that tells how node are placed in the world. */

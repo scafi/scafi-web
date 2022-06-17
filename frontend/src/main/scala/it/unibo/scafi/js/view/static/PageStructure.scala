@@ -44,13 +44,13 @@ object PageStructure {
     private val doubleClickEvent = (ev: js.Any) => {
       val backendSection = $("#backend-config-section")
       split.destroy()
-      val divisions = GlobalStore.get[PageDivision](sizesInGlobal).get
+      val divisions = GlobalStore.get(sizesKey).get
       if (divisions.collapsed) {
         divisions.elems(config) = configSection
         divisions.elems(visualization) =
           new SplitSection(divisions.elems(visualization).size - configSection.size, minVisualizationPortion)
         backendSection.show()
-        GlobalStore.put(sizesInGlobal, new PageDivision(false, divisions.elems))
+        GlobalStore.put(sizesKey)(new PageDivision(false, divisions.elems))
         split = createSplit(gutterCreator, sections, divisions.elems: _*)
       } else {
         backendSection.hide()
@@ -58,13 +58,13 @@ object PageStructure {
         divisions.elems(config) = empty
         divisions.elems(visualization) =
           new SplitSection(divisions.elems(visualization).size + oldConfig.size, minVisualizationPortion)
-        GlobalStore.put(sizesInGlobal, new PageDivision(true, divisions.elems))
+        GlobalStore.put(sizesKey)(new PageDivision(true, divisions.elems))
         split = createSplit(gutterCreator, sections, divisions.elems: _*)
       }
     }
 
     def install(): Unit = {
-      val divisions: PageDivision = GlobalStore.getOrElseUpdate(sizesInGlobal, standardConfig)
+      val divisions: PageDivision = GlobalStore.getOrElseUpdate(sizesKey)(standardConfig)
       val backendSection = $("#backend-config-section")
       if (divisions.collapsed) {
         backendSection.hide()
@@ -89,7 +89,7 @@ object PageStructure {
           "expandToMin" -> true,
           "onDrag" -> ((elems: js.Array[Double]) => {
             split.destroy()
-            val oldConfig = GlobalStore.get[PageDivision](sizesInGlobal).get
+            val oldConfig = GlobalStore.get(sizesKey).get
             val newPageDivision = new PageDivision(
               oldConfig.collapsed,
               js.Array(
@@ -105,7 +105,7 @@ object PageStructure {
               )
             )
             install()
-            GlobalStore.put(sizesInGlobal, newPageDivision)
+            GlobalStore.put(sizesKey)(newPageDivision)
           })
         )
       )
@@ -114,5 +114,8 @@ object PageStructure {
 
   class SplitSection(val size: Double, val minSize: Int) extends js.Object
   class PageDivision(val collapsed: Boolean, val elems: js.Array[SplitSection]) extends js.Object
-  val sizesInGlobal = "page-sizes"
+  val sizesKey = new GlobalStore.Key {
+    type Data = PageDivision
+    override val value = "page-sizes"
+  }
 }

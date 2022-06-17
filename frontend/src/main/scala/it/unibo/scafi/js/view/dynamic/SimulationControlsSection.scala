@@ -53,6 +53,7 @@ class SimulationControlsSection {
         simulation = Some(daemon)
         stopButton.disabled = false
         (tick :: startButton :: Nil) foreach { el => el.disabled = true }
+      case _ =>
     }
 
   tick.onclick = _ =>
@@ -115,8 +116,11 @@ class SimulationControlsSection {
   }
 
   private case class VelocitySelector(slow: Int, normal: Int, fast: Int) extends HtmlRenderable[Element] {
-    private val globalLabel = "velocitySelector"
-    val active: String = GlobalStore.getOrElseUpdate(globalLabel, "slow")
+    private val key = new GlobalStore.Key {
+      override type Data = String
+      override val value: String = "velocitySelector"
+    }
+    val active: String = GlobalStore.getOrElseUpdate(key)("slow")
     var onChangeRadio: () => Unit = () => {}
     var batchSize: Int = active match {
       case "slow" => slow
@@ -164,7 +168,7 @@ class SimulationControlsSection {
         "change",
         () => {
           batchSize = value
-          GlobalStore.put(globalLabel, name)
+          GlobalStore.put(key)(name)
           onChangeRadio()
         }
       )

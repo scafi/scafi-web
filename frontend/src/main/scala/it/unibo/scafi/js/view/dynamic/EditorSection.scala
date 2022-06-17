@@ -23,7 +23,14 @@ trait EditorSection {
 }
 
 object EditorSection {
-
+  val modeKey = new GlobalStore.Key {
+    type Data = Mode
+    override val value: String = "mode"
+  }
+  val docKey = new GlobalStore.Key {
+    override type Data = Doc
+    override val value: String = "doc"
+  }
   trait Mode extends js.Object {
     def lang: String
 
@@ -77,7 +84,7 @@ object EditorSection {
   }
 
   private class EditorSectionImpl(editorZone: Div, defaultMode: Mode = ScalaModeEasy) extends EditorSection {
-    var mode: Mode = GlobalStore.get[Mode]("mode") match {
+    var mode: Mode = GlobalStore.get(EditorSection.modeKey) match {
       case Failure(exception) => defaultMode
       case Success(mode) => mode
     }
@@ -101,7 +108,7 @@ object EditorSection {
         modeSelection.on()
       }
     )
-    val editor = GlobalStore.get[Doc]("doc") match {
+    val editor = GlobalStore.get(docKey) match {
       case Success(doc) =>
         val config = new EditorConfiguration(doc.getValue(), mode.codeMirrorMode, "native", true, "material")
         val editor = CodeMirror(editorZone, config)
@@ -114,7 +121,7 @@ object EditorSection {
     ThemeSwitcher.onDark(editor.setOption("theme", "material"))
     ThemeSwitcher.onLight(editor.setOption("theme", "default"))
 
-    GlobalStore.put("doc", editor.doc)
+    GlobalStore.put(docKey)(editor.doc)
     modeSelection.onClick = () => {
       if (mode.lang == ScalaModeEasy.lang) {
         val fullCode = ScalaModeEasy.convertToFull(this.getRaw())
@@ -132,7 +139,7 @@ object EditorSection {
         case _ =>
       }
       editor.setValue(code)
-      GlobalStore.put("mode", mode)
+      GlobalStore.put(modeKey)(mode)
       this.mode = mode
       editor.setOption("mode", mode.codeMirrorMode)
     }
