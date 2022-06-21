@@ -10,7 +10,7 @@ import it.unibo.scafi.js.model.{Graph, Node}
 import it.unibo.scafi.js.utils.{Debug, GlobalStore, JSNumber}
 import it.unibo.scafi.js.view.dynamic.{PageBus, VisualizationSettingsSection}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
-import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.{Bound, ForceRepaint}
+import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.{Bound, ForceRepaint, scrollKey, zoomKey}
 import it.unibo.scafi.js.view.static.VisualizationSetting
 import org.scalajs.dom.ext.Color
 import org.scalajs.dom.raw.HTMLElement
@@ -31,6 +31,7 @@ class PhaserGraphSection(
   private var model: (Option[Graph], Boolean) = (Option.empty[Graph], false)
   private val size = 5 // TODO put in configuration
   private var newBound: Option[Bound] = None
+  private var currentBound: Option[Bound] = None
   private val nodeColor: Int = Color(187, 134, 252) // TODO put in configuration
   private val lineColor: Int = Color(125, 125, 125) // TODO put in configuration
   private val cameraSlack = -0.1
@@ -59,8 +60,14 @@ class PhaserGraphSection(
     create = (scene, _) => {
       GlobalStore.listen(VisualizationSetting.key)(_ => PageBus.publish(ForceRepaint))
       val mainCamera = scene.cameras.main
-      mainCamera.zoom = 1
-      Debug("scene", scene)
+      mainCamera.zoom = GlobalStore.getOrElse(zoomKey)(1)
+      GlobalStore
+        .get(scrollKey)
+        .foreach { scroll =>
+          scene.cameras.main.scrollX = scroll(0)
+          scene.cameras.main.scrollY = scroll(1)
+        }
+
       vertexContainer = scene.add.container(0, 0)
       labelContainer = scene.add.container(0, 0)
       nodeContainer = scene.add.container(0, 0)
@@ -74,12 +81,20 @@ class PhaserGraphSection(
       // keyboardBindings.init(scene) // TODO to remove...
       scene.input.on(
         Phaser.Input.Events.POINTER_WHEEL,
-        (_: js.Any, _: js.Any, _: js.Any, _: JSNumber, dy: JSNumber, _: JSNumber) => mainCamera.zoom -= (dy / 1000)
+        (_: js.Any, _: js.Any, _: js.Any, _: JSNumber, dy: JSNumber, _: JSNumber) => {
+          val zoom = mainCamera.zoom - (dy / 1000)
+          GlobalStore.put(zoomKey)(zoom)
+          mainCamera.zoom = zoom
+        }
       )
     },
     update = scene => {
-      newBound.foreach(bound => adjustScene(bound, scene))
-      newBound = None
+      if (currentBound != newBound && currentBound.nonEmpty || isNewPage) {
+        newBound
+          .foreach(bound => adjustScene(bound, scene))
+      } else {
+        currentBound = newBound
+      }
       model match {
         case (Some(graph), true) => onNewGraph(graph, scene)
         case (Some(graph), false) => onSameGraph(graph, scene)
@@ -92,13 +107,17 @@ class PhaserGraphSection(
 
   PageBus.listen {
     case ForceRepaint => model = model.copy(_2 = true)
-    case SupportConfiguration(_ @RandomNetwork(min, max, _), _, _, _, _) => newBound = Some(Bound(min, min, max, max))
+    case SupportConfiguration(_ @RandomNetwork(min, max, _), _, _, _, _) =>
+      newBound = Some(Bound(min, min, max, max))
     case SupportConfiguration(_ @GridLikeNetwork(row, col, stepX, stepY, _), _, _, _, _) =>
       newBound = Some(Bound(0, 0, (row - 1) * stepX, (col - 1) * stepY))
   }
 
+  private def isNewPage: Boolean = GlobalStore.get(zoomKey).isFailure && currentBound.isEmpty
   private def adjustScene(bound: Bound, scene: Scene): Unit = {
+    currentBound = Some(bound)
     mainContainer.setPosition(0, 0)
+    GlobalStore.put(Interaction.panKey)(js.Array(0, 0))
     val Bound(minX, minY, maxX, maxY) = bound
     val (width, height) = (maxX - minX, maxY - minY)
     val (halfWidth, halfHeight) = (width / 2, height / 2)
@@ -107,11 +126,14 @@ class PhaserGraphSection(
       (game.canvas.parentElement.offsetWidth / 2.0, game.canvas.parentElement.offsetHeight / 2.0)
     scene.cameras.main.scrollX = -(gameCenterX - centerX)
     scene.cameras.main.scrollY = -(gameCenterY - centerY)
+    GlobalStore.put(scrollKey)(js.Array(scene.cameras.main.scrollX, scene.cameras.main.scrollY))
     val zoomFactorHeight = game.canvas.height / height
     val zoomFactorWidth = game.canvas.width / width
     val zoomFactor = if (zoomFactorWidth < zoomFactorHeight) zoomFactorWidth else zoomFactorHeight
     val slack = if (zoomFactor > 1) cameraSlack else noSlack
     scene.cameras.main.zoom = zoomFactor + slack
+    GlobalStore.put(zoomKey)(scene.cameras.main.zoom)
+
   }
 
   private def onSameGraph(graph: Graph, scene: Phaser.Scene): Unit = ()
@@ -187,8 +209,15 @@ class PhaserGraphSection(
 }
 
 object PhaserGraphSection {
-
-  /** a set of event that could be received by this sectio */
+  private val zoomKey = new GlobalStore.Key {
+    override type Data = Double
+    override val value: String = "zoom"
+  }
+  private val scrollKey = new GlobalStore.Key {
+    override type Data = js.Array[Double]
+    override val value: String = "scroll"
+  }
+  /** a set of event that could be received by this section */
   sealed trait VisualizationEvent
 
   /** repaint the graph even if it is not changed. */

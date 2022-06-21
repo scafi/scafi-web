@@ -9,7 +9,7 @@ import it.unibo.scafi.js.facade.phaser.Phaser.Input.Events._
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, GameObject, Rectangle}
 import it.unibo.scafi.js.facade.phaser.namespaces.InputNamespace.Pointer
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace.Transform
-import it.unibo.scafi.js.utils.{Execution, JSNumber}
+import it.unibo.scafi.js.utils.{Execution, GlobalStore, JSNumber}
 import it.unibo.scafi.js.view.dynamic.PageBus
 import it.unibo.scafi.js.view.dynamic.graph.Interaction.State
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
@@ -17,6 +17,8 @@ import monix.execution.Scheduler
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
 import org.scalajs.dom.ext.Color
+
+import scala.scalajs.js
 
 /** The trait models an abstraction over the possible interactions with the view. */
 trait Interaction {
@@ -45,7 +47,12 @@ trait Interaction {
 }
 
 object Interaction {
-
+  val panKey: GlobalStore.Key {
+    type Data = js.Array[JSNumber]
+  } = new GlobalStore.Key {
+    override type Data = js.Array[Double] // To marshalling issues
+    override val value: String = "pan"
+  }
   /** The trait models the current mode of interaction. */
   trait State
 
@@ -77,6 +84,8 @@ object Interaction {
       this.popup = popup
       this.mainContainer = container
       PageBus.listen { case _: SupportConfiguration => resetSelection() } // todo fix selection issue
+      val position = GlobalStore.getOrElse(panKey)(js.Array(0, 0))
+      mainContainer.setPosition(position(0), position(1))
       initRectangle()
       onDragStart()
       onDrag()
@@ -153,6 +162,7 @@ object Interaction {
               selectionContainer.y += (dy + positionBeforeDrag._2) - rectangleSelection.y
               rectangleSelection.setPosition(positionBeforeDrag._1 + dx, positionBeforeDrag._2 + dy)
             case (Pan, _) =>
+              GlobalStore.put(panKey)(js.Array(dx, dy))
               obj.setPosition(dx, dy)
             case _ =>
           }
