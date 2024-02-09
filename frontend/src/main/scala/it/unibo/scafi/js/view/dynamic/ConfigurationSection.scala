@@ -3,16 +3,13 @@ package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.js.controller.AggregateSystemSupport
 import it.unibo.scafi.js.controller.local.DeviceConfiguration.DeviceKind
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.facade.simplebar.SimpleBar
 import it.unibo.scafi.js.model.MatrixLed
 import it.unibo.scafi.js.model.MatrixLed.MatrixMap
-import it.unibo.scafi.js.utils.GlobalStore
 import it.unibo.scafi.js.view.dynamic.ConfigurationSection._
 import it.unibo.scafi.js.view.static.RootStyle.smallPrimaryBtnClass
 import org.scalajs.dom.html.{Button, Div, Select}
 import org.scalajs.dom.raw.MouseEvent
 import scalatags.JsDom.all._
-import upickle.default._
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -47,7 +44,7 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
   selectMode.onchange = _ => init(getModeFromSelect(selectMode))
   loadButton.onclick = _ => load(getModeFromSelect(selectMode))
   configuration.appendChild(container)
-  SimpleBar.wrap(configuration)
+  container.style = "height: 90%; overflow-x: scroll"
 
   sensors.foreach(sensor => sensor.closeButton.onclick = onRemoveSensor(sensor))
 
