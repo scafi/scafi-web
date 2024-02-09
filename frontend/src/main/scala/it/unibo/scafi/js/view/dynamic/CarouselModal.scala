@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.view.dynamic
 
-import it.unibo.scafi.js.facade.simplebar.SimpleBar
 import it.unibo.scafi.js.utils.Tree
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.dynamic.CarouselModal._
@@ -65,7 +64,6 @@ case class CarouselModal(carousel: CarouselContent, minBound: Double, innerHeigh
   override lazy val html: Element = innerModal.html
 
   innerModal.onClose = () => this.onClose()
-  SimpleBar.wrap(carouselInner)
 
   override def body: Seq[Element] = innerModal.body
 
