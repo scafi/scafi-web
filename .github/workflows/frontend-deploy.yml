@@ -6,7 +6,7 @@ jobs:
     strategy:
       # Using matrix build even if not needed
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-20.04 ]
         jvm_version: [ 11 ]
     runs-on: ${{ matrix.os }}
     steps:
