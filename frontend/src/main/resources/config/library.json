@@ -1,0 +1,1228 @@
+[{
+  "type": "aggregate_program",
+  "message0": "Aggregate Program %1 %2",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_statement",
+      "name": "AGGREGATE_PROGRAM_MAIN"
+    }
+  ],
+  "colour": 135,
+  "tooltip": "AggregateProgram",
+  "helpUrl": "https://scafi.github.io/"
+},
+{
+  "type": "output",
+  "message0": "Output %1",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "OUTPUT_VALUE"
+    }
+  ],
+  "previousStatement": null,
+  "colour": 20,
+  "tooltip": "Output a value",
+  "helpUrl": ""
+},
+{
+  "type": "sense",
+  "message0": "Sense %1 %2",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "TYPE",
+      "check": "Class"
+    },
+    {
+      "type": "input_value",
+      "name": "SENSOR_NAME",
+      "check": "String"
+    }
+  ],
+  "inputsInline": true,
+  "output": null,
+  "colour": 210,
+  "tooltip": "Get the value of a sensor",
+  "helpUrl": ""
+},
+{
+  "type": "mux",
+  "message0": "Mux %1 Then %2 Else %3",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "CONDITION",
+      "check": "Boolean"
+    },
+    {
+      "type": "input_value",
+      "name": "FIRST_BRANCH"
+    },
+    {
+      "type": "input_value",
+      "name": "SECOND_BRANCH"
+    }
+  ],
+  "output": null,
+  "colour": 65,
+  "tooltip": "Condition without branching",
+  "helpUrl": ""
+},
+{
+  "type": "boolean_operation",
+  "message0": "%1 %2 %3 %4",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "LEFT",
+      "check": "Boolean"
+    },
+    {
+      "type": "field_dropdown",
+      "name": "OPERATOR",
+      "options": [
+        [
+          "and",
+          "&&"
+        ],
+        [
+          "or",
+          "||"
+        ]
+      ]
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "RIGHT",
+      "check": "Boolean"
+    }
+  ],
+  "inputsInline": true,
+  "output": "Boolean",
+  "colour": 260,
+  "tooltip": "Boolean operation",
+  "helpUrl": ""
+},
+{
+  "type": "getter",
+  "message0": "Get ( %1 )",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": ""
+    }
+  ],
+  "output": null,
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "define",
+  "message0": "Define %1 %2",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "NAME",
+      "text": "x"
+    },
+    {
+      "type": "input_value",
+      "name": "VALUE"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "distance_to",
+  "message0": "Distance To %1",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "SRC",
+      "check": "Boolean"
+    }
+  ],
+  "output": "Double",
+  "colour": 120,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "channel",
+  "message0": "Channel %1 Source %2 Target %3 Width %4",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "SOURCE",
+      "check": "Boolean"
+    },
+    {
+      "type": "input_value",
+      "name": "TARGET",
+      "check": "Boolean"
+    },
+    {
+      "type": "input_value",
+      "name": "WIDTH",
+      "check": [
+        "Integer",
+        "Double"
+      ]
+    }
+  ],
+  "output": "Boolean",
+  "colour": 120,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "led_all_to",
+  "message0": "Led All To %1",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "COLOR",
+      "check": "Color"
+    }
+  ],
+  "output": null,
+  "colour": 230,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "distance_between",
+  "message0": "Distance Between %1 %2",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "SOURCE",
+      "check": "Boolean"
+    },
+    {
+      "type": "input_value",
+      "name": "TARGET",
+      "check": "Boolean"
+    }
+  ],
+  "output": "Double",
+  "colour": 120,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "number_compare",
+  "message0": "%1 %2 %3 %4",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "FIRST",
+      "check": [
+        "Integer",
+        "Double"
+      ]
+    },
+    {
+      "type": "field_dropdown",
+      "name": "OPERATOR",
+      "options": [
+        [
+          ">",
+          "GREATER"
+        ],
+        [
+          ">=",
+          "GREATER_OR_EQUAL"
+        ],
+        [
+          "==",
+          "EQUAL"
+        ],
+        [
+          "!=",
+          "NOT EQUAL"
+        ],
+        [
+          "<=",
+          "LESS_OR_EQUAL"
+        ],
+        [
+          "<",
+          "LESS"
+        ]
+      ]
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "SECOND",
+      "check": [
+        "Integer",
+        "Double"
+      ]
+    }
+  ],
+  "output": "Boolean",
+  "colour": 260,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "number_operation",
+  "message0": "%1 %2 %3 %4",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "FIRST"
+    },
+    {
+      "type": "field_dropdown",
+      "name": "OPERATOR",
+      "options": [
+        [
+          "+",
+          "ADDITION"
+        ],
+        [
+          "-",
+          "SUBTRACTION"
+        ],
+        [
+          "*",
+          "MULTIPLICATION"
+        ],
+        [
+          "/",
+          "DIVISION"
+        ],
+        [
+          "%",
+          "MODULUS"
+        ]
+      ]
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "SECOND"
+    }
+  ],
+  "output": [
+    "Double",
+    "Integer"
+  ],
+  "colour": 260,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "mid",
+  "message0": "Mid",
+  "output": "String",
+  "colour": 120,
+  "tooltip": "Device Id",
+  "helpUrl": ""
+},
+{
+  "type": "foldhood",
+  "message0": "FoldHood %1 Initial Value: %2 Aggregator: %3 Expression %4",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "START"
+    },
+    {
+      "type": "input_value",
+      "name": "AGGREGATOR",
+      "check": "Lambda2"
+    },
+    {
+      "type": "input_value",
+      "name": "EXPRESSION"
+    }
+  ],
+  "output": null,
+  "colour": 160,
+  "tooltip": "foldHood",
+  "helpUrl": ""
+},
+{
+  "type": "foldhoodplus",
+  "message0": "FoldHoodPlus %1 Initial Value: %2 Aggregator: %3 Expression: %4",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "START"
+    },
+    {
+      "type": "input_value",
+      "name": "AGGREGATOR",
+      "check": "Lambda2"
+    },
+    {
+      "type": "input_value",
+      "name": "EXPRESSION"
+    }
+  ],
+  "output": null,
+  "colour": 160,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "nbr",
+  "message0": "Nbr %1",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "EXPRESSION"
+    }
+  ],
+  "output": null,
+  "colour": 65,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "rep",
+  "message0": "Rep %1 Initial Value:  %2 Evolution:  %3",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "START"
+    },
+    {
+      "type": "input_value",
+      "name": "EVOLUTION",
+      "check": "Lambda1"
+    }
+  ],
+  "output": null,
+  "colour": 65,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "class_integer",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": "Integer"
+    }
+  ],
+  "output": "Class",
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "class_double",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": "Double"
+    }
+  ],
+  "output": "Class",
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "class_boolean",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": "Boolean"
+    }
+  ],
+  "output": "Class",
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "class_string",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": "String"
+    }
+  ],
+  "output": "Class",
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "class_other",
+  "message0": "Class %1 %2",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "field_input",
+      "name": "NAME",
+      "text": ""
+    }
+  ],
+  "inputsInline": true,
+  "output": "Class",
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "string_value",
+  "message0": "\" %1 \"",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "VALUE",
+      "text": ""
+    }
+  ],
+  "output": "String",
+  "colour": 290,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "integer_value",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "VALUE",
+      "text": "1"
+    }
+  ],
+  "output": "Integer",
+  "colour": 290,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "boolean_value",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_dropdown",
+      "name": "VALUE",
+      "options": [
+        [
+          "true",
+          "true"
+        ],
+        [
+          "false",
+          "false"
+        ]
+      ]
+    }
+  ],
+  "output": "Boolean",
+  "colour": 290,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "double_value",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_number",
+      "name": "VALUE",
+      "value": 0.1,
+      "precision": null
+    }
+  ],
+  "output": "Double",
+  "colour": 290,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "tuple_value",
+  "message0": "( %1 , %2 )",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "VALUE_1"
+    },
+    {
+      "type": "input_value",
+      "name": "VALUE_2"
+    }
+  ],
+  "output": "Tuple",
+  "colour": 290,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "color_value",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_colour",
+      "name": "VALUE",
+      "colour": "#ffff00"
+    }
+  ],
+  "output": "Color",
+  "colour": 290,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "branch",
+  "message0": "Branch %1 First %2 Second %3",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "CONDITION",
+      "check": "Boolean"
+    },
+    {
+      "type": "input_value",
+      "name": "FIRST_BRANCH"
+    },
+    {
+      "type": "input_value",
+      "name": "SECOND_BRANCH"
+    }
+  ],
+  "output": null,
+  "colour": 65,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "equals",
+  "message0": "%1 Equals To %2",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "LEFT"
+    },
+    {
+      "type": "input_value",
+      "name": "RIGHT"
+    }
+  ],
+  "inputsInline": true,
+  "output": "Boolean",
+  "colour": 260,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "function",
+  "message0": "Function %1 %2 %3",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "FUNCTION_NAME",
+      "text": "functionName"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_statement",
+      "name": "BODY"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "function_1_param",
+  "message0": "Function %1 %2 Input %3 %4 Of Type %5 %6",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "FUNCTION_NAME",
+      "text": "functionName"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "field_input",
+      "name": "PARAM_NAME",
+      "text": "x"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_TYPE"
+    },
+    {
+      "type": "input_statement",
+      "name": "BODY"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "random_value",
+  "message0": "Random Number %1 Between 0 And %2",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "MAX",
+      "check": "Number"
+    }
+  ],
+  "inputsInline": true,
+  "output": "Number",
+  "colour": 290,
+  "tooltip": "Random number between edges",
+  "helpUrl": ""
+},
+{
+  "type": "random_value_between",
+  "message0": "Random Number %1 Between %2 And %3",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "MIN",
+      "check": "Number"
+    },
+    {
+      "type": "input_value",
+      "name": "MAX",
+      "check": "Number"
+    }
+  ],
+  "inputsInline": true,
+  "output": "Number",
+  "colour": 290,
+  "tooltip": "Random number between edges",
+  "helpUrl": ""
+},
+{
+  "type": "val",
+  "message0": "Val %1 %2",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "NAME",
+      "text": "x"
+    },
+    {
+      "type": "input_value",
+      "name": "VALUE"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "var",
+  "message0": "Var %1 %2",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "NAME",
+      "text": "x"
+    },
+    {
+      "type": "input_value",
+      "name": "VALUE"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 330,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "return",
+  "message0": "Return %1",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "RETURN"
+    }
+  ],
+  "previousStatement": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "function_2_param",
+  "message0": "Function %1 %2 Input %3 %4 Of Type %5 Input %6 %7 Of Type %8 %9",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "FUNCTION_NAME",
+      "text": "functionName"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "field_input",
+      "name": "PARAM_1_NAME",
+      "text": "x"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_1_TYPE"
+    },
+    {
+      "type": "field_input",
+      "name": "PARAM_2_NAME",
+      "text": "y"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_2_TYPE"
+    },
+    {
+      "type": "input_statement",
+      "name": "BODY"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "function_3_param",
+  "message0": "Function %1 %2 Input %3 %4 Of Type %5 Input %6 %7 Of Type %8 Input %9 %10 Of Type %11 %12",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "FUNCTION_NAME",
+      "text": "functionName"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "field_input",
+      "name": "PARAM_1_NAME",
+      "text": "x"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_1_TYPE"
+    },
+    {
+      "type": "field_input",
+      "name": "PARAM_2_NAME",
+      "text": "y"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_2_TYPE"
+    },
+    {
+      "type": "field_input",
+      "name": "PARAM_3_NAME",
+      "text": "z"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_3_TYPE"
+    },
+    {
+      "type": "input_statement",
+      "name": "BODY"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "call_function",
+  "message0": "%1 %2 ()",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": ""
+    },
+    {
+      "type": "input_dummy"
+    }
+  ],
+  "inputsInline": true,
+  "output": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "call_function_1_param",
+  "message0": "%1 %2 ( %3 : %4 )",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": ""
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "field_label_serializable",
+      "name": "PARAM_NAME",
+      "text": ""
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM"
+    }
+  ],
+  "inputsInline": true,
+  "output": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "call_function_2_param",
+  "message0": "%1 %2 ( %3 : %4 , %5 : %6 )",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": ""
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "field_label_serializable",
+      "name": "PARAM_1_NAME",
+      "text": ""
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_1"
+    },
+    {
+      "type": "field_label_serializable",
+      "name": "PARAM_2_NAME",
+      "text": ""
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_2"
+    }
+  ],
+  "inputsInline": true,
+  "output": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "call_function_3_param",
+  "message0": "%1 %2 ( %3 : %4 , %5 : %6 , %7 : %8 )",
+  "args0": [
+    {
+      "type": "field_label_serializable",
+      "name": "NAME",
+      "text": ""
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "field_label_serializable",
+      "name": "PARAM_1_NAME",
+      "text": ""
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_1"
+    },
+    {
+      "type": "field_label_serializable",
+      "name": "PARAM_2_NAME",
+      "text": ""
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_2"
+    },
+    {
+      "type": "field_label_serializable",
+      "name": "PARAM_3_NAME",
+      "text": ""
+    },
+    {
+      "type": "input_value",
+      "name": "PARAM_3"
+    }
+  ],
+  "inputsInline": true,
+  "output": null,
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "ternary_operation",
+  "message0": "%1 ? %2 : %3",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "CONDITION",
+      "check": "Boolean"
+    },
+    {
+      "type": "input_value",
+      "name": "THEN"
+    },
+    {
+      "type": "input_value",
+      "name": "ELSE"
+    }
+  ],
+  "inputsInline": true,
+  "output": null,
+  "colour": 260,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "lambda_1_param",
+  "message0": "Lambda ( %1 %2 => %3 )",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "PARAM_NAME",
+      "text": "variable"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "FUNCTION"
+    }
+  ],
+  "inputsInline": true,
+  "output": "Lambda1",
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "lambda_2_param",
+  "message0": "Lambda ( %1 ,  %2 %3 => %4 )",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "PARAM_1_NAME",
+      "text": "variable"
+    },
+    {
+      "type": "field_input",
+      "name": "PARAM_2_NAME",
+      "text": "variable2"
+    },
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "FUNCTION"
+    }
+  ],
+  "inputsInline": true,
+  "output": "Lambda2",
+  "colour": 20,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "minhood",
+  "message0": "MinHood %1 %2",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "EXPRESSION"
+    }
+  ],
+  "inputsInline": true,
+  "output": null,
+  "colour": 160,
+  "tooltip": "foldHood",
+  "helpUrl": ""
+},
+{
+  "type": "minhoodplus",
+  "message0": "MinHoodPlus %1 %2",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_value",
+      "name": "EXPRESSION"
+    }
+  ],
+  "inputsInline": true,
+  "output": null,
+  "colour": 160,
+  "tooltip": "foldHood",
+  "helpUrl": ""
+},
+{
+  "type": "nbrrange",
+  "message0": "NbrRange",
+  "output": "Number",
+  "colour": 120,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "tuple_3_value",
+  "message0": "( %1 , %2 , %3 )",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "VALUE_1"
+    },
+    {
+      "type": "input_value",
+      "name": "VALUE_2"
+    },
+    {
+      "type": "input_value",
+      "name": "VALUE_3"
+    }
+  ],
+  "output": "Tuple",
+  "colour": 290,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "not",
+  "message0": "Not %1",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "NAME",
+      "check": "Boolean"
+    }
+  ],
+  "output": "Boolean",
+  "colour": 260,
+  "tooltip": "",
+  "helpUrl": ""
+},
+{
+  "type": "hsl",
+  "message0": "Hsl ( %1 , %2 , %3 )",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "VALUE_1"
+    },
+    {
+      "type": "input_value",
+      "name": "VALUE_2"
+    },
+    {
+      "type": "input_value",
+      "name": "VALUE_3"
+    }
+  ],
+  "inputsInline": true,
+  "output": "Color",
+  "colour": 290,
+  "tooltip": "",
+  "helpUrl": ""
+}]

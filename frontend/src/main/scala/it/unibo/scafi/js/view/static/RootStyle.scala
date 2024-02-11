@@ -41,6 +41,11 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
     outlineWidth(0 px)
   )
 
+  "#blockly-editor" - (
+    height(80 vh),
+    width(100 %%)
+  )
+
   "#page-container" - (height(pageContentHeight))
 
   "#control-mode-container" - (

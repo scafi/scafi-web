@@ -57,6 +57,7 @@ object Index {
       EditorSection.ScalaModeEasy
     }
     scafiInitialization(defaultMode)
+    ThemeSwitcher.Light
     ThemeSwitcher.render(SkeletonPage.navRightSide) // attach the theme switcher
   }
 
@@ -95,7 +96,6 @@ object Index {
     val viewControls = new InteractionBoundButtonBar(interaction)
     //    viewControls.render(SkeletonPage.panMoveMode)
     viewControls.render(SkeletonPage.panModeButton, SkeletonPage.selectModeButton)
-    val configurationSection = new ConfigurationSection(SkeletonPage.backendConfig, support)
     val controls = new SimulationControlsSection()
     controls.render(support, editor, SkeletonPage.controlsDiv)
     // attach the simulator with the view
@@ -115,13 +115,14 @@ object Index {
       modal.show()
     }
     PageBus.publish(configuration) // tell to all component the new configuration installed on the frontend
-    PageStructure.resizable()
+    PageStructure.static()
     if (mode == EditorSection.JavascriptMode) {
       editor.setCode("", mode)
     } else {
-      ExampleProvider
+      /*ExampleProvider
         .race(ExampleProvider.fromGlobal(), ExampleProvider.fromRemote())
         .foreach(examples => new ExampleChooser(SkeletonPage.selectionProgram, examples, configurationSection, editor))
+       */
     }
   }
   @JSExportTopLevel("ScafiBackend")

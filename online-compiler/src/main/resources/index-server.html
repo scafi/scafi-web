@@ -2,11 +2,23 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/8.0.0/blockly_compressed.min.js" integrity="sha512-+aYZ+G4j2XbkxVwpjgkNqI03aNLpPxubVuU7ScJxXCmN02QvxXdZU6v6QYAFAITbqUp0SqhGil4OwM4RJHRo1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <title>Scafi</title>
     <link rel="icon" href="icons/icon.png">
 </head>
 <body>
     <script id="common" type="text/javascript" src="/js/common.js"></script>
     <script id="scafiWeb" type="text/javascript" src="/js/frontend-opt-bundle.js"></script>
+    <script type="text/javascript" src="js/blockly2scafi.js"></script>
+    <script type="text/javascript" src="js/blockly2scafi-opt.js"></script>
+    <script>
+    setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
+    </script>
 </body>
+<style>
+#blockly-editor {
+    height: 80vh;
+    width: 100%;
+}
+</style>
 </html>

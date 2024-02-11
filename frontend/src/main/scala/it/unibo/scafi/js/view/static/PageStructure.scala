@@ -12,8 +12,7 @@ trait PageStructure
 
 object PageStructure {
   def static(): Unit = {
-    $("#backend-config-section").addClass("col-2")
-    $("#editor-section").addClass("col-4")
+    $("#editor-section").addClass("col-6")
     $("#visualization-section").addClass("col-6")
   }
 

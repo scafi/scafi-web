@@ -1,0 +1,7 @@
+<xml>
+    <block type="aggregate_program" deletable="false" x="10" y="10">
+        <statement name="AGGREGATE_PROGRAM_MAIN">
+            <block type="output"></block>
+        </statement>
+    </block>
+</xml>

@@ -10,6 +10,7 @@ import org.querki.jquery.$
 import org.scalajs.dom.html.Div
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobalScope
 import scala.util.{Failure, Success}
 
 trait EditorSection {
@@ -153,8 +154,18 @@ object EditorSection {
     override def getRaw(): String = editor.getValue()
   }
 
-  def apply(div: Div): EditorSection =
-    new EditorSectionImpl(div)
+  def apply(div: Div): EditorSection = {
+    div.id = "blockly-editor"
+    new EditorSection {
+      override def setCode(code: String, mode: Mode): Unit = {}
+
+      override def getScript(): Script = Script.ScalaEasy(getRaw())
+
+      override def getRaw(): String = js.Dynamic.global.ScafiBlocks.asInstanceOf[String]
+
+      override def mode: Mode = ScalaModeEasy
+    }
+  }
 
   class ModeSelection(id: String, enabled: Boolean) {
     private val mode = $(s"#$id")

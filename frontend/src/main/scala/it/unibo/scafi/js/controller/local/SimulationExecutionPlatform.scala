@@ -12,12 +12,13 @@ import it.unibo.scafi.js.model.{ActuationData, MatrixLed, MatrixOps, Movement}
 import it.unibo.scafi.simulation.SpatialSimulation
 import it.unibo.scafi.space.Point2D
 import org.scalajs.dom
-import org.scalajs.dom.document
+import org.scalajs.dom.{Event, document, window}
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js
+import scala.scalajs.js.timers.RawTimers.setTimeout
 import scala.util.{Success, Try}
 
 /** the execution platform of a local simulation in web browser. Currently it supports only javascript execution. */
@@ -95,8 +96,6 @@ trait SimulationExecutionPlatform
   private def handleMove(exports: Seq[(ID, Iterable[Any])]): Unit = {
     val movement = exports.map { case (id, values) => id -> values.collect { case (a: Movement) => a } }.toMap
     movement.foreach { case (id, movements) => movements.foreach(movement => act(id, movement)) }
-//    val effect = PositionChanged(movement.map { case (id, _) => id -> backend.space.getLocation(id) })
-//    sideEffectsStream.onNext(effect)
     sideEffectsStream.onNext(Invalidated)
   }
 
@@ -115,26 +114,39 @@ trait SimulationExecutionPlatform
     SupportConfiguration.storeGlobal(this.systemConfig)
     CompilationServers().flatMap { servers =>
       val serverHost = servers.map(server).find(isReachable).getOrElse("")
-      // val serverHost = server(servers.head)
-
       Ajax
         .post(pathGenerator(serverHost), Ajax.InputData.str2ajax(code))
         .filter(_.status == 200)
         .map(_.responseText)
         .map { id =>
+          js.Dynamic.global.window.storeWorkspace()
           document.body.innerHTML = "" // TODO NOT SAFE
-          val newScript = document.createElement("script").asInstanceOf[dom.html.Script]
-          newScript.src = s"$serverHost/js/$id"
-          newScript.`type` = "text/javascript"
-          newScript.id = "scafiWeb"
-          document.body.appendChild(newScript)
-          // document.location.replace(s"$server/compilation/$id") //injection...
-          sideEffectExecution(new AggregateProgram {
-            override def main(): Any = {}
-          }) // TODO USELESS, find another way
+          appendScript("scafiWeb", s"$serverHost/js/$id")
+          prepareBlockly(serverHost)
+          sideEffectExecution(new AggregateProgram { override def main(): Any = {} }) // TODO USELESS, find another way
         }
     }
   }
+
+  private def appendScript(id: String, url: String): Unit = {
+    val newScript = document.createElement("script").asInstanceOf[dom.html.Script]
+    newScript.src = s"$url"
+    newScript.`type` = "text/javascript"
+    newScript.id = id
+    document.body.appendChild(newScript)
+  }
+
+  private def prepareBlockly(serverHost: String): Unit = setTimeout(
+    () => {
+      List(
+        ("blockly", s"$serverHost/js/blockly2scafi.js"),
+        ("blocklyBlocks", s"$serverHost/js/blockly2scafi-opt.js")
+      ).foreach { case (id, url) => appendScript(id, url) }
+      window.dispatchEvent(new Event("resize"))
+      js.Dynamic.global.loadWorkspace()
+    },
+    interval = 1000
+  )
   private def server(name: String) = s"${location.protocol}//$name"
   private def standardCompilation(url: String) = s"$url/code"
   private def easyCompilationUrl(url: String) = s"$url/code/easy"

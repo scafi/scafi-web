@@ -29,11 +29,17 @@ object Service {
   val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(defaultPort) // todo put in configuration
   val host = "0.0.0.0" // todo put in configuration
   val indexJs = "frontend-opt-bundle.js"
+  val blocklyScaFi = "blockly2scafi-opt.js"
+  val blocklyHelp = "blockly2scafi.js"
   val commonsCode = "common.js"
   val pageDef: String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
   val page: String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index-server.html")).mkString
   val code: String =
     Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(indexJs))(Codec("UTF-8")).mkString
+  val blocklyCode: String =
+    Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(blocklyScaFi))(Codec("UTF-8")).mkString
+  val blocklyHelpCode: String =
+    Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(blocklyHelp))(Codec("UTF-8")).mkString
   val codeDivision = code.split("'use strict'")
   val webpack: String = codeDivision(0)
   val core = codeDivision(1)
@@ -42,7 +48,9 @@ object Service {
   var codeCache: CodeCache = CodeCache
     .limit(codeCacheLimit)
     .permanent(indexJs, "'use strict'" + core)
+    .permanent(blocklyScaFi, blocklyCode)
     .permanent(commonsCode, webpack)
+    .permanent(blocklyHelp, blocklyHelpCode)
   lazy val index: Route = get {
     path("") {
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, page))

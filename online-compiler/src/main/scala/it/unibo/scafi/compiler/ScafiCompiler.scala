@@ -78,7 +78,7 @@ object ScafiCompiler {
             |{${compiler.`export`(res)}}
             |Injector.main()
             |""".stripMargin
-        Success(jsCode) // the {} usage allow to reval the same scala.js code in browser
+        Success(jsCode) // the {} usage allow to reveal the same scala.js code in browser
       case (a, _) =>
         log.debug(a)
         Failure(new IllegalArgumentException(a))

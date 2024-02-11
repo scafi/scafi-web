@@ -18,7 +18,7 @@ object ThemeSwitcher {
   }
   private val lightStyle = link(id := "light", rel := "stylesheet", href := "style/light.css").render
 
-  private var theme: Theme = GlobalStore.get(keyTheme).getOrElse(Dark)
+  private var theme: Theme = GlobalStore.get(keyTheme).getOrElse(Light)
 
   def onLight(action: => Unit): CancelableFuture[Unit] = GlobalStore.listen(keyTheme) {
     case theme if theme.value == Light.value => action
@@ -40,8 +40,8 @@ object ThemeSwitcher {
         install(theme)
       }
     )
-    toggle.html.classList.add("pr-2")
-    rightSideBar.insertBefore(toggle.html, rightSideBar.childNodes(0))
+    //toggle.html.classList.add("pr-2")
+    //rightSideBar.insertBefore(toggle.html, rightSideBar.childNodes(0))
     install(theme)
   }
 

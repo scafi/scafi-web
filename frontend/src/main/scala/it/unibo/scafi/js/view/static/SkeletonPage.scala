@@ -69,14 +69,6 @@ object SkeletonPage {
       text = """In basic mode, you can write directly ScaFi code, without worrying about producing valid Scala code.
         |If you are not a beginner and you want more control on the produced Scala code, enable this toggle.""".stripMargin
     )
-    .addNextPopover(
-      attachTo = backendConfig.id,
-      title = "Backend configuration",
-      text = """Here you can tune the settings about the network of virtual devices the program is deployed onto,
-        |like spatial deployment and sensors accessible in code.
-        |""".stripMargin,
-      direction = Popover.Right
-    )
 
   /** Section that contains the controls to manage the visualization, it is support specific. */
   lazy val visualizationOptionDiv: Div =
@@ -131,13 +123,6 @@ object SkeletonPage {
     )
   ).render
 
-  /** Section used to configure the backend (it is support specific) */
-  lazy val backendConfig: Div = div(
-    cls := "bg-dark",
-    id := "backend-config-section",
-    h3(cls := "text-light", "Backend configuration")
-  ).render
-
   /** The entirely page content. */
   val fullPage: TypedTag[Div] = div(
     cls := "container-fluid d-flex flex-column p-0 bg-dark",
@@ -159,7 +144,6 @@ object SkeletonPage {
   private def pageContainer: TypedTag[Div] = div(
     cls := "row m-0 bg-dark pt-3",
     id := "page-container",
-    backendConfig,
     editor,
     visualization
   )
