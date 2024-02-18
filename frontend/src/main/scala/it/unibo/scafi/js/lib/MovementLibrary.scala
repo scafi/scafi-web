@@ -1,13 +1,14 @@
 package it.unibo.scafi.js.lib
 
 import it.unibo.scafi.incarnations.Incarnation
+import it.unibo.scafi.lib.StandardLibrary
 import it.unibo.scafi.space.Point3D.toPoint2D
 import it.unibo.scafi.space.{Point2D, Point3D}
 
 import java.util.Optional
 
 trait MovementLibrary extends BasicMovement_Lib with Flock_Lib {
-  self: Incarnation with ActuationLib =>
+  self: Incarnation with ActuationLib with StandardLibrary =>
 
   override type P = Point2D
   trait ProgramMovementImplicits {
@@ -57,5 +58,5 @@ trait MovementLibrary extends BasicMovement_Lib with Flock_Lib {
 }
 
 object MovementLibrary {
-  type Subcomponent = Incarnation with MovementLibrary with ActuationLib
+  type Subcomponent = Incarnation with MovementLibrary with ActuationLib with StandardLibrary
 }

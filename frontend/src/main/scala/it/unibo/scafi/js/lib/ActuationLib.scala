@@ -19,7 +19,9 @@ trait ActuationLib {
     case object on extends LedMode
     def rgb(r: Int, g: Int, b: Int): Color = Color.apply(r, g, b)
     def hsl(h: Double, s: Double, l: Double): Color = {
-      val phaserColor = ColorNamespace.HSLToColor(h, s, l)
+      // if h > 1 then it is a degree, otherwise it is a percentage
+      val (hNew, sNew, lNew) = if (h > 1) (h / 360, s / 255, l / 255) else (h, s, l)
+      val phaserColor = ColorNamespace.HSLToColor(hNew, sNew, lNew)
       Color.apply(phaserColor.r, phaserColor.g, phaserColor.b)
     }
     def hue(h: Double): Color = hsl(h, 0.5, 0.5)

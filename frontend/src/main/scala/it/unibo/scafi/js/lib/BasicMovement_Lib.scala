@@ -1,12 +1,12 @@
 package it.unibo.scafi.js.lib
 
-import it.unibo.scafi.space.Point2D
+import it.unibo.scafi.space.{Point2D, Point3D}
 
 trait BasicMovement_Lib {
   self: MovementLibrary.Subcomponent =>
 
   trait Movement2D extends ProgramMovementImplicits {
-    self: FieldCalculusSyntax with StandardSensors with Actuation =>
+    self: FieldCalculusSyntax with StandardSensors with Actuation with BlockG =>
 
     sealed trait Zone
     case class CircularZone(center: (Double, Double), radius: Double) extends Zone
@@ -29,6 +29,7 @@ trait BasicMovement_Lib {
 
     def explore(zone: Zone, trajectoryTime: Int, reachGoalRange: Double = 0): Velocity = {
       require(trajectoryTime > 0)
+
       val (_, _, velocity) = rep((randomCoordZone(zone), trajectoryTime, Velocity.Zero)) {
         case (goal, decay, v) if decay == 0 => (randomCoordZone(zone), trajectoryTime, v)
         case (goal, decay, v) if goal.distance(currentPosition()) < reachGoalRange =>
@@ -37,6 +38,9 @@ trait BasicMovement_Lib {
       }
       velocity
     }
+
+    def sinkAt(source: Boolean): Velocity =
+      G[Velocity](source, Velocity.Zero, vector => vector + nbrVector(), nbrRange).normalized
 
     private def randomCoordZone(zone: Zone): Point2D = zone match {
       case CircularZone((cx, cy), radius) =>

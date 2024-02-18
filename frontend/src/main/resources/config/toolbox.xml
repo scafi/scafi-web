@@ -7,8 +7,8 @@
         <block type="branch"></block>
         <block type="mux"></block>
     </category>
-    <category name="Utilities" colour="#5ba55b">
-        <block type="nbrrange"></block>
+    <category name="Building Blocks">
+        <block type="leaderElection"></block>
         <block type="distance_to">
             <value name="SRC">
                 <block type="sense">
@@ -20,36 +20,6 @@
                     <value name="SENSOR_NAME">
                         <block type="string_value">
                             <field name="VALUE">source</field>
-                        </block>
-                    </value>
-                </block>
-            </value>
-        </block>
-        <block type="channel">
-            <value name="SOURCE">
-                <block type="sense">
-                    <value name="TYPE">
-                        <block type="class_boolean">
-                            <field name="NAME">Boolean</field>
-                        </block>
-                    </value>
-                    <value name="SENSOR_NAME">
-                        <block type="string_value">
-                            <field name="VALUE">source</field>
-                        </block>
-                    </value>
-                </block>
-            </value>
-            <value name="TARGET">
-                <block type="sense">
-                    <value name="TYPE">
-                        <block type="class_boolean">
-                            <field name="NAME">Boolean</field>
-                        </block>
-                    </value>
-                    <value name="SENSOR_NAME">
-                        <block type="string_value">
-                            <field name="VALUE">target</field>
                         </block>
                     </value>
                 </block>
@@ -86,7 +56,39 @@
             </value>
         </block>
     </category>
-
+    <category name="Utilities" colour="#5ba55b">
+        <block type="nbrrange"></block>
+        <block type="channel">
+            <value name="SOURCE">
+                <block type="sense">
+                    <value name="TYPE">
+                        <block type="class_boolean">
+                            <field name="NAME">Boolean</field>
+                        </block>
+                    </value>
+                    <value name="SENSOR_NAME">
+                        <block type="string_value">
+                            <field name="VALUE">source</field>
+                        </block>
+                    </value>
+                </block>
+            </value>
+            <value name="TARGET">
+                <block type="sense">
+                    <value name="TYPE">
+                        <block type="class_boolean">
+                            <field name="NAME">Boolean</field>
+                        </block>
+                    </value>
+                    <value name="SENSOR_NAME">
+                        <block type="string_value">
+                            <field name="VALUE">target</field>
+                        </block>
+                    </value>
+                </block>
+            </value>
+        </block>
+    </category>
     <category name="I/O" colour="#5b67a5">
         <block type="mid"></block>
         <block type="led_all_to">

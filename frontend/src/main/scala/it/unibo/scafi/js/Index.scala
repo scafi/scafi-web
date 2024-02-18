@@ -29,7 +29,7 @@ object Index {
     new ScafiInterpreterJs("Lang") with BlockGJs with LanguageJs with BlockTJs with StandardSensorJs with BuiltinsJs
 
   val configuration: SupportConfiguration = SupportConfiguration(
-    GridLikeNetwork(10, 10, 60, 60, 10),
+    GridLikeNetwork(10, 10, 40, 40, 5),
     SpatialRadius(range = 70),
     deviceShape = DeviceConfiguration.standard,
     seed = SimulationSeeds()

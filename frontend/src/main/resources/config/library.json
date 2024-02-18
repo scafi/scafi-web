@@ -343,6 +343,15 @@
     "tooltip": "Device Id",
     "helpUrl": ""
   },
+
+  {
+    "type": "leaderElection",
+    "message0": "LeaderElection",
+    "output": "Boolean",
+    "colour": 120,
+    "tooltip": "A Random Leader Election",
+    "helpUrl": ""
+  },
   {
     "type": "foldhood",
     "message0": "FoldHood %1 Initial Value: %2 Aggregator: %3 Expression %4",
