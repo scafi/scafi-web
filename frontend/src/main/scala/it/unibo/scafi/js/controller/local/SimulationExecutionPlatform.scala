@@ -121,9 +121,8 @@ trait SimulationExecutionPlatform
         .map { id =>
           js.Dynamic.global.window.storeWorkspace()
           document.body.innerHTML = "" // TODO NOT SAFE
-          appendScript("scafiWeb", s"$serverHost/js/$id")
-          prepareBlockly(serverHost)
-          sideEffectExecution(new AggregateProgram { override def main(): Any = {} }) // TODO USELESS, find another way
+          window.location.href = s"$serverHost/$id"
+          null // it never returns
         }
     }
   }
@@ -138,12 +137,12 @@ trait SimulationExecutionPlatform
 
   private def prepareBlockly(serverHost: String): Unit = setTimeout(
     () => {
+      js.Dynamic.global.clearWorkspace()
       List(
-        ("blockly", s"$serverHost/js/blockly2scafi.js"),
-        ("blocklyBlocks", s"$serverHost/js/blockly2scafi-opt.js")
+        ("blockly", s"$serverHost/js/scafi-blocks-opt.js"),
+        ("blocklyBlocks", s"$serverHost/js/scafi-blocks-utils.js")
       ).foreach { case (id, url) => appendScript(id, url) }
       window.dispatchEvent(new Event("resize"))
-      js.Dynamic.global.loadWorkspace()
     },
     interval = 1000
   )

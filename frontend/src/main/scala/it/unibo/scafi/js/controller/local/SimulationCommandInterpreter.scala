@@ -27,14 +27,14 @@ trait SimulationCommandInterpreter
 
   def execute(command: SimulationCommand): Future[Result] = Future.successful {
     command match {
-      case ChangeSensor(sensor, ids, value) => onChangeSensorValue(sensor, ids, value)
-      case Move(positionMap) => onMove(positionMap)
-      case ToggleSensor(sensor, nodes) => onToggle(sensor, nodes)
+      case ChangeSensor(sensor, ids, value) => onChangeSensorValue(sensor, ids.map(_.toInt), value)
+      case Move(positionMap) => onMove(positionMap.map(kv => kv._1.toInt -> kv._2))
+      case ToggleSensor(sensor, nodes) => onToggle(sensor, nodes.map(_.toInt))
       case _ => Unkown
     }
   }
 
-  private def onMove(positionMap: Map[String, (Double, Double)]): Result = {
+  private def onMove(positionMap: Map[Int, (Double, Double)]): Result = {
     val toScafiBackend = positionMap
       .mapValues { case (x, y) => new Point2D(x, y) }
       .mapValues(self.systemConfig.coordinateMapping.toBackend)
@@ -43,14 +43,14 @@ trait SimulationCommandInterpreter
     Executed
   }
 
-  private def onChangeSensorValue(sensor: String, ids: Set[String], value: Any): Result = {
+  private def onChangeSensorValue(sensor: String, ids: Set[Int], value: Any): Result = {
     backend.chgSensorValue(sensor, ids, value)
     val sensorMap = ids.map(id => id -> Map(sensor -> value)).toMap
     sideEffectsStream.onNext(SensorChanged(sensorMap))
     Executed
   }
 
-  private def onToggle(sensor: String, ids: Set[String]): Result = {
+  private def onToggle(sensor: String, ids: Set[Int]): Result = {
     val sensors = ids
       .map(id =>
         id -> Try {
@@ -70,7 +70,7 @@ trait SimulationCommandInterpreter
     val cantChange = sensors.collect { case (id, Failure(_)) => id }
     sideEffectsStream.onNext(SensorChanged(sensorMap))
     toggleSensors.foreach { case (sensorValue, set) => backend.chgSensorValue(sensor, set.map(_._1), !sensorValue) }
-    if (cantChange.isEmpty) Executed else CantChange(cantChange)
+    if (cantChange.isEmpty) Executed else CantChange(cantChange.map(_.toString))
   }
 }
 

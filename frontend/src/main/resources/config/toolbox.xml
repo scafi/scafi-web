@@ -6,17 +6,8 @@
         <block type="nbr"></block>
         <block type="branch"></block>
         <block type="mux"></block>
-        <block type="rep">
-            <field name="PREVIOUS" id="yANW!y:.,l;R6;+zv.#?">x</field>
-            <value name="EVOLUTION">
-                <block type="lambda_1_param">
-                    <field name="PARAM_NAME">prev</field>
-                </block>
-            </value>
-        </block>
     </category>
     <category name="Utilities" colour="#5ba55b">
-        <block type="mid"></block>
         <block type="nbrrange"></block>
         <block type="distance_to">
             <value name="SRC">
@@ -95,29 +86,16 @@
             </value>
         </block>
     </category>
-    <category name="Fold" colour="#5ba58c">
-        <block type="foldhood">
-            <value name="AGGREGATOR">
-                <block type="lambda_2_param">
-                    <field name="PARAM_1_NAME">x</field>
-                    <field name="PARAM_2_NAME">y</field>
+
+    <category name="I/O" colour="#5b67a5">
+        <block type="mid"></block>
+        <block type="led_all_to">
+            <value name="COLOR">
+                <block type="color_value">
+                    <field name="VALUE">#ffff00</field>
                 </block>
             </value>
         </block>
-        <block type="foldhoodplus">
-            <value name="AGGREGATOR">
-                <block type="lambda_2_param">
-                    <field name="PARAM_1_NAME">x</field>
-                    <field name="PARAM_2_NAME">y</field>
-                </block>
-            </value>
-        </block>
-        <block type="minhood">
-        </block>
-        <block type="minhoodplus">
-        </block>
-    </category>
-    <category name="Sensors" colour="#5b80a5">
         <block type="sense">
             <value name="TYPE">
                 <block type="class_boolean">
@@ -127,15 +105,6 @@
             <value name="SENSOR_NAME">
                 <block type="string_value">
                     <field name="VALUE">sensorX</field>
-                </block>
-            </value>
-        </block>
-    </category>
-    <category name="Actuators" colour="#5b67a5">
-        <block type="led_all_to">
-            <value name="COLOR">
-                <block type="color_value">
-                    <field name="VALUE">#ffff00</field>
                 </block>
             </value>
         </block>
@@ -188,27 +157,7 @@
                 </block>
             </value>
         </block>
-        <block type="tuple_value"></block>
-        <block type="tuple_3_value"></block>
-        <block type="random_value">
-            <value name="MAX">
-                <block type="integer_value">
-                    <field name="VALUE">100</field>
-                </block>
-            </value>
-        </block>
-        <block type="random_value_between">
-            <value name="MIN">
-                <block type="integer_value">
-                        <field name="VALUE">10</field>
-                    </block>
-            </value>
-            <value name="MAX">
-                <block type="integer_value">
-                        <field name="VALUE">100</field>
-                    </block>
-            </value>
-        </block>
+
     </category>
     <category name="Types" colour="#a55b80">
         <block type="class_integer">
@@ -227,41 +176,7 @@
             <field name="NAME"></field>
         </block>
     </category>
-    <category name="Functions" colour="#a5745b" custom="Functions">
-        <block type="return"></block>
-        <block type="lambda_1_param"></block>
-        <block type="lambda_2_param"></block>
-        <block type="function">
-            <field name="FUNCTION_NAME">functionName</field>
-            <statement name="BODY">
-                <block type="return"></block>
-            </statement>
-        </block>
-        <block type="function_1_param">
-            <field name="FUNCTION_NAME">functionName</field>
-            <field name="PARAM_NAME">x</field>
-            <statement name="BODY">
-                <block type="return"></block>
-            </statement>
-        </block>
-        <block type="function_2_param">
-            <field name="FUNCTION_NAME">functionName</field>
-            <field name="PARAM_1_NAME">x</field>
-            <field name="PARAM_2_NAME">y</field>
-            <statement name="BODY">
-                <block type="return"></block>
-            </statement>
-        </block>
-        <block type="function_3_param">
-            <field name="FUNCTION_NAME">functionName</field>
-            <field name="PARAM_1_NAME">x</field>
-            <field name="PARAM_2_NAME">y</field>
-            <field name="PARAM_3_NAME">z</field>
-            <statement name="BODY">
-                <block type="return"></block>
-            </statement>
-        </block>
-    </category>
+
     <category name="Definitions" colour="#9fa55b" custom="Definitions">
         <block type="define">
             <field name="NAME">x</field>

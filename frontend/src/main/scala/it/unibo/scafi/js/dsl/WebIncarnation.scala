@@ -21,24 +21,24 @@ trait BasicWebIncarnation
     with ActuationLib
     with MovementLibrary {
   import Builtins.Bounded
-  implicit override val idBounded: Bounded[ID] = Builtins.Bounded.of_s
+  implicit override val idBounded: Bounded[ID] = Builtins.Bounded.of_i
   override type CNAME = String
-  override type ID = String
+  override type ID = Int
   override type P = Point2D
   override type EXECUTION = AggregateInterpreter
-  implicit override val interopID: Interop[String] = new Interop[String] {
-    override def toString(data: String): String = data
-    override def fromString(s: String): String = s
+  implicit override val interopID: Interop[Int] = new Interop[Int] {
+    override def toString(data: Int): String = data.toString
+    override def fromString(s: String): Int = s.toInt
   }
   override def cnameFromString(s: String): String = s
 
   @transient implicit override val linearID: Linearizable[ID] = new Linearizable[ID] {
-    override def toNum(v: ID): Int = Integer.parseInt(v)
-    override def fromNum(n: Int): ID = n.toString
+    override def toNum(v: ID): Int = v
+    override def fromNum(n: Int): ID = n
   }
-  @transient implicit override val interopCNAME: Interop[ID] = new Interop[ID] {
-    def toString(id: ID): String = id
-    def fromString(str: String): ID = str
+  @transient implicit override val interopCNAME: Interop[CNAME] = new Interop[CNAME] {
+    override def toString(data: CNAME): String = data
+    override def fromString(s: String): CNAME = s
   }
 
   trait WebSimulatorFactory extends SimulatorFactory {
@@ -58,7 +58,7 @@ trait BasicWebIncarnation
         val random = new Random(seeds.configSeed)
         def rangeRandom(): Double = min + random.nextDouble() * (max - min)
         def randomPosition(): P = new P(rangeRandom(), rangeRandom())
-        val nodePosition = (0 until howMany).map(id => id.toString -> randomPosition()).toMap
+        val nodePosition = (0 until howMany).map(id => id -> randomPosition()).toMap
         val deviceMap = nodePosition.map { case (id, pos) => id -> new DevInfo(id, pos, nsns = nsns => (id: ID) => _) }
         val space: SPACE[ID] =
           new Basic3DSpace(nodePosition, range) // TODO fix quad tree space for being scala.js supported
@@ -71,26 +71,26 @@ trait BasicWebIncarnation
       }
 
       override def basicSimulator(
-          idArray: ArrayBuffer[String],
-          nbrMap: mutable.Map[String, Set[String]],
-          lsnsMap: mutable.Map[String, mutable.Map[String, Any]],
-          nsnsMap: mutable.Map[String, mutable.Map[String, mutable.Map[String, Any]]]
+          idArray: ArrayBuffer[ID],
+          nbrMap: mutable.Map[ID, Set[ID]],
+          lsnsMap: mutable.Map[CNAME, mutable.Map[ID, Any]],
+          nsnsMap: mutable.Map[CNAME, mutable.Map[ID, mutable.Map[ID, Any]]]
       ): NETWORK =
         superReference.basicSimulator(idArray, nbrMap, lsnsMap, nsnsMap)
 
       override def simulator(
-          idArray: ArrayBuffer[String],
-          nbrMap: mutable.Map[String, Set[String]],
-          localSensors: PartialFunction[String, PartialFunction[String, Any]],
-          nbrSensors: PartialFunction[String, PartialFunction[(String, String), Any]]
+          idArray: ArrayBuffer[ID],
+          nbrMap: mutable.Map[ID, Set[ID]],
+          localSensors: PartialFunction[CNAME, PartialFunction[ID, Any]],
+          nbrSensors: PartialFunction[CNAME, PartialFunction[(ID, ID), Any]]
       ): NETWORK =
         superReference.simulator(idArray, nbrMap, localSensors, nbrSensors)
 
       override def gridLike(
           gsettings: GridSettings,
           rng: JSNumber,
-          lsnsMap: mutable.Map[String, mutable.Map[String, Any]],
-          nsnsMap: mutable.Map[String, mutable.Map[String, mutable.Map[String, Any]]],
+          lsnsMap: mutable.Map[CNAME, mutable.Map[ID, Any]],
+          nsnsMap: mutable.Map[CNAME, mutable.Map[ID, mutable.Map[ID, Any]]],
           seeds: Seeds
       ): NETWORK =
         superReference.gridLike(gsettings, rng, lsnsMap, nsnsMap, seeds)

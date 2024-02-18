@@ -81,11 +81,13 @@ object Index {
     implicit val context: Scheduler = Execution.timeoutBasedScheduler
     // dynamic part configuration
     val interaction = new Interaction.PhaserInteraction(support)
+    println("Interaction created")
     val visualizationSettingsSection = VisualizationSettingsSection(
       SkeletonPage.visualizationOptionDiv,
       SensorsMenu(interaction),
       SkeletonPage.visualizationConfigDropdown
     )
+    println("VisualizationSettingsSection created")
     val renders: Seq[LabelRender] = Seq(TextifyBitmap(Set("matrix")), MatrixLedRender())
     val phaserRender = new PhaserGraphSection(
       paneSection = SkeletonPage.visualizationSection,
@@ -93,18 +95,28 @@ object Index {
       settings = visualizationSettingsSection,
       labelRenders = renders
     )
+    println("PhaserGraphSection created")
     val viewControls = new InteractionBoundButtonBar(interaction)
+    println("InteractionBoundButtonBar created")
     //    viewControls.render(SkeletonPage.panMoveMode)
     viewControls.render(SkeletonPage.panModeButton, SkeletonPage.selectModeButton)
+    println("InteractionBoundButtonBar rendered")
     val controls = new SimulationControlsSection()
+    println("SimulationControlsSection created")
     controls.render(support, editor, SkeletonPage.controlsDiv)
+    println("SimulationControlsSection rendered")
     // attach the simulator with the view
     support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
+    println("GraphStream attached")
     // force repaint
     support.invalidate()
+    println("Support invalidated")
     SkeletonPage.visualizationSection.focus()
+    println("VisualizationSection focused")
     val tour = Tour(controls).start()
+    println("Tour started")
     PopoverProgression.ResetButton.render(tour, SkeletonPage.navRightSide)
+    println("PopoverProgression.ResetButton rendered")
     if (!Cookie.get("visited").exists(_.toBoolean)) {
       val modal = welcomeModal
       document.body.appendChild(modal.html)
@@ -115,6 +127,7 @@ object Index {
       modal.show()
     }
     PageBus.publish(configuration) // tell to all component the new configuration installed on the frontend
+
     PageStructure.static()
     if (mode == EditorSection.JavascriptMode) {
       editor.setCode("", mode)

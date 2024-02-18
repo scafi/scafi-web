@@ -58,7 +58,7 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(
 
     for ((id, sensorValues) <- config.deviceShape.initialValues)
       for ((sensorName, sensorValue) <- sensorValues)
-        backend.chgSensorValue(sensorName, Set(id), sensorValue)
+        backend.chgSensorValue(sensorName, Set(id.toInt), sensorValue)
     systemConfig = config
     backend
   }
@@ -82,7 +82,7 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(
         case (dev, Some(export)) => (dev, dev.lsns + (EXPORT_LABEL -> export))
         case (dev, None) => (dev, dev.lsns)
       }
-      .map { case (dev, labels) => Node(dev.id, dev.pos, labels) }
+      .map { case (dev, labels) => Node(dev.id.toString, dev.pos, labels) }
       .toSet
     val vertices = computeVertices()
     NaiveGraph(nodes, vertices)
@@ -90,7 +90,7 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(
 
   import GraphOps.Implicits._
   private def updateGraphWithExports(exports: Seq[(ID, EXPORT)], graph: Graph): Graph = {
-    val newExports = exports.map { case (id, export) => export -> graph(id) }.map { case (export, node) =>
+    val newExports = exports.map { case (id, export) => export -> graph(id.toString) }.map { case (export, node) =>
       node.copy(labels = node.labels + (EXPORT_LABEL -> export))
     }
     graph.insertNodes(newExports)
@@ -98,10 +98,8 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(
 
   private def updateGraphWithPosition(positionMap: Map[ID, Point3D], graph: Graph): Graph = {
     val nodesUpdated = positionMap
-      .map { case (id, pos) => pos -> graph(id) }
-      .map { case (pos, node) =>
-        node.copy(position = pos)
-      }
+      .map { case (id, pos) => pos -> graph(id.toString) }
+      .map { case (pos, node) => node.copy(position = pos) }
       .toSeq
     NaiveGraph(
       graph.insertNodes(nodesUpdated).nodes,
@@ -110,14 +108,18 @@ class SimulationSupport(protected var systemConfig: SupportConfiguration)(
   }
 
   private def updateGraphWithSensor(sensorMap: Map[ID, Map[CNAME, Any]], graph: Graph) = {
-    val nodeUpdated = sensorMap.toSeq.map { case (id, labels) => labels -> graph(id) }.map { case (labels, node) =>
-      node.copy(labels = node.labels ++ labels)
-    }
+    val nodeUpdated =
+      sensorMap.toSeq.map { case (id, labels) => labels -> graph(id.toString) }.map { case (labels, node) =>
+        node.copy(labels = node.labels ++ labels)
+      }
     graph.insertNodes(nodeUpdated)
   }
 
   private def computeVertices(): Set[Vertex] =
-    backend.getAllNeighbours().flatMap { case (id, elements) => elements.map(Vertex(id, _)) }.toSet
+    backend
+      .getAllNeighbours()
+      .flatMap { case (id, elements) => elements.map(e => Vertex(id.toString, e.toString)) }
+      .toSet
 
   private def backendSeed(config: SupportConfiguration): Seeds = {
     val SimulationSeeds(configSeed, simulationSeed, randomSensorSeed) = config.seed

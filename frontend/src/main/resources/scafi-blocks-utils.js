@@ -6,12 +6,17 @@ if(window.scafiBlocklyStore === undefined) {
 
 function storeWorkspace() {
     jsonResult = Blockly.serialization.workspaces.save(Blockly.getMainWorkspace());
-    localStorage.setItem("scafiBlocklyStore", JSON.stringify(jsonResult);
+    localStorage.setItem("scafiBlocklyStore", JSON.stringify(jsonResult));
     window.scafiBlocklyStore = jsonResult;
 }
 
+function clearWorkspace() {
+    Blockly.getMainWorkspace().clear();
+    Blockly = null
+}
+
 function loadWorkspace() {
-    Blockly.serialization.workspaces.load(JSON.parse(localStorage.get("scafiBlocklyStore")), Blockly.getMainWorkspace());
+    Blockly.serialization.workspaces.load(JSON.parse(localStorage.getItem("scafiBlocklyStore")), Blockly.getMainWorkspace());
 }
 
 /**
@@ -292,7 +297,7 @@ function createWorkspace(editor, toolbox, initialWorkspace) {
 
 /**
  * Create the environment.
- * @param {Element} editor the editor div element. 
+ * @param {Element} editor the editor div element.
  * @returns the created workspace
  */
 Blockly.createBlockly2ScafiWorkspace = function(editor) {

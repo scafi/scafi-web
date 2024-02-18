@@ -16,7 +16,7 @@ import org.scalajs.dom.ext.Color
 
 import scala.collection.mutable
 import scala.scalajs.js
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object LabelRender {
   type SensorEntries = Seq[(String, Any)]
@@ -218,6 +218,14 @@ object LabelRender {
     realValue match {
       case value: Double => "%.2f".format(value)
       case value: Int => value.toString
+      case value: String =>
+        if (Try(value.toInt).isSuccess) {
+          value
+        } else if (Try(value.toDouble).isSuccess) {
+          "%.2f".format(value.toDouble)
+        } else {
+          value
+        }
       case other => other.toString
     }
   }

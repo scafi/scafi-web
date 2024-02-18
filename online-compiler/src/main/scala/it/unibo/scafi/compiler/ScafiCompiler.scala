@@ -58,13 +58,6 @@ object ScafiCompiler {
       |     Index.main(Array())
       |     $core
       |     PageBus.publish(ScaFi(program))
-      |     import it.unibo.scafi.js.controller.local.SupportConfiguration
-      |     SupportConfiguration.loadGlobal().foreach {
-      |       config => {
-      |         Index.support.evolve(config)
-      |         PageBus.publish(config)
-      |       }
-      |     }
       |  }
       |}
       |""".stripMargin

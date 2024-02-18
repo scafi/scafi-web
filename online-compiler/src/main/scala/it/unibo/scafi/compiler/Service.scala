@@ -29,17 +29,17 @@ object Service {
   val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(defaultPort) // todo put in configuration
   val host = "0.0.0.0" // todo put in configuration
   val indexJs = "frontend-opt-bundle.js"
-  val blocklyScaFi = "blockly2scafi-opt.js"
-  val blocklyHelp = "blockly2scafi.js"
+  val scafiBlocksOpt = "scafi-blocks-opt.js"
+  val scafiBlocksJsFacade = "scafi-blocks-utils.js"
   val commonsCode = "common.js"
   val pageDef: String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index.html")).mkString
   val page: String = Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("index-server.html")).mkString
   val code: String =
     Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(indexJs))(Codec("UTF-8")).mkString
   val blocklyCode: String =
-    Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(blocklyScaFi))(Codec("UTF-8")).mkString
+    Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(scafiBlocksOpt))(Codec("UTF-8")).mkString
   val blocklyHelpCode: String =
-    Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(blocklyHelp))(Codec("UTF-8")).mkString
+    Source.fromInputStream(getClass.getClassLoader.getResourceAsStream(scafiBlocksJsFacade))(Codec("UTF-8")).mkString
   val codeDivision = code.split("'use strict'")
   val webpack: String = codeDivision(0)
   val core = codeDivision(1)
@@ -48,9 +48,9 @@ object Service {
   var codeCache: CodeCache = CodeCache
     .limit(codeCacheLimit)
     .permanent(indexJs, "'use strict'" + core)
-    .permanent(blocklyScaFi, blocklyCode)
+    .permanent(scafiBlocksOpt, blocklyCode)
     .permanent(commonsCode, webpack)
-    .permanent(blocklyHelp, blocklyHelpCode)
+    .permanent(scafiBlocksJsFacade, blocklyHelpCode)
   lazy val index: Route = get {
     path("") {
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, page))
@@ -60,7 +60,8 @@ object Service {
   lazy val jsCode: Route = get {
     path("js" / Segment) { id =>
       codeCache.get(id) match {
-        case Some(id) => complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, id))
+        case Some(code) =>
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, code))
         case _ => complete(StatusCodes.NotFound)
       }
     }
@@ -69,12 +70,13 @@ object Service {
   lazy val resourceLike = Seq(
     resourcePath("resources"),
     resourcePath("fonts"),
+    resourcePath("compilation/fonts"),
     resourcePath("icons"),
     resourcePath("style", ContentType.parse("text/css").toOption.get),
     resourcePath("config")
   )
   lazy val compiledPage: Route = get {
-    path("compilation" / Segment) { id =>
+    path(Segment) { id =>
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, ScalaCompiledPage.html(id)))
     }
   }
@@ -110,7 +112,7 @@ object Service {
             this.synchronized { codeCache = codeCache put (id, result) } // fix
             log.debug("done : " + id)
             log.debug("occupied ram : " + (runtime.totalMemory() - runtime.freeMemory()) / 1000000.0 + " Mb")
-            complete(id)
+              complete(id)
           case Failure(exception) =>
             complete(StatusCodes.InternalServerError, exception.getMessage)
         }

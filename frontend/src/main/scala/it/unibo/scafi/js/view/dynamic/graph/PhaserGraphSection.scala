@@ -61,12 +61,10 @@ class PhaserGraphSection(
       GlobalStore.listen(VisualizationSetting.key)(_ => PageBus.publish(ForceRepaint))
       val mainCamera = scene.cameras.main
       mainCamera.zoom = GlobalStore.getOrElse(zoomKey)(1)
-      GlobalStore
-        .get(scrollKey)
-        .foreach { scroll =>
-          scene.cameras.main.scrollX = scroll(0)
-          scene.cameras.main.scrollY = scroll(1)
-        }
+      GlobalStore.listen(scrollKey) { scroll =>
+        scene.cameras.main.scrollX = scroll(0)
+        scene.cameras.main.scrollY = scroll(1)
+      }
 
       vertexContainer = scene.add.container(0, 0)
       labelContainer = scene.add.container(0, 0)
