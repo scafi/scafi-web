@@ -33,7 +33,7 @@ class PhaserGraphSection(
   private var newBound: Option[Bound] = None
   private var currentBound: Option[Bound] = None
   private val nodeColor: Int = Color(187, 134, 252) // TODO put in configuration
-  private val lineColor: Int = Color(125, 125, 125) // TODO put in configuration
+  private val lineColor: Int = Color(200, 200, 200) // TODO put in configuration
   private val cameraSlack = -0.1
   private val keyboardBindings = new KeyboardBindings(interaction)
   private val noSlack = 0.0

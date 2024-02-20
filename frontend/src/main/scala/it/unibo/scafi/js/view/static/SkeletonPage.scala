@@ -8,7 +8,7 @@ import it.unibo.scafi.js.view.dynamic.graph.InteractionBoundButtonBar.{
 }
 import it.unibo.scafi.js.view.static.CssSettings._
 import it.unibo.scafi.js.view.static.RootStyle.primaryBtnClass
-import org.scalajs.dom.html.{Div, Form, Label, Select, TextArea}
+import org.scalajs.dom.html.{Button, Div, Form, Label, Select, TextArea}
 import org.scalajs.dom.raw.HTMLStyleElement
 import scalacss.ScalatagsCss._
 import scalatags.JsDom.TypedTag
@@ -31,6 +31,13 @@ object SkeletonPage {
     id := "select-program",
     cls := "form-control bg-dark text-light"
   ).render
+
+  lazy val showCode: Button = button(
+    id := "show-code",
+    cls := primaryBtnClass("ml-1"),
+    `type` := "button",
+    "Show code"
+  ).render
   private val modeSelectionId = "advanced-toggle";
 
   /** Section that contains the controls to manage the backend, it is support specific. */
@@ -45,10 +52,9 @@ object SkeletonPage {
     id := "editor-header",
     cls := "input-group input-group-sm pt-1 pb-1",
     div(
-      cls := "input-group-prepend",
-      span(cls := "input-group-text", "Examples")
+      cls := "input-group-prepend"
     ),
-    selectionProgram
+    showCode
   ).render
   lazy val editorHeaderPopover = new Popover(
     attachTo = editorHeader.id,
@@ -147,9 +153,11 @@ object SkeletonPage {
     editor,
     visualization
   )
-
+  def code: Div = div(
+    id := "code-section"
+  ).render
   private def editor: TypedTag[Div] =
-    div(cls := "bg-dark", id := "editor-section", editorHeader, editorSection)
+    div(cls := "bg-dark", id := "editor-section", editorHeader, editorSection, code)
 
   private def visualization: TypedTag[Div] = div(
     cls := "bg-dark",

@@ -6,7 +6,9 @@ import it.unibo.scafi.js.controller.scripting.Script.{Javascript, Scala, ScalaEa
 import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Doc, EditorConfiguration}
 import it.unibo.scafi.js.utils.GlobalStore
 import it.unibo.scafi.js.view.dynamic.EditorSection.Mode
+import it.unibo.scafi.js.view.static.SkeletonPage
 import org.querki.jquery.$
+import org.scalajs.dom.{document, window}
 import org.scalajs.dom.html.Div
 
 import scala.scalajs.js
@@ -85,6 +87,7 @@ object EditorSection {
   }
 
   private class EditorSectionImpl(editorZone: Div, defaultMode: Mode = ScalaModeEasy) extends EditorSection {
+
     var mode: Mode = GlobalStore.get(EditorSection.modeKey) match {
       case Failure(exception) => defaultMode
       case Success(mode) => mode
@@ -155,6 +158,11 @@ object EditorSection {
   }
 
   def apply(div: Div): EditorSection = {
+    val created = CodeMirror(
+      document.getElementById("code-section").asInstanceOf[Div],
+      new EditorConfiguration("Hello", ScalaModeEasy.codeMirrorMode, "native", true, "default")
+    )
+    scala.scalajs.js.Dynamic.global.window.codeSection = created
     div.id = "blockly-editor"
     new EditorSection {
       override def setCode(code: String, mode: Mode): Unit = {}

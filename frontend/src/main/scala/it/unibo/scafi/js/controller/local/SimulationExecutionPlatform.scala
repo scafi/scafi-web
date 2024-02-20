@@ -5,15 +5,14 @@ import it.unibo.scafi.js.controller.local.CompilationServers.isReachable
 import it.unibo.scafi.js.controller.local.SimulationExecution.TickBased
 import it.unibo.scafi.js.controller.local.SimulationSideEffect.SideEffects
 import it.unibo.scafi.js.controller.scripting.Script
-import it.unibo.scafi.js.controller.scripting.Script.{Javascript, ScaFi, Scala, ScalaEasy}
-import it.unibo.scafi.js.dsl.JF1
+import it.unibo.scafi.js.controller.scripting.Script.{ScaFi, Scala, ScalaEasy}
 import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
 import it.unibo.scafi.js.model.{ActuationData, MatrixLed, MatrixOps, Movement}
 import it.unibo.scafi.simulation.SpatialSimulation
 import it.unibo.scafi.space.Point2D
 import org.scalajs.dom
-import org.scalajs.dom.{Event, document, window}
 import org.scalajs.dom.ext.Ajax
+import org.scalajs.dom.{Event, document, window}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -33,12 +32,7 @@ trait SimulationExecutionPlatform
   val location = document.location
 
   override def loadScript(script: Script): Future[SimulationExecution] = script match {
-    case Javascript(code) =>
-      Future.fromTry {
-        Try(interpreter.adaptForScafi(code))
-          .map(_.asInstanceOf[JF1[CONTEXT, EXPORT]]) // TODO NOT SAFE! FIND ANOTHER WAY
-          .map(sideEffectExecution)
-      }
+
     case aggregateClass: ScaFi[AggregateProgram] =>
       Future.fromTry {
         Try(sideEffectExecution(aggregateClass.program))
@@ -47,10 +41,17 @@ trait SimulationExecutionPlatform
     case Scala(code) => remoteRequest(code, standardCompilation)
     case _ => Future.failed(new IllegalArgumentException("lang not supported"))
   }
-  private def sideEffectExecution(program: js.Function1[CONTEXT, EXPORT]): TickBased = {
+
+  private def sideEffectExecution(program: AggregateProgram): TickBased = {
+    var counter = 0
     val execution: (Int => Future[Unit]) = batchSize => {
       val execution = Future.fromTry(Try[Unit] {
-        val exports = (0 until batchSize).map(_ => backend.exec(program))
+        val exports = (0 until batchSize)
+          .map { _ =>
+            counter = (counter + 1) % backend.space.elemPositions.size
+            backend.exec(program, program.main(), counter + 1)
+            (counter + 1, backend.exports()(counter + 1).get)
+          }
         val valueMap = toExportMap(exports)
         handleMatrixChanges(valueMap)
         handleMove(valueMap)

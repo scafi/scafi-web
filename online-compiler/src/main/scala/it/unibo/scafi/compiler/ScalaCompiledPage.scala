@@ -18,6 +18,21 @@ object ScalaCompiledPage {
       |    loadWorkspace();
       |    setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
       |    </script>
+      |    <script>
+      |    // hide code selection
+      |    document.getElementById('code-section').style.display = 'none';
+      |    // when show-code is clicked, show the code if it is hidden, otherwise hide it and show the blockly editor with editor-section id
+      |    document.getElementById('show-code').addEventListener('click', function() {
+      |        if (document.getElementById('code-section').style.display === 'none') {
+      |            document.getElementById('code-section').style.display = 'block';
+      |            document.getElementById('blockly-editor').style.display = 'none';
+      |            codeSection.setValue(ScafiBlocks)
+      |        } else {
+      |            document.getElementById('code-section').style.display = 'none';
+      |            document.getElementById('blockly-editor').style.display = 'block';
+      |        }
+      |    });
+      |    </script>
       |</body>
       |<style>
       |#blockly-editor {

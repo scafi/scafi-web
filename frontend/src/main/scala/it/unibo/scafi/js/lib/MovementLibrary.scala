@@ -11,6 +11,7 @@ trait MovementLibrary extends BasicMovement_Lib with Flock_Lib {
   self: Incarnation with ActuationLib with StandardLibrary =>
 
   override type P = Point2D
+  override type ID = Int
   trait ProgramMovementImplicits {
     self: Actuation =>
     type Velocity = Cartesian

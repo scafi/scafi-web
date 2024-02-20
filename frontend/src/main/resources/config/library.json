@@ -187,7 +187,7 @@
       }
     ],
     "output": "Boolean",
-    "colour": 120,
+    "colour": 300,
     "tooltip": "",
     "helpUrl": ""
   },
@@ -202,9 +202,102 @@
       }
     ],
     "output": null,
+    "colour": 0,
+    "tooltip": "",
+    "helpUrl": ""
+  },
+  {
+    "type": "velocity",
+    "message0": "Velocity Set %1",
+    "args0": [
+      {
+        "type": "input_value",
+        "name": "VELOCITY"}
+    ],
+    "output": null,
+    "colour": 0,
+    "tooltip": "",
+    "helpUrl": ""
+  },
+  {
+    "type": "random_movement",
+    "message0": "Brownian Motion",
+    "output": null,
     "colour": 230,
     "tooltip": "",
     "helpUrl": ""
+  },
+  {
+    "type": "stand_still",
+    "message0": "Stand Still",
+    "output": null,
+    "colour": 230,
+    "tooltip": "",
+    "helpUrl": ""
+  },
+  {
+    "type": "flocking",
+    "message0": "Flocking",
+    "output": null,
+    "colour": 230,
+    "tooltip": "",
+    "helpUrl": ""
+  },
+  {
+    "type": "sink_at",
+    "message0": "Sink At %1",
+    "args0": [
+      {
+        "type": "input_value",
+        "name": "LEADER"
+      }
+    ],
+    "colour": 20,
+    "tooltip": "Sink towards a leader",
+    "helpUrl": "",
+    "output": null
+  },
+  {
+    "type": "spin_around",
+    "message0": "Spin around %1",
+    "args0": [
+      {
+        "type": "input_value",
+        "name": "LEADER"
+      }
+    ],
+    "colour": 20,
+    "tooltip": "Spin around a leader",
+    "helpUrl": "",
+    "output": null
+  },
+  {
+    "type": "line",
+    "message0": "Line formation %1",
+    "args0": [
+      {
+        "type": "input_value",
+        "name": "LEADER"
+      }
+    ],
+    "colour": 20,
+    "tooltip": "Forming a line wrt a leader",
+    "helpUrl": "",
+    "output": null
+  },
+  {
+    "type": "centered_circle",
+    "message0": "Centered Circle formation %1",
+    "args0": [
+      {
+        "type": "input_value",
+        "name": "LEADER"
+      }
+    ],
+    "colour": 20,
+    "tooltip": "Forming a circle wrt a leader",
+    "helpUrl": "",
+    "output": null
   },
   {
     "type": "distance_between",
@@ -339,7 +432,7 @@
     "type": "mid",
     "message0": "Mid",
     "output": "Integer",
-    "colour": 120,
+    "colour": 210,
     "tooltip": "Device Id",
     "helpUrl": ""
   },

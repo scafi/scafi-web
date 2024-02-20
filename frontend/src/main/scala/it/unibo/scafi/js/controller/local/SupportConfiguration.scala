@@ -144,11 +144,17 @@ object DeviceConfiguration {
       }
     )
   val standardDimension = 3
-  val standardColor = Color("#bb86fc")
+  val standardColor = Color("#000000")
   val standardMatrix = MatrixLed.fill(standardDimension, standardColor.toHex)
   /** @return a configuration in which exist the sensor "source" and "obstacle". */
   def standard: DeviceConfiguration = DeviceConfiguration(
-    Map[String, DeviceKind]("matrix" -> standardMatrix, "source" -> false, "obstacle" -> false, "target" -> false)
+    Map[String, DeviceKind](
+      "matrix" -> standardMatrix,
+      "sensor1" -> false,
+      "sensor2" -> false,
+      "sensor3" -> false,
+      "sensor4" -> false,
+    )
   )
 
   /** @return a configuration without any sensor. */

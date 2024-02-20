@@ -25,8 +25,8 @@ case class RootStyle(measures: Measure) extends StyleSheet.Standalone {
 
   ".CodeMirror" - (height(editorHeight).important)
 
-  "#visualization-section, #editor-section, #backend-config-section" - (height(contentHeight))
-
+  "#visualization-section, #editor-section, #code-section, #backend-config-section" - (height(contentHeight))
+  ".CodeMirror" - (height(editorHeight).important)
   "backendConfig" - (overflow.auto)
 
   "#controls, #visualization-option" - (

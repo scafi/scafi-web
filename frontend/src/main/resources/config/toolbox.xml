@@ -2,12 +2,11 @@
     <category name="Basic" colour="#a5745b">
         <block type="output"></block>
     </category>
-    <category name="Aggregate" colour="#9fa55b">
-        <block type="nbr"></block>
+    <category name="Conditions" colour="#9fa55b">
         <block type="branch"></block>
         <block type="mux"></block>
     </category>
-    <category name="Building Blocks">
+    <category name="Building Blocks" colour="#5BA55B">
         <block type="leaderElection"></block>
         <block type="distance_to">
             <value name="SRC">
@@ -56,8 +55,7 @@
             </value>
         </block>
     </category>
-    <category name="Utilities" colour="#5ba55b">
-        <block type="nbrrange"></block>
+    <category name="User-API" colour="#A55BA5">
         <block type="channel">
             <value name="SOURCE">
                 <block type="sense">
@@ -89,15 +87,9 @@
             </value>
         </block>
     </category>
-    <category name="I/O" colour="#5b67a5">
+
+    <category name="Sensing" colour="#5b67a5">
         <block type="mid"></block>
-        <block type="led_all_to">
-            <value name="COLOR">
-                <block type="color_value">
-                    <field name="VALUE">#ffff00</field>
-                </block>
-            </value>
-        </block>
         <block type="sense">
             <value name="TYPE">
                 <block type="class_boolean">
@@ -110,6 +102,25 @@
                 </block>
             </value>
         </block>
+    </category>
+    <category name="Actuation" colour="#A55B5B">
+        <block type="led_all_to">
+            <value name="COLOR">
+                <block type="color_value">
+                    <field name="VALUE">#ffff00</field>
+                </block>
+            </value>
+        </block>
+        <block type="velocity"></block>
+    </category>
+    <category name="Movement" colour="#5b67a5">
+        <block type="random_movement"></block>
+        <block type="stand_still"></block>
+        <block type="spin_around"></block>
+        <block type="flocking"></block>
+        <block type="sink_at"></block>
+        <block type="line"></block>
+        <block type="centered_circle"></block>
     </category>
     <category name="Operations" colour="#745ba5">
         <block type="equals"></block>
