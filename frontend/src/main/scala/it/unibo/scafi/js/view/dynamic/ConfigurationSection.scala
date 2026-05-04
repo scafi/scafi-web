@@ -61,6 +61,10 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
     configureFromConfig(lastConfiguration)
   }
 
+  def loadExample(shape: DeviceConfiguration): Unit = {
+    evolve(ConfigurationSection.exampleConfiguration(shape))
+  }
+
   def updateDeviceShape(shape: DeviceConfiguration): Unit = {
     lastConfiguration.copy(deviceShape = shape)
     evolve(lastConfiguration.copy(deviceShape = shape))
@@ -144,6 +148,13 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
 }
 
 object ConfigurationSection {
+
+  def exampleConfiguration(shape: DeviceConfiguration): SupportConfiguration = SupportConfiguration(
+    GridLikeNetwork(10, 10, 60, 60, 10),
+    SpatialRadius(70),
+    shape,
+    SimulationSeeds(0, 0, 0)
+  )
 
   import scalatags.JsDom.all._
 

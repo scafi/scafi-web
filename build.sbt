@@ -1,17 +1,8 @@
 import sbt.Keys.target
 // Constants
 val scalaProjectVersion = "2.12.10"
-val akkaVersion = "2.5.32"
 val scalaTestVersion = "3.1.1"
 val scafiVersion = "1.1.0"
-// Managed dependencies
-val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
-val akkaHttp = "com.typesafe.akka" %% "akka-http" % "10.2.2"
-val akkaRemote = "com.typesafe.akka" %% "akka-remote" % akkaVersion
-val akkaStream = "com.typesafe.akka" %% "akka-stream" % akkaVersion
-val akkaLogging = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
-val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
-val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
 
 inThisBuild(
   List(
@@ -55,13 +46,7 @@ lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 lazy val commonSettings = Seq(
   organization := "it.unibo.scafi",
   compileScalastyle := (Compile / scalastyle).toTask("").value,
-  Compile / compile := ((Compile / compile) dependsOn compileScalastyle).value,
-  assembly / assemblyJarName := s"${name.value}.jar",
-  assembly / assemblyMergeStrategy := {
-    case PathList("reference.conf") => MergeStrategy.concat
-    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-    case x => MergeStrategy.first
-  }
+  Compile / compile := ((Compile / compile) dependsOn compileScalastyle).value
 )
 
 lazy val noPublishSettings = Seq(
@@ -73,13 +58,12 @@ lazy val noPublishSettings = Seq(
 lazy val `scafi-web` = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
-  .aggregate(`online-compiler`)
+  .aggregate(frontend)
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
   .settings(
-    // Prevents aggregated project (root) to be published
     packagedArtifacts := Map.empty,
-    crossScalaVersions := Nil, // NB: Nil to prevent double publishing!
+    crossScalaVersions := Nil,
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
   )
 
@@ -124,72 +108,3 @@ lazy val frontend = project
     webpackConfigFile := Some(baseDirectory.value / "src" / "main" / "resources" / "dev.webpack.config.js"),
     Test / webpackConfigFile := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js")
   )
-//allow to load the dependecies
-def runtimeProject(p: Project, scalaJSVersion: String): Project = {
-  p.dependsOn(frontend)
-    .settings(
-      libraryDependencies ++= Seq(
-        "org.scala-js" %% "scalajs-library" % scalaJSVersion,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-        "org.scala-js" %% "scalajs-library" % scalaJSVersion,
-        "org.scala-js" % "scalajs-compiler" % scalaJSVersion cross CrossVersion.full,
-        "org.scala-js" %% "scalajs-linker" % scalaJSVersion
-      )
-    )
-}
-lazy val runtime1x = runtimeProject(project, scalaJSVersion)
-
-lazy val `online-compiler` = project
-  .enablePlugins(JavaAppPackaging)
-  .dependsOn(runtime1x)
-  .settings(
-    commonSettings,
-    libraryDependencies ++= Seq(
-      "io.get-coursier" %% "coursier" % "1.0.3",
-      "ch.megard" %% "akka-http-cors" % "1.1.1",
-      "com.lihaoyi" %% "upickle" % "0.4.4",
-      "io.get-coursier" %% "coursier-cache" % "1.0.3",
-      "org.apache.maven" % "maven-artifact" % "3.3.9",
-      "org.xerial.snappy" % "snappy-java" % "1.1.2.6",
-      "org.xerial.larray" %% "larray" % "0.4.0",
-      "net.logstash.logback" % "logstash-logback-encoder" % "5.0", // logging
-      "ch.qos.logback" % "logback-classic" % "1.2.3", // logging
-      akkaLogging,
-      akkaHttp,
-      akkaActor,
-      akkaStream
-    ),
-    scalacOptions ++= Seq(
-      "-Xlint",
-      "-unchecked",
-      "-deprecation",
-      "-feature"
-    ),
-    Compile / resourceGenerators += (Def.task {
-      // store build a / version property file
-      val file = (Compile / resourceManaged).value / "version.properties"
-      val contents =
-        s"""
-          |version=${version.value}
-          |scalaVersion=${scalaVersion.value}
-          |scalaJSVersion=$scalaJSVersion
-          |""".stripMargin
-      IO.write(file, contents)
-      Seq(file)
-    } dependsOn (Compile / compile)).taskValue,
-    Compile / resourceGenerators += (Def.task {
-      val major = scalaVersion.value.take(4) // works only for scala version > 10
-      IO.listFiles(
-        (LocalProject("frontend") / Compile / target).value / s"scala-$major" / "scalajs-bundler" / "main"
-      ).toSeq
-        .filter(file => file.getName.contains("frontend-opt-bundle"))
-    } dependsOn (Compile / compile)).taskValue,
-    Compile / compile := ((Compile / compile) dependsOn (`frontend` / Compile / fullOptJS / webpack)).value,
-    Compile / resources ++= Seq(
-      (LocalProject("frontend") / Compile / packageBin).value
-    ),
-    Compile / resources ++= (LocalProject("runtime1x") / Compile / managedClasspath).value.map(_.data),
-    Compile / resources ++= (LocalProject("frontend") / Compile / resources).value
-  )
-
-addCommandAlias("runService", ";project frontend; fullOptJS::webpack; project online-compiler; run")

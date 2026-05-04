@@ -20,6 +20,7 @@ class SimulationControlsSection {
   import it.unibo.scafi.js.utils.Execution
 
   implicit val exc: Scheduler = Execution.timeoutBasedScheduler
+  private val daemonDelayMs = 50
 
   private val buttonClass = cls := smallPrimaryBtnClass("ml-1")
   val loadButton: Button = button("load", buttonClass, id := "load-code").render
@@ -33,7 +34,7 @@ class SimulationControlsSection {
   velocitySelector.onChangeRadio = () => {
     simulation = simulation match {
       case Some(d: Daemon) =>
-        Some(d.stop().toDaemon(0, velocitySelector.batchSize))
+        Some(d.stop().toDaemon(daemonDelayMs, velocitySelector.batchSize))
       case Some(t: TickBased) => Some(t.withBatchSize(velocitySelector.batchSize))
       case other => other
     }
@@ -43,7 +44,7 @@ class SimulationControlsSection {
   startButton.onclick = _ =>
     simulation match {
       case Some(ticker: TickBased) =>
-        val daemon = ticker.toDaemon(0, velocitySelector.batchSize)
+        val daemon = ticker.toDaemon(daemonDelayMs, velocitySelector.batchSize)
         daemon.failed.onComplete {
           case Failure(exc) =>
             ErrorModal.showError(exc.toString)
@@ -69,6 +70,7 @@ class SimulationControlsSection {
   // TODO move the execution far from here...
   def render(execution: SimulationExecutionPlatform, editor: EditorSection, controlDiv: Div): Unit = {
     lazy val loader = new Loader(controlDiv.parentElement)
+    var lastConfiguration: Option[SupportConfiguration] = None
     (loadButton :: startButton :: stopButton :: tick :: velocitySelector.html :: Nil) foreach (el =>
       controlDiv.appendChild(el)
     )
@@ -76,26 +78,38 @@ class SimulationControlsSection {
     velocitySelector.init()
     PageBus.listen {
       case code @ ScaFi(_) => loadScript(code)
-      case config: SupportConfiguration => stopCurrentSimulation()
+      case config: SupportConfiguration =>
+        if (lastConfiguration.forall(_ != config)) {
+          lastConfiguration = Some(config)
+          stopCurrentSimulation()
+        }
     }
     loadButton.onclick = event => loadScript(editor.getScript())
 
     def loadScript(script: Script): Unit = {
+      simulation.foreach(clearSimulationExecution)
+      simulation = None
+      (tick :: startButton :: stopButton :: loadButton :: Nil) foreach { el => el.disabled = true }
       loader.load()
       execution
         .loadScript(script)
         .onComplete { result =>
           loader.loaded()
+          loadButton.disabled = false
           result match {
             case Success(ticker: TickBased) =>
-              simulation foreach clearSimulationExecution
               simulation = Some(ticker.withBatchSize(velocitySelector.batchSize))
               (tick :: startButton :: Nil) foreach { el => el.disabled = false }
+              stopButton.disabled = true
             case Failure(e: AjaxException) if e.xhr.status == 404 =>
+              (tick :: startButton :: stopButton :: Nil) foreach { el => el.disabled = true }
               ErrorModal.showError(s"Compilation service not found...")
             case Failure(e: AjaxException) =>
+              (tick :: startButton :: stopButton :: Nil) foreach { el => el.disabled = true }
               ErrorModal.showError(s"request error, code : ${e.xhr.status}\n${e.xhr.responseText}")
-            case Failure(exception) => ErrorModal.showError(exception.toString)
+            case Failure(exception) =>
+              (tick :: startButton :: stopButton :: Nil) foreach { el => el.disabled = true }
+              ErrorModal.showError(exception.toString)
           }
         }
     }

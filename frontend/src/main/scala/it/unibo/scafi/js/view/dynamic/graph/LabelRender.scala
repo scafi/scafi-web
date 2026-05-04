@@ -27,6 +27,9 @@ object LabelRender {
     def onInit(scene: Scene): Unit = {}
   }
 
+  private def inlineLabel(elements: SensorEntries): String =
+    elements.iterator.map { case (_, value) => normalizeValue(value) }.filter(_.nonEmpty).mkString(" | ")
+
   case class Textify() extends LabelRender {
     private var textCache: Map[String, Text] = Map.empty
     override def graphicalRepresentation(
@@ -35,9 +38,7 @@ object LabelRender {
         world: Graph,
         scene: Scene
     ): Output = {
-      val result = elements
-        .map { case (_, value) => normalizeValue(value) }
-        .mkString("\n")
+      val result = inlineLabel(elements)
       val style =
         textCache.headOption.map { case (_, p) => new TextStyle(p.getTextMetrics()) }.getOrElse(new TextStyle())
       val gameobject = textCache
@@ -75,9 +76,7 @@ object LabelRender {
         case Failure(_) => (fallBackSize, node.width)
       }
       val textLabel = elements.filterNot { case (name, _) => except.contains(name) }
-      val result = textLabel
-        .map { case (name, value) => normalizeValue(value) }
-        .mkString("\n")
+      val result = inlineLabel(textLabel)
       val text = cache.getOrElseUpdate(
         node.id,
         scene.add.bitmapText(node.x + node.width / 2, node.y, "fonts", normalizeValue(result), fontSize)

@@ -15,6 +15,7 @@ import org.scalajs.dom.experimental.URLSearchParams
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 /** Root object, it initialize the simulation, the page and the backend. */
@@ -99,7 +100,8 @@ object Index {
     val controls = new SimulationControlsSection()
     controls.render(support, editor, SkeletonPage.controlsDiv)
     // attach the simulator with the view
-    support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender)
+    support.graphStreamSub = Some(support.graphStream.sample(FiniteDuration(updateTime, TimeUnit.MILLISECONDS)).foreach(phaserRender))
+    support.renderStandalone = Some((state: js.Dynamic) => phaserRender.renderFromJson(state))
     // force repaint
     support.invalidate()
     SkeletonPage.visualizationSection.focus()

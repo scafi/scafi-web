@@ -4,7 +4,7 @@ import it.unibo.scafi.js.controller.CommandInterpreter
 import it.unibo.scafi.js.controller.local.SimulationCommand._
 import it.unibo.scafi.js.utils.JSNumber
 import it.unibo.scafi.simulation.SpatialSimulation
-import it.unibo.scafi.space.Point2D
+import it.unibo.scafi.space.{Point2D, Point3D}
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -21,7 +21,7 @@ trait SimulationCommandInterpreter
       SimulationCommand,
       SimulationCommand.Result
     ] {
-  self: SimulationSupport =>
+  self: SimulationSupport with SimulationExecutionPlatform =>
 
   import self.incarnation._
 
@@ -38,19 +38,30 @@ trait SimulationCommandInterpreter
     val toScafiBackend = positionMap
       .mapValues { case (x, y) => new Point2D(x, y) }
       .mapValues(self.systemConfig.coordinateMapping.toBackend)
-    toScafiBackend.foreach { case (id, position: P) => backend.setPosition(id, position) }
+      .map { case (id, position) => id -> position }
+    toScafiBackend.foreach { case (id, position) => updateBackendPosition(id, Point2D(position.x, position.y)) }
+    forwardStandaloneMove(toScafiBackend.map { case (id, position) => id -> Point3D(position.x, position.y, 0) })
     sideEffectsStream.onNext(PositionChanged(toScafiBackend))
     Executed
   }
 
   private def onChangeSensorValue(sensor: String, ids: Set[String], value: Any): Result = {
+    if (ids.isEmpty) {
+      warnMissingSensorTargets(sensor)
+      return Executed
+    }
     backend.chgSensorValue(sensor, ids, value)
+    forwardStandaloneSensorChange(sensor, ids, value)
     val sensorMap = ids.map(id => id -> Map(sensor -> value)).toMap
     sideEffectsStream.onNext(SensorChanged(sensorMap))
     Executed
   }
 
   private def onToggle(sensor: String, ids: Set[String]): Result = {
+    if (ids.isEmpty) {
+      warnMissingSensorTargets(sensor)
+      return Executed
+    }
     val sensors = ids
       .map(id =>
         id -> Try {
@@ -68,10 +79,17 @@ trait SimulationCommandInterpreter
       .flatMap(set => set.map { case (id, value) => id -> Map(sensor -> !value) })
       .toMap
     val cantChange = sensors.collect { case (id, Failure(_)) => id }
+    toggleSensors.foreach { case (sensorValue, set) =>
+      val affectedIds = set.map(_._1)
+      backend.chgSensorValue(sensor, affectedIds, !sensorValue)
+      forwardStandaloneSensorChange(sensor, affectedIds, !sensorValue)
+    }
     sideEffectsStream.onNext(SensorChanged(sensorMap))
-    toggleSensors.foreach { case (sensorValue, set) => backend.chgSensorValue(sensor, set.map(_._1), !sensorValue) }
     if (cantChange.isEmpty) Executed else CantChange(cantChange)
   }
+
+  private def warnMissingSensorTargets(sensor: String): Unit =
+    org.scalajs.dom.console.warn(s"[ScafiWeb] Ignoring sensor command for '$sensor' because no nodes are selected")
 }
 
 object SimulationCommandInterpreter {

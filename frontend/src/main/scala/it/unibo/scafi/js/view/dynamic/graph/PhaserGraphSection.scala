@@ -14,6 +14,7 @@ import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.{Bound, ForceRepa
 import it.unibo.scafi.js.view.static.VisualizationSetting
 import org.scalajs.dom.ext.Color
 import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -55,9 +56,11 @@ class PhaserGraphSection(
   private var vertexContainer: GameObjects.Container = _
   private var nodeContainer: GameObjects.Container = _
   private var labelContainer: GameObjects.Container = _
+  private var currentScene: Phaser.Scene = _
   private lazy val sceneHandler: types.scenes.CreateSceneFromObjectConfig = types.scenes.callbacks(
     preload = scene => labelRenders.foreach(_.onInit(scene)),
     create = (scene, _) => {
+      currentScene = scene
       GlobalStore.listen(VisualizationSetting.key)(_ => PageBus.publish(ForceRepaint))
       val mainCamera = scene.cameras.main
       mainCamera.zoom = GlobalStore.getOrElse(zoomKey)(1)
@@ -148,7 +151,7 @@ class PhaserGraphSection(
       renderVertex(graph, scene)
     }
 
-    popup.selectedId.foreach(id => popup.refresh(graph(id)))
+    popup.selectedId.flatMap(graph.get).foreach(popup.refresh)
 
     val nodes = graph.nodes.map { node =>
       val circle = scene.add.circle(node.position.x, node.position.y, size, nodeColor)
@@ -206,16 +209,23 @@ class PhaserGraphSection(
       .foreach(labelContainer.add(_))
 
   }
+
+  def renderFromJson(state: js.Dynamic): Unit = {
+    StandaloneGraphSnapshot.toGraph(state).foreach { result =>
+      result.warnings.foreach(message => dom.console.warn(s"[ScafiWeb] $message"))
+      apply(result.graph)
+    }
+  }
 }
 
 object PhaserGraphSection {
   private val zoomKey = new GlobalStore.Key {
     override type Data = Double
-    override val value: String = "zoom"
+    override val value: String = "scafi_zoom"
   }
   private val scrollKey = new GlobalStore.Key {
     override type Data = js.Array[Double]
-    override val value: String = "scroll"
+    override val value: String = "scafi_scroll"
   }
   /** a set of event that could be received by this section */
   sealed trait VisualizationEvent

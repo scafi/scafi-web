@@ -28,7 +28,7 @@ class ExampleChooser(
   private def loadExample(name: String): Unit = codeExample.find(_.name == name) match {
     case Some(code) =>
       editor.setCode(code.body, ScalaModeEasy)
-      config.updateDeviceShape(code.devices)
+      config.loadExample(code.devices)
     case _ =>
   }
 }
