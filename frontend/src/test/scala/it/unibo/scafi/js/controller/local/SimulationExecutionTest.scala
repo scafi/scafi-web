@@ -93,24 +93,22 @@ class SimulationExecutionTest extends SupportTesterLike {
 
     it("batch size impact on changes in the graph") {
       val execution = localPlatform.loadScript(Script.javascript("rep(() => 0, x => x + 1)"))
-      var unsafeList: List[Graph] = List.empty
-      val tickTimes = 2
-      val batchTickSize = 10
-      val countNonBatched = completeAfterN(tickTimes, localPlatform.graphStream).runToFuture(monixScheduler)
-      localPlatform.graphStream.foreach(graph => unsafeList = graph :: unsafeList)(monixScheduler)
-      execution.foreach {
-        case ticker: TickBased => execTickMultipleTimes(ticker, tickTimes).runToFuture(monixScheduler)
-        case _ =>
-      }
-      val countFuture = countNonBatched.map(_ => countDifferences(unsafeList.head, unsafeList.tail.head) shouldBe 1)
-      countFuture.flatMap { _ =>
-        unsafeList = List.empty
+        val tickTimes = 2
+        val batchTickSize = 10
+        val nonBatchedGraphs = localPlatform.graphStream.take(tickTimes.toLong).toListL.runToFuture(monixScheduler)
         execution.foreach {
-          case ticker: TickBased => execTickMultipleTimes(ticker.withBatchSize(batchTickSize), tickTimes).runToFuture(monixScheduler)
+          case ticker: TickBased => execTickMultipleTimes(ticker, tickTimes).runToFuture(monixScheduler)
           case _ =>
         }
-        completeAfterN(tickTimes, localPlatform.graphStream).runToFuture(monixScheduler)
-      }.map { _ => countDifferences(unsafeList.head, unsafeList.tail.head) shouldNot be(1) }
+        nonBatchedGraphs.flatMap { list =>
+          countDifferences(list(1), list(0)) shouldBe 1
+          val batchedGraphs = localPlatform.graphStream.take(tickTimes.toLong).toListL.runToFuture(monixScheduler)
+          execution.foreach {
+            case ticker: TickBased => execTickMultipleTimes(ticker.withBatchSize(batchTickSize), tickTimes).runToFuture(monixScheduler)
+            case _ =>
+          }
+          batchedGraphs
+        }.map { list => countDifferences(list(1), list(0)) shouldNot be(1) }
     }
   }
 }

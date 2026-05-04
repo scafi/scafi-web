@@ -9,7 +9,7 @@ import it.unibo.scafi.space.Point3D
 import monix.execution.Cancelable
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
-import org.scalajs.dom.ext.Color
+
 
 import scala.concurrent.Future
 //TODO make support more general

@@ -48,7 +48,7 @@ object StandaloneGraphSnapshot {
   }
 
   private def parseEdge(value: js.Any): Option[(String, String)] = value match {
-    case edge: js.Array[js.Any] if edge.length >= 2 =>
+    case edge: js.Array[js.Any @unchecked] if edge.length >= 2 =>
       Some(edge(0).toString -> edge(1).toString)
     case _ =>
       val edge = value.asInstanceOf[js.Dynamic]
@@ -85,7 +85,7 @@ object StandaloneGraphSnapshot {
   private def normalizeLabelValue(value: js.Any): Any = {
     parseMatrix(value)
       .orElse(value.asInstanceOf[Any] match {
-        case array: js.Array[js.Any] => Some(array.toSeq.map(normalizeLabelValue))
+        case array: js.Array[js.Any @unchecked] => Some(array.toSeq.map(normalizeLabelValue))
         case iterable: Iterable[_] => Some(iterable.toSeq)
         case primitive => Some(primitive)
       })
@@ -110,9 +110,9 @@ object StandaloneGraphSnapshot {
 
   private def parsePixels(rawPixels: js.Any): Seq[((Int, Int), String)] = {
     selectArray(rawPixels.asInstanceOf[js.Dynamic], identity = true).flatMap {
-      case pixel: js.Array[js.Any] if pixel.length >= 2 =>
+      case pixel: js.Array[js.Any @unchecked] if pixel.length >= 2 =>
         pixel(0) match {
-          case coordinates: js.Array[js.Any] if coordinates.length >= 2 =>
+          case coordinates: js.Array[js.Any @unchecked] if coordinates.length >= 2 =>
             Some(((toInt(coordinates(0)), toInt(coordinates(1))), pixel(1).toString))
           case _ => None
         }
@@ -135,7 +135,7 @@ object StandaloneGraphSnapshot {
   private def selectArray(value: js.Dynamic, key: String = "", identity: Boolean = false): Seq[js.Any] = {
     val raw = if (identity) value.asInstanceOf[js.Any] else select(value, key).orNull
     raw match {
-      case array: js.Array[js.Any] => array.toSeq
+      case array: js.Array[js.Any @unchecked] => array.toSeq
       case _ => Seq.empty
     }
   }

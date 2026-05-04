@@ -12,7 +12,7 @@ import it.unibo.scafi.js.view.dynamic.{PageBus, ThemeSwitcher}
 import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.ForceRepaint
 import it.unibo.scafi.js.view.static.VisualizationSetting
-import org.scalajs.dom.ext.Color
+
 
 import scala.collection.mutable
 import scala.scalajs.js
@@ -61,9 +61,9 @@ object LabelRender {
     val fontUrl = "./fonts/font.xml"
     val hexBasis = 16
     private val cache: mutable.Map[String, BitmapText] = new mutable.HashMap()
-    var tint = Integer.parseInt(Color.White.toHex.tail, hexBasis)
-    ThemeSwitcher.onDark { tint = Integer.parseInt(Color.White.toHex.tail, hexBasis); PageBus.publish(ForceRepaint) }
-    ThemeSwitcher.onLight { tint = Integer.parseInt(Color.Black.toHex.tail, hexBasis); PageBus.publish(ForceRepaint) }
+    var tint = Integer.parseInt("ffffff", hexBasis)
+    ThemeSwitcher.onDark { tint = Integer.parseInt("ffffff", hexBasis); PageBus.publish(ForceRepaint) }
+    ThemeSwitcher.onLight { tint = Integer.parseInt("000000", hexBasis); PageBus.publish(ForceRepaint) }
 
     override def graphicalRepresentation(
         node: GameobjectNode,
@@ -94,7 +94,7 @@ object LabelRender {
   case class BooleanRender() extends LabelRender {
     val falseAlpha = 0.2
     val colorMultiplier = 1000
-    val initialColor: Int = Color.White
+    val initialColor: Int = 0xffffff
     val trueAlpha = 1
     val lineWidth = 1
 
@@ -145,7 +145,7 @@ object LabelRender {
           val computedStrokeSize = if (value) strokeSize else 0
           val unsafeNode: Shape = node.asInstanceOf[Shape]
           unsafeNode.setFillStyle(unsafeNode.fillColor, alpha = exportValue)
-          unsafeNode.setStrokeStyle(computedStrokeSize, Color.Cyan, 1)
+          unsafeNode.setStrokeStyle(computedStrokeSize, 0x00ffff, 1)
           Seq((node: GameObject) -> Seq("export"))
       }
     }

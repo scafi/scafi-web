@@ -37,7 +37,7 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
   private val randomValue = List(min, max, howMany)
   private val radius = InputText("radius", 70)
   private val addSensorButton = button(cls := smallPrimaryBtnClass, `type` := "button", "add sensor").render
-  private var matrix = MatrixInput(3, DeviceConfiguration.standardColor.toHex)
+  private var matrix = MatrixInput(3, DeviceConfiguration.standardColor)
   private var sensors: List[SensorInputText] = List()
   private var lastConfiguration: SupportConfiguration = _
 
@@ -132,7 +132,7 @@ class ConfigurationSection(configuration: Div, support: AggregateSystemSupport[_
         selectMode.value = Random.toString
     }
     matrix = newMatrix match {
-      case Some((_, m)) => MatrixInput(m.dimension, m.get(0, 0).getOrElse(DeviceConfiguration.standardColor.toHex))
+      case Some((_, m)) => MatrixInput(m.dimension, m.get(0, 0).getOrElse(DeviceConfiguration.standardColor))
       case None => matrix
     }
     init(getModeFromSelect(selectMode))

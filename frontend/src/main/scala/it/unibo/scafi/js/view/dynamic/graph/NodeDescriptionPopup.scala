@@ -76,7 +76,7 @@ object NodeDescriptionPopup {
 
       val root = exports.find(_._1.isRoot)
 
-      exportTree.refreshContents(buildTreeFrom(root, exportsTreeMap))
+      exportTree.refreshContents(buildTreeFrom(root, exportsTreeMap.toMap))
       sensorList.refreshContents(sensorsContent)
     }
     def focusOn(node: Transform with GameObject): Unit = {

@@ -14,7 +14,7 @@ Scala compilation is powered by [Scastie](https://scastie.scala-lang.org).
 ```
 sbt "project frontend; fastOptJS::webpack"
 ```
-Then serve the `frontend/target/scala-2.12/scalajs-bundler/main/` directory with any static file server (e.g., `npx serve`).
+Then serve the `frontend/target/scala-2.13/scalajs-bundler/main/` directory with any static file server (e.g., `npx serve`).
 
 ## Preliminary support of ScaFi.js
 ScaFi web supports also a Javascript dialect of ScaFi but currently is not mature enough to be part of the page.

@@ -16,7 +16,7 @@ import it.unibo.scafi.js.view.dynamic.graph.NodeRepresentation._
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
-import org.scalajs.dom.ext.Color
+
 
 import scala.scalajs.js
 
@@ -75,7 +75,7 @@ object Interaction {
     private var selectionContainer: Container = _
     private val rectangleAlpha = 0.5
     private var positionBeforeDrag = (0.0, 0.0)
-    private val selectionColor = Color.Red
+    private val selectionColor = 0xff0000
     var state: State = Pan
     var selection: Option[Seq[String]] = None
 
@@ -105,7 +105,7 @@ object Interaction {
 
     def initRectangle(): Unit = {
       rectangleSelection =
-        scene.add.rectangle(0, 0, 0, 0, fillColor = Color.Yellow, fillAlpha = rectangleAlpha).setOrigin(0)
+        scene.add.rectangle(0, 0, 0, 0, fillColor = 0xffff00, fillAlpha = rectangleAlpha).setOrigin(0)
       selectionContainer = scene.add.container(0, 0)
       mainContainer.add(selectionContainer)
       mainContainer.setInteractive()

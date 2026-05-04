@@ -11,9 +11,6 @@ module.exports.module.rules.push(
 module.exports.module.rules.push(
     {
         test: /\.(png|xml|gif)$/i,
-        loader: 'file-loader',
-        options: {
-            outputPath: 'assets',
-        }
+        type: 'asset/resource'
     }
 )

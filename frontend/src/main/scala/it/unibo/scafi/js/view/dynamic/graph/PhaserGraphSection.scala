@@ -12,7 +12,7 @@ import it.unibo.scafi.js.view.dynamic.{PageBus, VisualizationSettingsSection}
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.LabelRender
 import it.unibo.scafi.js.view.dynamic.graph.PhaserGraphSection.{Bound, ForceRepaint, scrollKey, zoomKey}
 import it.unibo.scafi.js.view.static.VisualizationSetting
-import org.scalajs.dom.ext.Color
+
 import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.dom
 
@@ -33,8 +33,8 @@ class PhaserGraphSection(
   private val size = 5 // TODO put in configuration
   private var newBound: Option[Bound] = None
   private var currentBound: Option[Bound] = None
-  private val nodeColor: Int = Color(187, 134, 252) // TODO put in configuration
-  private val lineColor: Int = Color(125, 125, 125) // TODO put in configuration
+  private val nodeColor: Int = 0xbb86fc // TODO put in configuration
+  private val lineColor: Int = 0x7d7d7d // TODO put in configuration
   private val cameraSlack = -0.1
   private val keyboardBindings = new KeyboardBindings(interaction)
   private val noSlack = 0.0

@@ -47,6 +47,6 @@ object MatrixLed {
       }
     }
 
-    override def all(color: String): MatrixLed = MatrixMap(dimension, pixels.mapValues(_ => color))
+    override def all(color: String): MatrixLed = MatrixMap(dimension, pixels.view.mapValues(_ => color).toMap)
   }
 }

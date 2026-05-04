@@ -1,7 +1,7 @@
 import sbt.Keys.target
 // Constants
-val scalaProjectVersion = "2.12.10"
-val scalaTestVersion = "3.1.1"
+val scalaProjectVersion = "2.13.16"
+val scalaTestVersion = "3.2.19"
 val scafiVersion = "1.1.0"
 
 inThisBuild(
@@ -12,7 +12,7 @@ inThisBuild(
     pomIncludeRepository := { _ => false }, // no repositories show up in the POM file
     licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
     homepage := Some(url("https://scafi.github.io/web")),
-    resolvers += Resolver.sonatypeRepo("snapshots"),
+    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
     scmInfo := Some(
       ScmInfo(
         url("https://github.com/scafi/scafi-web"),
@@ -35,7 +35,7 @@ inThisBuild(
     ),
     releaseEarlyWith := SonatypePublisher,
     publishTo := Some(
-      if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging
+      if (isSnapshot.value) Resolver.sonatypeOssRepos("snapshots").head else Opts.resolver.sonatypeStaging
     ),
     scalaVersion := scalaProjectVersion // default version
   )
@@ -64,7 +64,7 @@ lazy val `scafi-web` = project
   .settings(
     packagedArtifacts := Map.empty,
     crossScalaVersions := Nil,
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
+    ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject
   )
 
 lazy val frontend = project
@@ -74,14 +74,14 @@ lazy val frontend = project
     name := "frontend",
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "1.0.0",
-      "org.scalatest" %%% "scalatest" % "3.2.0" % "test",
-      "com.lihaoyi" %%% "scalatags" % "0.9.1",
-      "com.lihaoyi" %%% "upickle" % "2.0.0",
-      "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.1",
+      "org.scalatest" %%% "scalatest" % scalaTestVersion % Test,
+      "com.lihaoyi" %%% "scalatags" % "0.13.1",
+      "com.lihaoyi" %%% "upickle" % "3.3.1",
+      "com.github.japgolly.scalacss" %%% "ext-scalatags" % "1.0.0",
       "io.monix" %%% "monix-reactive" % "3.2.2",
-      "org.querki" %%% "jquery-facade" % "2.0",
+      "org.querki" %%% "jquery-facade" % "2.1",
       "it.unibo.scafi" %%% "scafi-core" % scafiVersion,
+      "org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0",
       "it.unibo.scafi" %%% "scafi-commons" % scafiVersion,
       "it.unibo.scafi" %%% "scafi-simulator" % scafiVersion
     ),
@@ -99,11 +99,11 @@ lazy val frontend = project
       "simplebar" -> "6.0.0-beta.3",
       "split.js" -> "1.6.2",
       // webpack dependecies
-      "webpack-merge" -> "4.1.2",
-      "imports-loader" -> "0.8.0",
-      "expose-loader" -> "0.7.5",
-      "css-loader" -> "4.2.1",
-      "style-loader" -> "1.2.1"
+      "webpack-merge" -> "5.8.0",
+      "imports-loader" -> "3.1.1",
+      "expose-loader" -> "3.1.0",
+      "css-loader" -> "6.7.1",
+      "style-loader" -> "3.3.1"
     ),
     webpackConfigFile := Some(baseDirectory.value / "src" / "main" / "resources" / "dev.webpack.config.js"),
     Test / webpackConfigFile := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js")

@@ -40,8 +40,8 @@ trait SimulationCommandInterpreter
       .mapValues(self.systemConfig.coordinateMapping.toBackend)
       .map { case (id, position) => id -> position }
     toScafiBackend.foreach { case (id, position) => updateBackendPosition(id, Point2D(position.x, position.y)) }
-    forwardStandaloneMove(toScafiBackend.map { case (id, position) => id -> Point3D(position.x, position.y, 0) })
-    sideEffectsStream.onNext(PositionChanged(toScafiBackend))
+    forwardStandaloneMove(toScafiBackend.map { case (id, position) => id -> Point3D(position.x, position.y, 0) }.toMap)
+    sideEffectsStream.onNext(PositionChanged(toScafiBackend.toMap))
     Executed
   }
 

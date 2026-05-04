@@ -51,7 +51,7 @@ object PageStructure {
           new SplitSection(divisions.elems(visualization).size - configSection.size, minVisualizationPortion)
         backendSection.show()
         GlobalStore.put(sizesKey)(new PageDivision(false, divisions.elems))
-        split = createSplit(gutterCreator, sections, divisions.elems: _*)
+        split = createSplit(gutterCreator, sections, divisions.elems.toSeq: _*)
       } else {
         backendSection.hide()
         val oldConfig = divisions.elems(config)
@@ -59,7 +59,7 @@ object PageStructure {
         divisions.elems(visualization) =
           new SplitSection(divisions.elems(visualization).size + oldConfig.size, minVisualizationPortion)
         GlobalStore.put(sizesKey)(new PageDivision(true, divisions.elems))
-        split = createSplit(gutterCreator, sections, divisions.elems: _*)
+        split = createSplit(gutterCreator, sections, divisions.elems.toSeq: _*)
       }
     }
 
@@ -73,7 +73,7 @@ object PageStructure {
         divisions.elems(visualization) =
           new SplitSection(divisions.elems(visualization).size + oldConfig.size, minVisualizationPortion)
       }
-      split = createSplit(gutterCreator, sections, divisions.elems: _*)
+      split = createSplit(gutterCreator, sections, divisions.elems.toSeq: _*)
       $("#backend-config-section").addClass("pl-3")
     }
 

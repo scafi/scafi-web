@@ -2,11 +2,10 @@ package it.unibo.scafi.js.model
 
 import it.unibo.scafi.js.model.MatrixLed.Led
 import it.unibo.scafi.js.model.MatrixOps.LedGroup
-import org.scalajs.dom.ext.Color
 import scalajs.js
 import js.JSConverters._
 //TODO doc
-case class MatrixOps(color: Color, cells: LedGroup) extends ActuationData {
+case class MatrixOps(color: String, cells: LedGroup) extends ActuationData {
   override def toString: String = "ledAct"
 }
 
@@ -23,21 +22,21 @@ object MatrixOps {
 
   def apply(action: MatrixOps, matrix: MatrixLed): MatrixLed = {
     action.cells match {
-      case One(i, j) => matrix.set(new Led(i, j, action.color.toHex)).getOrElse(matrix)
+      case One(i, j) => matrix.set(new Led(i, j, action.color)).getOrElse(matrix)
       case Column(i) =>
-        val led = (0 until matrix.dimension).map(new Led(_, i, action.color.toHex)).toJSArray
+        val led = (0 until matrix.dimension).map(new Led(_, i, action.color))
         matrix.setBulk(led).getOrElse(matrix)
       case Row(j) =>
-        val led = (0 until matrix.dimension).map(new Led(j, _, action.color.toHex)).toJSArray
+        val led = (0 until matrix.dimension).map(new Led(j, _, action.color))
         matrix.setBulk(led).getOrElse(matrix)
-      case All => matrix.all(action.color.toHex)
+      case All => matrix.all(action.color)
       case Diagonal =>
         val cells = 0 until matrix.dimension
-        val diagonal = cells.zip(cells).map { case (i, j) => new Led(i, j, action.color.toHex) }.toJSArray
+        val diagonal = cells.zip(cells).map { case (i, j) => new Led(i, j, action.color) }
         matrix.setBulk(diagonal).getOrElse(matrix)
       case AntiDiagonal =>
         val cells = 0 until matrix.dimension
-        val antidigonal = cells.zip(cells.reverse).map { case (i, j) => new Led(i, j, action.color.toHex) }.toJSArray
+        val antidigonal = cells.zip(cells.reverse).map { case (i, j) => new Led(i, j, action.color) }
         matrix.setBulk(antidigonal).getOrElse(matrix)
       case Ring => matrix // TODO
       case Combine(head :: other) =>

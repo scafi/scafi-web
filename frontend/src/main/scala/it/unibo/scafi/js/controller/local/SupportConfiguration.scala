@@ -6,7 +6,7 @@ import it.unibo.scafi.js.model.MatrixLed
 import it.unibo.scafi.js.model.MatrixLed.MatrixMap
 import it.unibo.scafi.js.utils.GlobalStore
 import it.unibo.scafi.space.Point3D
-import org.scalajs.dom.ext.Color
+
 import upickle.default._
 
 import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
@@ -144,8 +144,8 @@ object DeviceConfiguration {
       }
     )
   val standardDimension = 3
-  val standardColor = Color("#bb86fc")
-  val standardMatrix = MatrixLed.fill(standardDimension, standardColor.toHex)
+  val standardColor = "#bb86fc"
+  val standardMatrix = MatrixLed.fill(standardDimension, standardColor)
   /** @return a configuration in which exist the sensor "source" and "obstacle". */
   def standard: DeviceConfiguration = DeviceConfiguration(
     Map[String, DeviceKind]("matrix" -> standardMatrix, "source" -> false, "obstacle" -> false, "target" -> false)

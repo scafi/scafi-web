@@ -5,7 +5,6 @@ import it.unibo.scafi.js.facade.phaser.namespaces.display.ColorNamespace
 import it.unibo.scafi.js.model.MatrixOps._
 import it.unibo.scafi.js.model.Movement.{AbsoluteMovement, VectorMovement}
 import it.unibo.scafi.js.model.{MatrixOps, Movement}
-import org.scalajs.dom.ext.Color
 
 import scala.scalajs.js.|
 
@@ -17,18 +16,17 @@ trait ActuationLib {
     sealed trait LedMode
     case object off extends LedMode
     case object on extends LedMode
-    def rgb(r: Int, g: Int, b: Int): Color = Color.apply(r, g, b)
-    def hsl(h: Double, s: Double, l: Double): Color = {
+    def rgb(r: Int, g: Int, b: Int): String = f"#$r%02x$g%02x$b%02x"
+    def hsl(h: Double, s: Double, l: Double): String = {
       val phaserColor = ColorNamespace.HSLToColor(h, s, l)
-      Color.apply(phaserColor.r, phaserColor.g, phaserColor.b)
+      rgb(phaserColor.r, phaserColor.g, phaserColor.b)
     }
-    def hue(h: Double): Color = hsl(h, 0.5, 0.5)
+    def hue(h: Double): String = hsl(h, 0.5, 0.5)
     case class LedSelect(cell: LedGroup) {
-      def to(color: Color | String | LedMode): MatrixOps = (color: Any) match {
+      def to(color: String | LedMode): MatrixOps = (color: Any) match {
         case s: String => MatrixOps(getColorFrom(s), cell)
-        case c: Color => MatrixOps(c, cell)
-        case off => MatrixOps(Color.Black, cell)
-        case on => MatrixOps(Color.White, cell)
+        case `off` => MatrixOps("#000000", cell)
+        case `on` => MatrixOps("#ffffff", cell)
       }
     }
 
@@ -41,15 +39,15 @@ trait ActuationLib {
     def ledRow(i: Int): LedSelect = LedSelect(Row(i))
     def led(i: Int, j: Int): LedSelect = LedSelect(One(i, j))
 
-    private def getColorFrom(s: String): Color = s match {
-      case "white" => Color.White
-      case "red" => Color.Red
-      case "green" => Color.Green
-      case "blue" => Color.Blue
-      case "yellow" => Color.Yellow
-      case "cyan" => Color.Cyan
-      case "magenta" => Color.Magenta
-      case hex => Color.apply(hex)
+    private def getColorFrom(s: String): String = s match {
+      case "white" => "#ffffff"
+      case "red" => "#ff0000"
+      case "green" => "#00ff00"
+      case "blue" => "#0000ff"
+      case "yellow" => "#ffff00"
+      case "cyan" => "#00ffff"
+      case "magenta" => "#ff00ff"
+      case hex => hex
     }
 
     sealed trait VelocityComponent

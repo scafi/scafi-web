@@ -111,7 +111,7 @@ trait SimulationExecutionPlatform
           .map(_.asInstanceOf[JF1[CONTEXT, EXPORT]])
           .map(sideEffectExecution)
       }
-    case aggregateClass: ScaFi[AggregateProgram] =>
+    case aggregateClass: ScaFi[AggregateProgram @unchecked] =>
       clearStandaloneSession()
       Future.fromTry {
         Try(sideEffectExecution(aggregateClass.program))
@@ -276,15 +276,15 @@ trait SimulationExecutionPlatform
       (maybeDimension, maybePixels) match {
         case (Some(dimension), Some(rawPixels)) =>
           val pixels = selectArray(rawPixels.asInstanceOf[js.Dynamic], identity = true).flatMap {
-            case pixel: js.Array[js.Any] if pixel.length >= 2 =>
+            case pixel: js.Array[js.Any @unchecked] if pixel.length >= 2 =>
               pixel(0) match {
-                case coordinates: js.Array[js.Any] if coordinates.length >= 2 =>
+                case coordinates: js.Array[js.Any @unchecked] if coordinates.length >= 2 =>
                   Some(((toInt(coordinates(0)), toInt(coordinates(1))), pixel(1).toString))
                 case _ => None
               }
             case _ => None
           }.toMap
-          if (pixels.nonEmpty) Some(MatrixMap(dimension, pixels)) else None
+          if (pixels.nonEmpty) Some(MatrixMap(dimension, pixels.toMap[(Int, Int), String])) else None
         case _ => None
       }
     }
@@ -298,7 +298,7 @@ trait SimulationExecutionPlatform
   private def selectArray(value: js.Dynamic, key: String = "", identity: Boolean = false): Seq[js.Any] = {
     val raw = if (identity) value.asInstanceOf[js.Any] else select(value, key).orNull
     raw match {
-      case array: js.Array[js.Any] => array.toSeq
+      case array: js.Array[js.Any @unchecked] => array.toSeq
       case _ => Seq.empty
     }
   }
