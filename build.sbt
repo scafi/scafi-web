@@ -58,7 +58,7 @@ lazy val noPublishSettings = Seq(
 lazy val `scafi-web` = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
-  .aggregate(frontend, `standalone-runtime`)
+  .aggregate(`standalone-runtime`)
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
   .settings(
@@ -105,43 +105,4 @@ lazy val `standalone-runtime` = project
       IO.write(outputFile, content)
       Seq(outputFile)
     }.taskValue
-  )
-
-lazy val frontend = project
-  .enablePlugins(ScalaJSBundlerPlugin)
-  .dependsOn(`standalone-runtime`)
-  .settings(
-    name := "frontend",
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % scalaTestVersion % Test,
-      "com.lihaoyi" %%% "scalatags" % "0.13.1",
-      "com.lihaoyi" %%% "upickle" % "3.3.1",
-      "com.github.japgolly.scalacss" %%% "ext-scalatags" % "1.0.0",
-      "io.monix" %%% "monix-reactive" % "3.2.2",
-      "org.querki" %%% "jquery-facade" % "2.1",
-      "org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0"
-    ),
-    installJsdom / version := "12.0.0",
-    Test / requireJsDomEnv := true,
-    webpackBundlingMode := BundlingMode
-      .LibraryAndApplication(), // https://scalacenter.github.io/scalajs-bundler/cookbook.html#several-entry-points
-    Compile / npmDependencies ++= Seq(
-      "bootstrap" -> "4.6.0",
-      "codemirror" -> "5.59.2",
-      "@fortawesome/fontawesome-free" -> "5.15.2",
-      "jquery" -> "3.5.1",
-      "jquery-resizable-dom" -> "0.35.0",
-      "phaser" -> "3.24.1",
-      "simplebar" -> "6.0.0-beta.3",
-      "split.js" -> "1.6.2",
-      // webpack dependecies
-      "webpack-merge" -> "5.8.0",
-      "imports-loader" -> "3.1.1",
-      "expose-loader" -> "3.1.0",
-      "css-loader" -> "6.7.1",
-      "style-loader" -> "3.3.1"
-    ),
-    webpackConfigFile := Some(baseDirectory.value / "src" / "main" / "resources" / "dev.webpack.config.js"),
-    Test / webpackConfigFile := Some(baseDirectory.value / "src" / "test" / "resources" / "test.webpack.config.js")
   )

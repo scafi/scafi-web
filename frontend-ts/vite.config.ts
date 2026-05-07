@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  base: "/web/",
   server: {
     port: 4173,
     fs: {
