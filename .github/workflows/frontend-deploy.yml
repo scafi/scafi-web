@@ -15,8 +15,6 @@ jobs:
         uses: olafurpg/setup-scala@v11
         with:
           java-version: adopt@1.${{ matrix.jvm_version }}
-      - name: Coursier cache
-        uses: coursier/cache-action@v5
       - name: Sbt test
         run: sbt test
 
@@ -34,8 +32,6 @@ jobs:
         run: git fetch --tags -f
       - name: Setup Scala
         uses: olafurpg/setup-scala@v11
-      - name: Coursier cache
-        uses: coursier/cache-action@v5
       - name: Generate RuntimeTemplate.scala
         run: sbt -v "standalone-runtime/compile"
       - name: Setup Node.js
