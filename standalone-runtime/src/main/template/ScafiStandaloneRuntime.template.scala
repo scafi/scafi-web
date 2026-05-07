@@ -242,7 +242,7 @@ object ScafiStandalone {
 
     implicit val booleanEncoder: RuntimeValueEncoder[Boolean] = RuntimeValueEncoder(value => encodeValue(value))
     implicit val intEncoder: RuntimeValueEncoder[Int] = RuntimeValueEncoder(value => encodeValue(value))
-    implicit val longEncoder: RuntimeValueEncoder[Long] = RuntimeValueEncoder(value => encodeValue(value))
+    implicit val longEncoder: RuntimeValueEncoder[Long] = RuntimeValueEncoder(value => encodeValue(value.toDouble))
     implicit val doubleEncoder: RuntimeValueEncoder[Double] = RuntimeValueEncoder(value => encodeValue(value))
     implicit val stringEncoder: RuntimeValueEncoder[String] = RuntimeValueEncoder(value => encodeValue(value))
     implicit val jsAnyEncoder: RuntimeValueEncoder[js.Any] = RuntimeValueEncoder(value => value)

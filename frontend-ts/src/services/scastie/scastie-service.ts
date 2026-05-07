@@ -83,7 +83,7 @@ export class ScastieService {
         },
         libraries: [dependency("scafi-core"), dependency("scafi-commons"), dependency("scafi-simulator")],
         librariesFromList: [],
-        sbtConfigExtra: "",
+        sbtConfigExtra: 'scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")',
         sbtPluginsConfigExtra: "",
         isShowingInUserProfile: false,
       },
@@ -153,6 +153,10 @@ export class ScastieService {
           if (javascript && javascript.length > 0) {
             resolve({ javascript, warnings, errors, runtimeError });
             return;
+          }
+          const allMessages = [...errors, ...warnings].filter(Boolean);
+          if (allMessages.length > 0) {
+            console.error("[Scastie] Compilation failed with details:", allMessages);
           }
           reject(new Error(`Compilation failed: ${failureMessage("Unknown error")}`));
         }
