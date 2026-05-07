@@ -244,6 +244,7 @@ export class ScafiWebUiShell {
     this.visualization = this.resolveVisualization(state);
     const graph = state.graph;
     const status = state.execution.status;
+    const isLoaded = status === "ready" || status === "daemon";
     const hasSelection = this.selectedNodes(graph.nodes).length > 0;
     const selectionPanelVisible = hasSelection && this.selectionPanelOpen;
 
@@ -305,7 +306,6 @@ export class ScafiWebUiShell {
                     }
                   </div>
                   ${this.examplesError ? `<p class="inline-error">Examples fallback failed: ${escapeHtml(this.examplesError)}</p>` : ""}
-                  ${this.activePlaygroundDocument === "world" ? `<p class="world-helper">Edit the simulation world as Scala code. The snippet is kept verbatim and only takes effect when you press Load, where it is injected into the Scastie standalone wrapper before compilation. The DSL supports advanced hooks too, including custom sensor encoders, generated positions and raw config transforms.</p>` : ""}
                   ${
                     this.activePlaygroundDocument === "renderer"
                       ? `<div id="renderer-error-container">${this.rendererDocumentError ? `<p class="inline-error">Renderer JS error: ${escapeHtml(this.rendererDocumentError)}</p>` : ""}</div>`
@@ -320,7 +320,7 @@ export class ScafiWebUiShell {
               </section>
             </section>
 
-            <section class="panel panel-visualization">
+            <section class="panel panel-visualization ${!isLoaded ? "viz-unloaded" : ""}">
               <section class="panel-section viz-top-section">
                 <div class="viz-heading-row compact-viz-heading-row">
                   <div class="section-heading compact-section-heading">
@@ -364,6 +364,7 @@ export class ScafiWebUiShell {
               <section class="panel-section panel-section-tight panel-section-fill graph-pane">
                 <div class="graph-workspace">
                   <div class="graph-main">
+                    ${!isLoaded ? `<div class="viz-startup-overlay"><p>Press <strong>Load</strong> to start the simulation</p></div>` : ""}
                     <div class="graph-stage ${this.graphInteractionMode === "pan" ? "is-pan-mode" : "is-selection-mode"}" data-graph-stage>
                       ${graph.nodes.length > 0 ? this.renderGraph(state.graph.nodes, state.graph.edges) : `<div class="empty-graph">No nodes available for the current configuration.</div>`}
                     </div>
@@ -936,6 +937,7 @@ export class ScafiWebUiShell {
       this.app.saveWorldDocument(this.worldDocument);
       this.app.saveRendererDocument(this.rendererDocument);
       this.app.evolve(exampleConfiguration);
+      this.app.resetExecution();
       this.app.saveEditor(this.editorDocument);
       this.render();
     });

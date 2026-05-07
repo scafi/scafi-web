@@ -281,6 +281,23 @@ export class AppStore {
     }
   }
 
+  resetExecution(): void {
+    this.stopDaemon();
+    void this.sessionManager.clear();
+    this.patch({
+      execution: {
+        ...this.state.execution,
+        status: "idle",
+        error: undefined,
+        warnings: [],
+      },
+      standalone: {
+        active: false,
+        authoritative: false,
+      },
+    });
+  }
+
   moveNodes(positionMap: Record<NodeId, Vec2>): void {
     for (const [id, position] of Object.entries(positionMap)) {
       const device = this.backend.devices.get(id);

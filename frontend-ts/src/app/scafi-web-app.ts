@@ -94,6 +94,10 @@ export class ScafiWebApp {
     this.store.evolve(configuration);
   }
 
+  resetExecution(): void {
+    this.store.resetExecution();
+  }
+
   moveNodes(positionMap: Record<string, Vec2>): void {
     this.store.moveNodes(positionMap);
   }

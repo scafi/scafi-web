@@ -1673,3 +1673,38 @@ textarea {
   background: rgba(74, 144, 217, 0.14);
   border-color: var(--accent-cool);
 }
+
+/* --- Simulation not loaded (viz-unloaded) --- */
+.panel-visualization.viz-unloaded .graph-pane,
+.panel-visualization.viz-unloaded .viz-control-group-speed,
+.panel-visualization.viz-unloaded .viz-control-group-graph {
+  opacity: 0.3;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 200ms ease;
+}
+
+.viz-startup-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.viz-startup-overlay p {
+  font-size: 1rem;
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.22);
+  padding: 12px 24px;
+  border-radius: 12px;
+  text-align: center;
+  margin: 0;
+}
+
+[data-theme="light"] .viz-startup-overlay p {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--muted);
+}
