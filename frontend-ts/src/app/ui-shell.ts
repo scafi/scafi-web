@@ -272,7 +272,6 @@ export class ScafiWebUiShell {
                 <div class="editor-pane-meta">
                   <div class="section-heading compact-section-heading">
                     <p class="section-kicker">Playground</p>
-                    <h2>${this.currentDocumentTitle()}</h2>
                   </div>
                   <div class="editor-tabbar" role="tablist" aria-label="Playground documents">
                     <button id="document-tab-code" class="editor-tab ${this.activePlaygroundDocument === "code" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "code")}">Code</button>
@@ -325,7 +324,6 @@ export class ScafiWebUiShell {
                 <div class="viz-heading-row compact-viz-heading-row">
                   <div class="section-heading compact-section-heading">
                     <p class="section-kicker">Execution</p>
-                    <h2>Simulation controls</h2>
                   </div>
                   <div class="status-strip status-strip-inline">${this.renderStatusStrip(state)}</div>
                 </div>
@@ -1748,19 +1746,6 @@ export class ScafiWebUiShell {
     return this.getActiveEditorCode();
   }
 
-  private currentDocumentTitle(): string {
-    if (this.activePlaygroundDocument === "world") {
-      return "World";
-    }
-    if (this.activePlaygroundDocument === "renderer") {
-      return "Renderer (JS)";
-    }
-    if (this.activePlaygroundDocument === "compiled") {
-      return "Compiled";
-    }
-    return "Program";
-  }
-
   private getBufferForMode(mode: EditorDocument["mode"]): string {
     return mode === "easy-scala" ? this.easyScalaBuffer : this.fullScalaBuffer;
   }
@@ -2156,6 +2141,27 @@ function renderNodeOverlays(overlays: NodeRenderOverlay[], nodeRenderState: Reso
         return `<circle class="graph-node-overlay graph-node-overlay-dot ${escapeHtml(overlay.className ?? "")}" data-overlay-index="${index}" cx="${overlay.x}" cy="${overlay.y}" r="${overlay.radius ?? 3}" fill="${escapeHtml(overlay.fill ?? "#ffffff")}" ${
           overlay.fillOpacity !== undefined ? `fill-opacity="${overlay.fillOpacity}" ` : ""
         }${overlay.stroke ? `stroke="${escapeHtml(overlay.stroke)}" ` : ""}${overlay.strokeWidth !== undefined ? `stroke-width="${overlay.strokeWidth}"` : ""} />`;
+      }
+      if (overlay.kind === "arrow") {
+        const module = Math.hypot(overlay.dx, overlay.dy);
+        if (module === 0) return "";
+        const nx = overlay.dx / module;
+        const ny = overlay.dy / module;
+        const arrowLen = overlay.length ?? nodeRenderState.nodeSize * 3;
+        const tipX = nx * arrowLen;
+        const tipY = ny * arrowLen;
+        const headLen = Math.min(7, arrowLen * 0.4);
+        const headW = headLen * 0.45;
+        const baseX = tipX - nx * headLen;
+        const baseY = tipY - ny * headLen;
+        const pw = -ny * headW;
+        const ph = nx * headW;
+        const color = escapeHtml(overlay.stroke ?? "#a5d6ff");
+        const strokeWidth = overlay.strokeWidth ?? 2.5;
+        return `<g class="graph-node-overlay graph-node-overlay-arrow ${escapeHtml(overlay.className ?? "")}" data-overlay-index="${index}">
+          <line x1="0" y1="0" x2="${tipX}" y2="${tipY}" stroke="${color}" stroke-width="${strokeWidth}" />
+          <polygon points="${tipX},${tipY} ${baseX + pw},${baseY + ph} ${baseX - pw},${baseY - ph}" fill="${color}" />
+        </g>`;
       }
       return `<text class="graph-node-overlay graph-node-overlay-text ${escapeHtml(overlay.className ?? "")}" data-overlay-index="${index}" x="${overlay.x ?? 0}" y="${overlay.y}" fill="${escapeHtml(overlay.fill ?? "#ffffff")}" text-anchor="${overlay.anchor ?? "middle"}" style="font-size:${overlay.fontSize ?? Math.max(10, nodeRenderState.fontSize - 1)}px">${escapeHtml(overlay.text)}</text>`;
     })

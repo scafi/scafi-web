@@ -119,7 +119,7 @@ textarea {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--accent-cool);
 }
 
@@ -147,7 +147,7 @@ textarea {
 }
 
 .section-heading h2 {
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1.05;
 }
 
@@ -574,6 +574,17 @@ textarea {
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   padding: 10px 12px;
+}
+
+select option {
+  background: #24282e;
+  color: var(--text);
+}
+
+select optgroup {
+  background: #1a1d22;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 textarea {
@@ -1621,6 +1632,17 @@ textarea {
 [data-theme="light"] select,
 [data-theme="light"] textarea {
   background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] select option {
+  background: #f5f5f5;
+  color: var(--text);
+}
+
+[data-theme="light"] select optgroup {
+  background: #e8e8e8;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 [data-theme="light"] .viz-control-group {

@@ -1,11 +1,12 @@
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
+import scala.collection.mutable.{Map => MutableMap}
 import it.unibo.scafi.incarnations.BasicAbstractSpatialSimulationIncarnation
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.lib.StandardLibrary
 import it.unibo.scafi.space.Point2D
 import it.unibo.utils.{Interop, Linearizable}
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import scala.util.Try
 
 object ScafiRuntime extends BasicAbstractSpatialSimulationIncarnation with StandardLibrary {
@@ -180,31 +181,31 @@ object ScafiRuntime extends BasicAbstractSpatialSimulationIncarnation with Stand
     case class CircularZone(center: (Double, Double), radius: Double) extends Zone
     case class RectangularZone(center: (Double, Double), width: Double, height: Double) extends Zone
 
-    def clockwiseRotation(center: (Double, Double)): Velocity = {
+    def clockwiseRotation(center: (Double, Double), speed: Double = 100): Velocity = {
       val current = currentPosition()
-      Velocity(current.y - center._2, -(current.x - center._1)).normalized
+      Velocity(current.y - center._2, -(current.x - center._1)).normalized * speed
     }
 
-    def clockwiseRotation(x: Double, y: Double): Velocity = clockwiseRotation((x, y))
+    def clockwiseRotation(x: Double, y: Double, speed: Double): Velocity = clockwiseRotation((x, y), speed)
 
-    def anticlockwiseRotation(center: (Double, Double)): Velocity = -clockwiseRotation(center)
+    def anticlockwiseRotation(center: (Double, Double), speed: Double = 100): Velocity = -clockwiseRotation(center, speed)
 
-    def anticlockwiseRotation(x: Double, y: Double): Velocity = anticlockwiseRotation((x, y))
+    def anticlockwiseRotation(x: Double, y: Double, speed: Double): Velocity = anticlockwiseRotation((x, y), speed)
 
-    def goToPoint(dx: Double, dy: Double): Velocity = {
+    def goToPoint(dx: Double, dy: Double, speed: Double = 100): Velocity = {
       val current = currentPosition()
-      Velocity(dx - current.x, dy - current.y).normalized
+      Velocity(dx - current.x, dy - current.y).normalized * speed
     }
 
     def standStill: Velocity = Velocity.Zero
 
-    def explore(zone: Zone, trajectoryTime: Int, reachGoalRange: Double = 0): Velocity = {
+    def explore(zone: Zone, trajectoryTime: Int, reachGoalRange: Double = 0, speed: Double = 100): Velocity = {
       require(trajectoryTime > 0)
       val (_, _, velocity) = rep((randomCoordZone(zone), trajectoryTime, Velocity.Zero)) {
         case (goal, decay, currentVelocity) if decay == 0 => (randomCoordZone(zone), trajectoryTime, currentVelocity)
         case (goal, _, _) if goal.distance(currentPosition()) < reachGoalRange =>
-          (goal, 0, goToPoint(goal.x, goal.y))
-        case (goal, decay, _) => (goal, decay - 1, goToPoint(goal.x, goal.y))
+          (goal, 0, goToPoint(goal.x, goal.y, speed))
+        case (goal, decay, _) => (goal, decay - 1, goToPoint(goal.x, goal.y, speed))
       }
       velocity
     }
@@ -229,6 +230,8 @@ object ScafiStandalone {
   import ScafiRuntime._
   private var simulator: SpaceAwareSimulator = _
   private var userProgram: AggregateProgram = _
+  private var lastTickTime: Double = 0L
+  private val velocities: MutableMap[Int, (Double, Double)] = MutableMap.empty
   private val sensorNames: StandardSensorNames = new StandardSensorNames {}
 
   trait RuntimeValueEncoder[-A] {
@@ -473,28 +476,39 @@ object ScafiStandalone {
     simulator = createSimulator(config)
     applyPositions(simulator, config)
     applySensors(config)
+    lastTickTime = System.currentTimeMillis().toDouble
     simulator.getAllNeighbours()
     simulator.devs.foreach { case (id, _) =>
       simulator.exec(userProgram)
     }
     handleMatrixOps()
-    handleMovement()
+    handleMovement(0.0)
   }
 
   def tick(): Unit = {
     if (simulator != null && userProgram != null) {
+      val now = System.currentTimeMillis().toDouble
+      val deltaSeconds = if (lastTickTime == 0L) 0.016 else {
+        val raw = (now - lastTickTime) / 1000.0
+        Math.min(raw, 1.0)
+      }
+      lastTickTime = now
       simulator.getAllNeighbours()
       simulator.devs.foreach { case (id, _) =>
+        simulator.chgSensorValue(sensorNames.LSNS_DELTA_TIME, Set(id),
+          FiniteDuration((deltaSeconds * 1000).toLong, MILLISECONDS))
         simulator.exec(userProgram)
       }
       handleMatrixOps()
-      handleMovement()
+      handleMovement(deltaSeconds)
     }
   }
 
   def setPosition(nodeId: String, x: Double, y: Double): Unit = {
     if (simulator != null) {
-      updatePosition(asInt(nodeId.asInstanceOf[js.Any]), Point2D(x, y))
+      val id = asInt(nodeId.asInstanceOf[js.Any])
+      velocities.remove(id)
+      updatePosition(id, Point2D(x, y))
     }
   }
 
@@ -511,6 +525,8 @@ object ScafiStandalone {
   def dispose(): Unit = {
     simulator = null
     userProgram = null
+    lastTickTime = 0L
+    velocities.clear()
   }
 
   def getState(): js.Dynamic = {
@@ -534,6 +550,10 @@ object ScafiStandalone {
         node.updateDynamic("y")(position.y)
         dev.lsns.foreach { case (name, value) =>
           labels.updateDynamic(name)(encodeSensorValue(value))
+        }
+        velocities.get(id).foreach { case (vx, vy) =>
+          labels.updateDynamic("vx")(vx)
+          labels.updateDynamic("vy")(vy)
         }
         val expVal = exports.get(id).flatten.map(e => displayExport(e.root[scala.Any]())).orNull
         if (expVal != null) {
@@ -631,21 +651,23 @@ object ScafiStandalone {
     updates.foreach { case (id, matrix) => simulator.chgSensorValue("matrix", Set(id), matrix) }
   }
 
-  private def handleMovement(): Unit = {
+  private def handleMovement(deltaSeconds: Double): Unit = {
     simulator.exports().foreach { case (id, exported) =>
       exported.map(_.root[Any]()).foreach { rootValue =>
-        flattenValues(rootValue).collect { case movement: RuntimeMovement => movement }.foreach(act(id, _))
+        flattenValues(rootValue).collect { case movement: RuntimeMovement => movement }.foreach(act(id, _, deltaSeconds))
       }
     }
   }
 
-  private def act(id: Int, movement: RuntimeMovement): Unit = {
+  private def act(id: Int, movement: RuntimeMovement, deltaSeconds: Double): Unit = {
     val position = movement match {
-      case RuntimeAbsoluteMovement(x, y) => Point2D(x, y)
+      case RuntimeAbsoluteMovement(x, y) =>
+        velocities.remove(id)
+        Point2D(x, y)
       case RuntimeVectorMovement(dx, dy) =>
         val oldPosition = simulator.space.getLocation(id)
-        val delta = simulator.context(id).sense[FiniteDuration](sensorNames.LSNS_DELTA_TIME).map(_.toMillis).getOrElse(50L)
-        Point2D((dx * delta) + oldPosition.x, (dy * delta) + oldPosition.y)
+        velocities.update(id, (dx, dy))
+        Point2D((dx * deltaSeconds) + oldPosition.x, (dy * deltaSeconds) + oldPosition.y)
     }
     updatePosition(id, position)
   }

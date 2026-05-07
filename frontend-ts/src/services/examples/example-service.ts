@@ -311,6 +311,7 @@ type NodeRendererSourceOptions = {
   renderBooleans?: boolean;
   renderGradient?: boolean;
   renderExportEffect?: boolean;
+  velocityArrow?: boolean;
 };
 
 function createValueRenderer(overrides: ExampleRendererOverrides = {}): string {
@@ -390,7 +391,7 @@ function createMovementRenderer(sensors: string[], overrides: ExampleRendererOve
     showIdExpr: "false",
     ...rest,
     renderNodeOptions: mergeNodeRendererOptions(
-      { renderMatrix: true, renderBooleans: sensors.length > 0 },
+      { renderMatrix: true, renderBooleans: sensors.length > 0, velocityArrow: true },
       renderNodeOptions,
     ),
     renderEdgeSource,
@@ -440,6 +441,7 @@ function mergeNodeRendererOptions(
     renderBooleans: override.renderBooleans ?? base.renderBooleans,
     renderGradient: override.renderGradient ?? base.renderGradient,
     renderExportEffect: override.renderExportEffect ?? base.renderExportEffect,
+    velocityArrow: override.velocityArrow ?? base.velocityArrow,
   };
 }
 
@@ -468,6 +470,9 @@ function createNodeRendererSource(options: NodeRendererSourceOptions | undefined
   }
   if (options.renderExportEffect) {
     parts.push("RendererKit.node.exportEffect()");
+  }
+  if (options.velocityArrow) {
+    parts.push("RendererKit.node.velocityArrow()");
   }
   if (parts.length === 0) {
     return undefined;

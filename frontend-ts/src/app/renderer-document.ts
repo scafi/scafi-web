@@ -75,7 +75,17 @@ export type NodeDotOverlay = {
   className?: string;
 };
 
-export type NodeRenderOverlay = NodeTextOverlay | NodeRingOverlay | NodeDotOverlay;
+export type NodeArrowOverlay = {
+  kind: "arrow";
+  dx: number;
+  dy: number;
+  length?: number;
+  stroke?: string;
+  strokeWidth?: number;
+  className?: string;
+};
+
+export type NodeRenderOverlay = NodeTextOverlay | NodeRingOverlay | NodeDotOverlay | NodeArrowOverlay;
 
 export type NodeRendererContext = {
   node: GraphNode;
@@ -276,6 +286,28 @@ const RENDERER_KIT_SOURCE = String.raw`const RendererKit = (() => {
       exportEffect() {
         return () => ({ renderExportEffect: true });
       },
+      velocityArrow(options = {}) {
+        return ({ node }) => {
+          const vx = typeof node.labels.vx === "number" ? node.labels.vx : 0;
+          const vy = typeof node.labels.vy === "number" ? node.labels.vy : 0;
+          if (vx === 0 && vy === 0) {
+            return undefined;
+          }
+          return {
+            overlays: [
+              {
+                kind: "arrow",
+                dx: vx,
+                dy: vy,
+                length: options.length,
+                stroke: options.stroke ?? "#a5d6ff",
+                strokeWidth: options.strokeWidth ?? 2.5,
+                className: options.className,
+              },
+            ],
+          };
+        };
+      },
     },
     edge: {
       highlightNeighborhood(widthDelta = 0.6, options = {}) {
@@ -452,6 +484,9 @@ function isNodeRenderOverlay(value: unknown): value is NodeRenderOverlay {
   }
   if (kind === "dot") {
     return typeof (value as { x?: unknown }).x === "number" && typeof (value as { y?: unknown }).y === "number";
+  }
+  if (kind === "arrow") {
+    return typeof (value as { dx?: unknown }).dx === "number" && typeof (value as { dy?: unknown }).dy === "number";
   }
   return false;
 }
