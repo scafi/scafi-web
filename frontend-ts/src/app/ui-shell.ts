@@ -452,15 +452,50 @@ export class ScafiWebUiShell {
       }
     }
     const selectionPanel = this.root.querySelector<HTMLElement>("[data-selection-panel]");
-    if (selectionPanel) {
-      selectionPanel.innerHTML = this.renderSelectionPanel(state);
+    if (selectionPanel && this.selectionPanelOpen) {
+      this.patchSelectionPanel(state);
     }
     if (shouldRebindGraphListeners) {
       this.attachGraphListeners();
+      this.attachSelectionListeners();
     }
-    this.attachSelectionListeners();
     this.scheduleGraphViewportAnimation();
     this.recordUiUpdate(renderStartedAt);
+  }
+
+  private patchSelectionPanel(state: AppState): void {
+    const selectedNodes = this.selectedNodes(state.graph.nodes);
+    if (selectedNodes.length === 0) return;
+    const primaryNode = selectedNodes[0];
+    const exportValue = primaryNode.labels.export ?? null;
+
+    const summaryEl = this.root.querySelector<HTMLElement>("[data-inspector-export-summary]");
+    if (summaryEl) {
+      summaryEl.textContent = summarizeInspectorValue(exportValue);
+    }
+    const previewEl = this.root.querySelector<HTMLElement>("[data-inspector-export-preview]");
+    if (previewEl) {
+      previewEl.textContent = formatInspectorJson(exportValue);
+    }
+
+    const moveX = this.root.querySelector<HTMLInputElement>("#move-x");
+    if (moveX) {
+      moveX.value = primaryNode.position.x.toFixed(2);
+    }
+    const moveY = this.root.querySelector<HTMLInputElement>("#move-y");
+    if (moveY) {
+      moveY.value = primaryNode.position.y.toFixed(2);
+    }
+
+    for (const [name, value] of Object.entries(primaryNode.labels)) {
+      if (name === "export" || name === "matrix") continue;
+      const input = this.root.querySelector<HTMLInputElement>(
+        `[data-runtime-sensor-input="${cssEscape(name)}"]`,
+      );
+      if (input) {
+        input.value = String(value);
+      }
+    }
   }
 
   private scheduleLiveStatePatch(state: AppState): void {
@@ -793,9 +828,9 @@ export class ScafiWebUiShell {
           </div>
           <div class="export-callout">
             <span class="export-callout-label">Current output</span>
-            <p class="export-summary">${escapeHtml(summarizeInspectorValue(exportValue))}</p>
+            <p class="export-summary" data-inspector-export-summary>${escapeHtml(summarizeInspectorValue(exportValue))}</p>
           </div>
-          <pre class="export-preview">${escapeHtml(formatInspectorJson(exportValue))}</pre>
+          <pre class="export-preview" data-inspector-export-preview>${escapeHtml(formatInspectorJson(exportValue))}</pre>
         </div>
 
         <div class="inspector-card">

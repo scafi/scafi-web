@@ -2,7 +2,7 @@ import sbt.Keys.target
 // Constants
 val scalaProjectVersion = "2.13.16"
 val scalaTestVersion = "3.2.19"
-val scafiVersion = "1.1.0"
+val scafiVersion = "1.6.0"
 
 inThisBuild(
   List(

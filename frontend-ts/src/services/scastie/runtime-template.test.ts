@@ -14,7 +14,7 @@ describe("runtime-template", () => {
     expect(wrapped).toContain("val world = WorldDocumentBuilder()");
     expect(wrapped).toContain("def mergeRuntimeConfig(configJson: String): js.Dynamic");
     expect(wrapped).toContain("val config = mergeRuntimeConfig(configJson)");
-    expect(wrapped).toContain("applySensors(config)\n    simulator.getAllNeighbours()\n    simulator.devs.foreach { case (id, _) =>");
+    expect(wrapped).toContain("applySensors(config)\n    lastTickTime = System.currentTimeMillis().toDouble\n    simulator.getAllNeighbours()\n    simulator.devs.foreach { case (id, _) =>");
     expect(wrapped).toContain("val x = 30");
     expect(wrapped).toContain("world\n      .grid(rows = x, cols = x, stepX = 60, stepY = 60, tolerance = 10)\n      .radius(70)");
     expect(wrapped).toContain("val program = new MyProgram");

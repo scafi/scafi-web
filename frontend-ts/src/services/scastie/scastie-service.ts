@@ -21,7 +21,7 @@ export interface EventSourceLike {
 
 const DEFAULTS = {
   baseUrl: "https://scastie.scala-lang.org",
-  scafiVersion: "1.1.0",
+  scafiVersion: "1.6.0",
   scalaVersion: "2.13.18",
   scalaJsVersion: "1.21.0",
 };
