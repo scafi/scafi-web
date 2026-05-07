@@ -66,6 +66,14 @@ export class ScafiWebApp {
     this.configRepository.saveRendererDocument(document);
   }
 
+  loadPersistedTheme(): "dark" | "light" {
+    return this.configRepository.loadTheme() ?? "dark";
+  }
+
+  saveTheme(theme: "dark" | "light"): void {
+    this.configRepository.saveTheme(theme);
+  }
+
   async loadExamples(): Promise<ExampleGroup[]> {
     const examples = await this.exampleService.loadExamples();
     this.bus.publish({ type: "examples-loaded", examples });

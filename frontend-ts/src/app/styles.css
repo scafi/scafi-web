@@ -22,6 +22,25 @@
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
 
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f5f5;
+  --bg-soft: #ffffff;
+  --panel: rgba(255, 255, 255, 0.96);
+  --panel-strong: #f0f0f0;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: rgba(0, 0, 0, 0.18);
+  --text: #1a1a1a;
+  --muted: #666666;
+  --accent: #e07030;
+  --accent-soft: rgba(224, 112, 48, 0.18);
+  --accent-cool: #4a90d9;
+  --danger: #c0392b;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1400,6 +1419,16 @@ textarea {
   }
 }
 
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.icon-btn svg {
+  flex-shrink: 0;
+}
+
 @media (max-height: 620px) {
   .viz-top-section {
     gap: 8px;
@@ -1426,4 +1455,221 @@ textarea {
   .empty-graph {
     min-height: 210px;
   }
+}
+
+/* Light theme overrides */
+[data-theme="light"] body {
+  background:
+    radial-gradient(circle at top left, rgba(74, 144, 217, 0.12), transparent 24%),
+    radial-gradient(circle at top right, rgba(224, 112, 48, 0.14), transparent 22%),
+    linear-gradient(180deg, #eef2f6 0%, #e2e6ea 100%);
+}
+
+[data-theme="light"] .app-nav {
+  background: rgba(235, 238, 242, 0.92);
+}
+
+[data-theme="light"] .panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 245, 245, 0.96));
+}
+
+[data-theme="light"] .viz-top-section {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+[data-theme="light"] .editor-surface .CodeMirror {
+  background: rgba(250, 250, 250, 0.96);
+  border-color: var(--line-strong);
+}
+
+[data-theme="light"] .editor-surface .CodeMirror-gutters {
+  background: rgba(0, 0, 0, 0.03);
+  border-right-color: var(--line);
+}
+
+[data-theme="light"] .graph-stage {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.005)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  border-color: var(--line);
+}
+
+[data-theme="light"] .graph-stage::before {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(74, 144, 217, 0.08), transparent 28%),
+    radial-gradient(circle at 80% 12%, rgba(224, 112, 48, 0.06), transparent 26%);
+}
+
+[data-theme="light"] .graph-surface {
+  fill: rgba(240, 243, 246, 0.64);
+}
+
+[data-theme="light"] .graph-edge {
+  stroke: rgba(0, 0, 0, 0.14);
+}
+
+[data-theme="light"] .graph-edge.is-neighborhood {
+  stroke: rgba(74, 144, 217, 0.88);
+}
+
+[data-theme="light"] .graph-edge.is-muted {
+  stroke: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .graph-node circle {
+  stroke: rgba(240, 243, 246, 0.92);
+}
+
+[data-theme="light"] .graph-node-label {
+  stroke: rgba(240, 243, 246, 0.85);
+}
+
+[data-theme="light"] .graph-node-overlay-text {
+  stroke: rgba(240, 243, 246, 0.85);
+}
+
+[data-theme="light"] .graph-node.is-selected circle {
+  stroke: rgba(30, 20, 10, 0.98);
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)) drop-shadow(0 0 20px rgba(224, 112, 48, 0.3));
+}
+
+[data-theme="light"] .graph-matrix-cell {
+  stroke: rgba(240, 243, 246, 0.35);
+}
+
+[data-theme="light"] .selection-tray {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 245, 245, 0.98));
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .inspector-card,
+[data-theme="light"] .matrix-card,
+[data-theme="light"] .sensor-card {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+[data-theme="light"] .inspector-card-export {
+  background:
+    linear-gradient(180deg, rgba(224, 112, 48, 0.08), rgba(0, 0, 0, 0.01)),
+    rgba(0, 0, 0, 0.01);
+  border-color: rgba(224, 112, 48, 0.2);
+}
+
+[data-theme="light"] .export-callout {
+  background: rgba(240, 243, 246, 0.38);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .export-preview {
+  background: rgba(235, 238, 242, 0.7);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .status-ready,
+[data-theme="light"] .status-idle {
+  background: rgba(39, 174, 96, 0.14);
+  color: #1e6b3a;
+}
+
+[data-theme="light"] .status-compiling,
+[data-theme="light"] .status-daemon {
+  background: rgba(74, 144, 217, 0.14);
+  color: #2a5a8a;
+}
+
+[data-theme="light"] .status-error {
+  background: rgba(192, 57, 43, 0.14);
+  color: #7a1e1e;
+}
+
+[data-theme="light"] .warning-box {
+  background: rgba(243, 156, 18, 0.12);
+  border-color: rgba(243, 156, 18, 0.28);
+}
+
+[data-theme="light"] .inline-error {
+  color: #c0392b;
+}
+
+[data-theme="light"] .perf-pill {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .matrix-cell {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] button,
+[data-theme="light"] .ghost-link {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] button.ghost,
+[data-theme="light"] .speed-pill {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] button.danger {
+  background: rgba(192, 57, 43, 0.12);
+  border-color: rgba(192, 57, 43, 0.4);
+}
+
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .viz-control-group {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: var(--line);
+}
+
+[data-theme="light"] .control-card {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: var(--line);
+}
+
+[data-theme="light"] .interaction-toggle {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: var(--line-strong);
+}
+
+[data-theme="light"] .settings-tray {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: var(--line);
+}
+
+[data-theme="light"] .settings-group {
+  background: rgba(0, 0, 0, 0.015);
+  border-color: var(--line);
+}
+
+[data-theme="light"] .mode-chip.is-active {
+  background: rgba(74, 144, 217, 0.14);
+  border-color: var(--accent-cool);
+}
+
+[data-theme="light"] .selection-panel-toggle.is-active {
+  background: rgba(224, 112, 48, 0.12);
+  border-color: rgba(224, 112, 48, 0.4);
+  color: var(--text);
+}
+
+[data-theme="light"] .editor-tab.is-active {
+  background: rgba(74, 144, 217, 0.14);
+  border-color: var(--accent-cool);
+}
+
+[data-theme="light"] .speed-pill.is-active {
+  background: rgba(74, 144, 217, 0.14);
+  border-color: var(--accent-cool);
+}
+
+[data-theme="light"] .selection-chip.is-active {
+  background: rgba(74, 144, 217, 0.14);
+  border-color: var(--accent-cool);
 }

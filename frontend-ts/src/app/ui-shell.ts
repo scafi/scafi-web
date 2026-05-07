@@ -162,6 +162,7 @@ export class ScafiWebUiShell {
     fps: 0,
     averageRenderMs: 0,
   };
+  private theme: "dark" | "light" = "dark";
 
   constructor(
     private readonly root: HTMLElement,
@@ -180,6 +181,8 @@ export class ScafiWebUiShell {
     const persistedWorld = this.app.loadPersistedWorldDocument(serializeWorldDocument(configuration));
     this.worldDocument = persistedWorld;
     this.rendererDocument = this.app.loadPersistedRendererDocument(defaultRendererDocument);
+    this.theme = this.app.loadPersistedTheme();
+    this.applyTheme(this.theme);
 
     this.app.subscribe((event) => {
       if (event.type === "state-changed") {
@@ -214,6 +217,24 @@ export class ScafiWebUiShell {
     });
   }
 
+  private applyTheme(theme: "dark" | "light"): void {
+    this.theme = theme;
+    document.documentElement.dataset.theme = theme;
+    if (this.codeEditor) {
+      this.codeEditor.setOption("theme", theme === "dark" ? "material" : "default");
+    }
+    const themeButton = this.root.querySelector<HTMLButtonElement>("#toggle-theme");
+    if (themeButton) {
+      themeButton.innerHTML = theme === "dark" ? iconSun() : iconMoon();
+    }
+  }
+
+  private toggleTheme(): void {
+    const next = this.theme === "dark" ? "light" : "dark";
+    this.applyTheme(next);
+    this.app.saveTheme(next);
+  }
+
   private render(): void {
     const renderStartedAt = nowMs();
     this.pendingLiveState = undefined;
@@ -236,6 +257,7 @@ export class ScafiWebUiShell {
             </div>
           </div>
           <div class="topbar-actions">
+            <button id="toggle-theme" class="ghost-link icon-btn" type="button" title="Toggle theme">${this.theme === "dark" ? iconSun() : iconMoon()}</button>
             <a class="ghost-link" href="https://scafi.github.io/" target="_blank" rel="noreferrer">Website</a>
             <a class="ghost-link" href="https://github.com/scafi/scafi" target="_blank" rel="noreferrer">Repository</a>
             <a class="ghost-link" href="https://youtu.be/E-EoFmm5tuc" target="_blank" rel="noreferrer">Demo</a>
@@ -311,10 +333,10 @@ export class ScafiWebUiShell {
                   <div class="viz-control-group viz-control-group-run">
                     <p class="control-card-title">Execution</p>
                     <div class="viz-inline-actions viz-inline-actions-run" role="group" aria-label="Execution commands">
-                      <button id="load-script" class="primary" ${disabled(status === "compiling")}>Load</button>
-                      <button id="tick-once" ${disabled(!(status === "ready" || status === "daemon"))}>Tick</button>
-                      <button id="start-daemon" ${disabled(status !== "ready")}>Start</button>
-                      <button id="stop-daemon" ${disabled(status !== "daemon")}>Stop</button>
+                      <button id="load-script" class="primary icon-btn" ${disabled(status === "compiling")}>${iconPlay()} Load</button>
+                      <button id="tick-once" class="icon-btn" ${disabled(!(status === "ready" || status === "daemon"))}>${iconSkipForward()} Tick</button>
+                      <button id="start-daemon" class="icon-btn" ${disabled(status !== "ready")}>${iconPlay()} Start</button>
+                      <button id="stop-daemon" class="icon-btn" ${disabled(status !== "daemon")}>${iconSquare()} Stop</button>
                     </div>
                   </div>
                   <div class="viz-control-group viz-control-group-speed">
@@ -328,12 +350,11 @@ export class ScafiWebUiShell {
                   <div class="viz-control-group viz-control-group-graph">
                     <div class="viz-inline-actions graph-inline-actions">
                       <div class="interaction-toggle graph-mode-toggle" role="group" aria-label="Graph interaction mode">
-                        <button id="interaction-pan" class="mode-chip ${this.graphInteractionMode === "pan" ? "is-active" : ""}" type="button">Pan</button>
-                        <button id="interaction-selection" class="mode-chip ${this.graphInteractionMode === "selection" ? "is-active" : ""}" type="button">Select</button>
+                        <button id="interaction-pan" class="mode-chip icon-btn ${this.graphInteractionMode === "pan" ? "is-active" : ""}" type="button">${iconMove()} Pan</button>
+                        <button id="interaction-selection" class="mode-chip icon-btn ${this.graphInteractionMode === "selection" ? "is-active" : ""}" type="button">${iconMousePointer()} Select</button>
                       </div>
-                      <button id="toggle-selection-panel" class="ghost selection-panel-toggle ${selectionPanelVisible ? "is-active" : ""}" type="button" ${disabled(!hasSelection)} aria-pressed="${String(selectionPanelVisible)}">${selectionPanelVisible ? "Hide inspector" : "Show inspector"}</button>
-                      <button id="reset-view" class="ghost" type="button">Reset view</button>
-                      <button id="toggle-settings" class="ghost" type="button">${this.visualizationSettingsOpen ? "Hide renderer" : "Renderer (JS)"}</button>
+                      <button id="toggle-selection-panel" class="ghost selection-panel-toggle icon-btn ${selectionPanelVisible ? "is-active" : ""}" type="button" ${disabled(!hasSelection)} aria-pressed="${String(selectionPanelVisible)}">${selectionPanelVisible ? `${iconEyeOff()} Hide` : `${iconEye()} Show`} inspector</button>
+                      <button id="reset-view" class="ghost icon-btn" type="button">${iconRotateCcw()} Reset view</button>
                     </div>
                   </div>
                 </div>
@@ -847,6 +868,9 @@ export class ScafiWebUiShell {
   }
 
   private attachListeners(): void {
+    this.bindButton("toggle-theme", () => {
+      this.toggleTheme();
+    });
     this.bindButton("toggle-settings", () => {
       this.visualizationSettingsOpen = !this.visualizationSettingsOpen;
       this.render();
@@ -1613,7 +1637,7 @@ export class ScafiWebUiShell {
     const editor = CodeMirror.fromTextArea(textArea, {
       lineNumbers: true,
       mode: codeMirrorMode(this.activePlaygroundDocument, this.activeEditorMode),
-      theme: "material",
+      theme: this.theme === "dark" ? "material" : "default",
       lineWrapping: true,
       indentUnit: 2,
       tabSize: 2,
@@ -2190,6 +2214,50 @@ function parseRuntimeValue(value: string): unknown {
     return Number(trimmed);
   }
   return value;
+}
+
+function iconSun(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+}
+
+function iconMoon(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
+}
+
+function iconPlay(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+}
+
+function iconSkipForward(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>`;
+}
+
+function iconSquare(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>`;
+}
+
+function iconMove(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><path d="M2 12h20"/><path d="M12 2v20"/></svg>`;
+}
+
+function iconMousePointer(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>`;
+}
+
+function iconRotateCcw(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
+}
+
+function iconEye(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+
+function iconEyeOff(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`;
+}
+
+function iconCode(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>`;
 }
 
 function numberField(label: string, id: string, value: number): string {

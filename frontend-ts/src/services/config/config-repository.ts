@@ -5,6 +5,7 @@ const CONFIGURATION_KEY = "configuration";
 const EDITOR_DOCUMENT_KEY = "editor-document";
 const WORLD_DOCUMENT_KEY = "world-document";
 const RENDERER_DOCUMENT_KEY = "renderer-document";
+const THEME_KEY = "ui-theme";
 
 export class ConfigRepository {
   constructor(private readonly store: KeyValueStore) {}
@@ -39,6 +40,18 @@ export class ConfigRepository {
 
   loadRendererDocument(): string | undefined {
     return this.store.get(RENDERER_DOCUMENT_KEY) ?? undefined;
+  }
+
+  saveTheme(theme: "dark" | "light"): void {
+    this.store.set(THEME_KEY, theme);
+  }
+
+  loadTheme(): "dark" | "light" | undefined {
+    const value = this.store.get(THEME_KEY);
+    if (value === "dark" || value === "light") {
+      return value;
+    }
+    return undefined;
   }
 
   private readJson<T>(key: string): T | undefined {
