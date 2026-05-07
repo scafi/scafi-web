@@ -1,11 +1,10 @@
 package it.unibo.scafi.js.controller.local
 
-import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.js.controller.local.DeviceConfiguration.DeviceKind
 import it.unibo.scafi.js.model.MatrixLed
 import it.unibo.scafi.js.model.MatrixLed.MatrixMap
+import it.unibo.scafi.js.model.Vec3
 import it.unibo.scafi.js.utils.GlobalStore
-import it.unibo.scafi.space.Point3D
 
 import upickle.default._
 
@@ -84,9 +83,7 @@ case class RandomNetwork(min: Double, max: Double, howMany: Int) extends Network
 @JSExportTopLevel("GridLikeNetwork")
 @JSExportAll
 case class GridLikeNetwork(rows: Int, cols: Int, stepX: Double, stepY: Double, tolerance: Double)
-    extends NetworkConfiguration {
-  def toGridSettings: GridSettings = GridSettings(cols, rows, stepX, stepY, tolerance)
-}
+    extends NetworkConfiguration
 
 /** a top level trait that describe the policy of neighbour in a network. */
 sealed trait NeighbourConfiguration
@@ -176,10 +173,10 @@ object SimulationSeeds {
 /** a logic using to alter the coordinate between frontend space and backed space. */
 sealed trait CoordinateMapping {
   /** alter a backend position in the frontend space. */
-  def toWeb(point: Point3D): Point3D
+  def toWeb(point: Vec3): Vec3
 
   /** alter the front position in the backend space. */
-  def toBackend(point: Point3D): Point3D
+  def toBackend(point: Vec3): Vec3
 }
 
 object CoordinateMapping {
@@ -188,7 +185,7 @@ object CoordinateMapping {
 }
 
 case object Identity extends CoordinateMapping {
-  override def toWeb(point: Point3D): Point3D = point
+  override def toWeb(point: Vec3): Vec3 = point
 
-  override def toBackend(point: Point3D): Point3D = point
+  override def toBackend(point: Vec3): Vec3 = point
 }

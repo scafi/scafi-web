@@ -2,7 +2,7 @@ package it.unibo.scafi.js.view.dynamic
 
 import it.unibo.scafi.js.code.Example
 import it.unibo.scafi.js.controller.scripting.Script
-import it.unibo.scafi.js.controller.scripting.Script.{Javascript, Scala, ScalaEasy}
+import it.unibo.scafi.js.controller.scripting.Script.{Scala, ScalaEasy}
 import it.unibo.scafi.js.facade.codemirror.{CodeMirror, Doc, EditorConfiguration}
 import it.unibo.scafi.js.utils.GlobalStore
 import it.unibo.scafi.js.view.dynamic.EditorSection.Mode
@@ -72,15 +72,9 @@ object EditorSection {
     }
   }
 
-  object JavascriptMode extends Mode {
-    override val lang: String = "javascript"
-    override val codeMirrorMode: String = lang
-  }
-
   def modeFromLang(lang: String): Mode = lang match {
     case ScalaModeFull.lang => ScalaModeFull
     case ScalaModeEasy.lang => ScalaModeEasy
-    case JavascriptMode.lang => JavascriptMode
   }
 
   private class EditorSectionImpl(editorZone: Div, defaultMode: Mode = ScalaModeEasy) extends EditorSection {
@@ -145,7 +139,6 @@ object EditorSection {
     }
 
     override def getScript(): Script = mode.lang match {
-      case JavascriptMode.lang => Javascript(getRaw())
       case ScalaModeFull.lang => Scala(getRaw())
       case ScalaModeEasy.lang => ScalaEasy(getRaw())
     }

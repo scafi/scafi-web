@@ -1,8 +1,7 @@
 package it.unibo.scafi.js.view.dynamic.graph
 
 import it.unibo.scafi.js.model.MatrixLed.MatrixMap
-import it.unibo.scafi.js.model.{Graph, NaiveGraph, Node, Vertex}
-import it.unibo.scafi.space.Point3D
+import it.unibo.scafi.js.model.{Graph, NaiveGraph, Node, Vec3, Vertex}
 
 import scala.scalajs.js
 
@@ -43,7 +42,7 @@ object StandaloneGraphSnapshot {
       val labels = select(node, "labels")
         .map(parseLabelEntries)
         .getOrElse(parseFlatNodeLabels(node))
-      Node(id, Point3D(x, y, 0), labels)
+      Node(id, Vec3.from2D(x, y), labels)
     }
   }
 

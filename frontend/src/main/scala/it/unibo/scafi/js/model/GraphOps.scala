@@ -1,7 +1,5 @@
 package it.unibo.scafi.js.model
 
-import it.unibo.scafi.space.Point3D
-
 /** define a set of operations used to alter nodes inside a graph */
 trait NodeOperation {
   /** Remove the node selected from the graph. If the node isn't in the graph, return the current graph */
@@ -45,7 +43,7 @@ object GraphOps {
       override def removeNode(node: String): Graph = graph match {
         case g: NodeOperation => g.removeNode(node)
         case _ =>
-          val nodes = graph.nodes - Node(node, Point3D.Zero) // remove node, equals is on id, not on point.
+          val nodes = graph.nodes - Node(node, Vec3.Zero) // remove node, equals is on id, not on point.
           val vertices = graph.vertices.filterNot(vertex =>
             vertex.to == node || vertex.from == node
           ) // remove vertex in witch node is partecipant

@@ -1,7 +1,5 @@
 package it.unibo.scafi.js.model
 
-import it.unibo.scafi.space.Point3D
-
 import scala.scalajs.js
 //TODO add enviroment concept? What is it? It is Any? has some constraint?
 //TODO modify to became fully javascript complaint (using js.Array and js.Dictionary)
@@ -25,7 +23,7 @@ object Graph {
 }
 case class Vertex(from: String, to: String)
 //position is a first class element or could be ignored?
-case class Node(id: String, position: Point3D, labels: Map[String, Any] = Map.empty) {
+case class Node(id: String, position: Vec3, labels: Map[String, Any] = Map.empty) {
   def canEqual(other: Any): Boolean = other.isInstanceOf[Node]
 
   override def equals(other: Any): Boolean = other match {

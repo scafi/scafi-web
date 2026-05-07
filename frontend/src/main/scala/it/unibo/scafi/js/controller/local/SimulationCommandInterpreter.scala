@@ -2,28 +2,22 @@ package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.js.controller.CommandInterpreter
 import it.unibo.scafi.js.controller.local.SimulationCommand._
+import it.unibo.scafi.js.model.Vec3
 import it.unibo.scafi.js.utils.JSNumber
-import it.unibo.scafi.simulation.SpatialSimulation
-import it.unibo.scafi.space.{Point2D, Point3D}
 
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportAll
 import scala.util.{Failure, Success, Try}
 
-/** an interpreter used to eval and act command sent by a input side (e.g. GUI, console,..:). It change the local state
-  * of the simulator.
-  */
 trait SimulationCommandInterpreter
     extends CommandInterpreter[
-      SpatialSimulation#SpaceAwareSimulator,
+      SimulationSupport.SimulationBackend,
       SimulationSideEffect,
       SimulationCommand,
       SimulationCommand.Result
     ] {
   self: SimulationSupport with SimulationExecutionPlatform =>
-
-  import self.incarnation._
 
   def execute(command: SimulationCommand): Future[Result] = Future.successful {
     command match {
@@ -36,11 +30,11 @@ trait SimulationCommandInterpreter
 
   private def onMove(positionMap: Map[String, (Double, Double)]): Result = {
     val toScafiBackend = positionMap
-      .mapValues { case (x, y) => new Point2D(x, y) }
+      .mapValues { case (x, y) => Vec3.from2D(x, y) }
       .mapValues(self.systemConfig.coordinateMapping.toBackend)
       .map { case (id, position) => id -> position }
-    toScafiBackend.foreach { case (id, position) => updateBackendPosition(id, Point2D(position.x, position.y)) }
-    forwardStandaloneMove(toScafiBackend.map { case (id, position) => id -> Point3D(position.x, position.y, 0) }.toMap)
+    toScafiBackend.foreach { case (id, position) => updateBackendPosition(id, position) }
+    forwardStandaloneMove(toScafiBackend.toMap)
     sideEffectsStream.onNext(PositionChanged(toScafiBackend.toMap))
     Executed
   }
@@ -63,29 +57,19 @@ trait SimulationCommandInterpreter
       return Executed
     }
     val sensors = ids
-      .map(id =>
-        id -> Try {
-          backend.localSensor[Any](sensor)(id)
-        }
-      )
-      .map {
-        case (id, Success(value: Boolean)) => id -> Success(value)
-        case (id, _) => id -> Failure(new IllegalArgumentException("non boolean value"))
-      }
-    val toggleSensors = sensors.collect { case (id, Success(value)) => id -> value }.groupBy { case (_, value) =>
-      value
-    }
+      .map(id => id -> backend.localSensor[Any](sensor)(id))
+      .collect { case (id, Some(value: Boolean)) => id -> value }
+    val toggleSensors = sensors.groupBy { case (_, value) => value }
     val sensorMap = toggleSensors.values
       .flatMap(set => set.map { case (id, value) => id -> Map(sensor -> !value) })
       .toMap
-    val cantChange = sensors.collect { case (id, Failure(_)) => id }
     toggleSensors.foreach { case (sensorValue, set) =>
       val affectedIds = set.map(_._1)
       backend.chgSensorValue(sensor, affectedIds, !sensorValue)
       forwardStandaloneSensorChange(sensor, affectedIds, !sensorValue)
     }
     sideEffectsStream.onNext(SensorChanged(sensorMap))
-    if (cantChange.isEmpty) Executed else CantChange(cantChange)
+    Executed
   }
 
   private def warnMissingSensorTargets(sensor: String): Unit =
@@ -94,11 +78,6 @@ trait SimulationCommandInterpreter
 
 object SimulationCommandInterpreter {
 
-  /** a facade used to send command via javascript console.
-    *
-    * @param interpreter
-    *   the wrapped instance of the interpreter
-    */
   @JSExportAll
   class JsConsole(interpreter: SimulationCommandInterpreter) {
     def move(id: String, x: JSNumber, y: JSNumber): Unit =

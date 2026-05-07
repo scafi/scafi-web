@@ -1,6 +1,7 @@
 package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.js.view.dynamic.EditorSection.{Mode, ScalaModeEasy}
+import it.unibo.scafi.standalone.RuntimeTemplate
 import org.scalajs.dom.ext.Ajax
 
 import scala.collection.mutable.ArrayBuffer
@@ -20,7 +21,7 @@ object ScastieClient {
       case ScalaModeEasy => ScalaModeEasy.convertToFull(code)
       case _             => code
     }
-    val wrappedCode = ScastieTemplate.wrapCode(core)
+    val wrappedCode = RuntimeTemplate.wrapCode(core)
     val payload = buildPayload(wrappedCode)
 
     for {

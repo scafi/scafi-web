@@ -3,7 +3,6 @@ package it.unibo.scafi.js.view.dynamic
 import it.unibo.scafi.js.controller.local.{SimulationExecution, SimulationExecutionPlatform, SupportConfiguration}
 import it.unibo.scafi.js.controller.local.SimulationExecution.{Daemon, TickBased}
 import it.unibo.scafi.js.controller.scripting.Script
-import it.unibo.scafi.js.controller.scripting.Script.ScaFi
 import it.unibo.scafi.js.utils.{Debug, GlobalStore}
 import it.unibo.scafi.js.view.HtmlRenderable
 import it.unibo.scafi.js.view.static.RootStyle.smallPrimaryBtnClass
@@ -77,7 +76,6 @@ class SimulationControlsSection {
     (tick :: stopButton :: startButton :: Nil) foreach { el => el.disabled = true }
     velocitySelector.init()
     PageBus.listen {
-      case code @ ScaFi(_) => loadScript(code)
       case config: SupportConfiguration =>
         if (lastConfiguration.forall(_ != config)) {
           lastConfiguration = Some(config)

@@ -3,7 +3,7 @@ package it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local.DeviceConfiguration.DeviceKind
 import it.unibo.scafi.js.model.MatrixLed
 import it.unibo.scafi.js.model.MatrixLed.MatrixMap
-import it.unibo.scafi.space.Point3D
+import it.unibo.scafi.js.model.Vec3
 import ujson.{Arr, Bool, Num, Obj, Str, Value}
 
 object StandaloneRuntimeConfig {
@@ -12,7 +12,7 @@ object StandaloneRuntimeConfig {
 
   def toJson(
       config: SupportConfiguration,
-      positions: Map[String, Point3D] = Map.empty,
+      positions: Map[String, Vec3] = Map.empty,
       initialValues: Map[String, Map[String, Any]] = Map.empty
   ): String = {
     val runtimeInitialValues = if (initialValues.nonEmpty) initialValues else config.deviceShape.initialValues
@@ -66,7 +66,7 @@ object StandaloneRuntimeConfig {
     result
   }
 
-  private def encodePositions(positions: Map[String, Point3D]): Value = {
+  private def encodePositions(positions: Map[String, Vec3]): Value = {
     val result = Obj()
     positions.toSeq.sortBy(_._1).foreach { case (nodeId, point) =>
       result(nodeId) = Obj(

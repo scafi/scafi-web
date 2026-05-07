@@ -218,6 +218,12 @@ lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
+
+# frontend-ts
+frontend-ts/node_modules/
+frontend-ts/dist/
+frontend-ts/.vite/
+frontend-ts/coverage/
 .history
 .cache
 .lib/

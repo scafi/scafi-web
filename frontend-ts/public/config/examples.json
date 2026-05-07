@@ -1,0 +1,364 @@
+[
+  {
+    "groupName": "Basic",
+    "examples": [
+      {
+        "name": "Hello scafi",
+        "body": "\"hello scafi\"",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Sense",
+        "body": "sense[Boolean](\"sensor\")",
+        "devices": {
+          "sensors": {
+            "sensor": false,
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          },
+          "initialValues": {
+            "1": { "sensor": true }
+          }
+        }
+      },
+      {
+        "name": "Neighbour count",
+        "body": "foldhoodPlus(0)((a,b) => a + b)(nbr(1))",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Field Evolution",
+        "body": "rep(0){ _ + 1 }",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Gradient",
+        "body": "//using StandardSensors, Actuation\nval gradient = rep(Double.PositiveInfinity)(distance =>\n  mux(sense[Boolean](\"sensor\")){\n    0.0\n  }{\n    minHoodPlus(nbr{distance} + nbrRange)\n  }\n)\nval saturation = if(gradient.isInfinite) { 0.0 } else { gradient / 500.0 }\nval color = hsl(0.0, 1 - saturation, 0.5)\n(gradient.formatted(\"%4.2f\"), ledAll to color)",
+        "devices": {
+          "sensors": {
+            "sensor": false,
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          },
+          "initialValues": {
+            "1": { "sensor": true }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "groupName": "Libraries",
+    "examples": [
+      {
+        "name": "Spread across the gradient",
+        "body": "//using StandardSensors, BlockG\nG2(sense[Boolean](\"source\"))(0.0)(_ + nbrRange())(nbrRange)",
+        "devices": {
+          "sensors": {
+            "source": false,
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          },
+          "initialValues": {
+            "1": { "source": true }
+          }
+        }
+      },
+      {
+        "name": "Broadcast data",
+        "body": "//using StandardSensors, BlockG\nbroadcast(sense[Boolean](\"source\"), mid())",
+        "devices": {
+          "sensors": {
+            "source": false,
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          },
+          "initialValues": {
+            "1": { "source": true }
+          }
+        }
+      },
+      {
+        "name": "Channel",
+        "body": "//using StandardSensors, BlockG, Actuation\ndef source : Boolean = sense(\"source\")\ndef target : Boolean = sense(\"target\")\ndef channel(source: Boolean, target: Boolean, width: Double): Boolean = {\n  distanceTo(source) + distanceTo(target) <= distanceBetween(source, target) + width\n}\nval inChannel = channel(source, target, 1.0)\nval channelColor = mux(inChannel) { ledAll to \"white\" } { ledAll to off }\nval nodeColor = mux(source) { ledAll to \"blue\" } {\n  mux(target) { ledAll to \"green\" } { channelColor }\n}\n(inChannel, nodeColor)",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            },
+            "source": false,
+            "obstacle": false,
+            "target": false
+          },
+          "initialValues": {
+            "1": { "source": true },
+            "100": { "target": true }
+          }
+        }
+      },
+      {
+        "name": "Channel with obstacles",
+        "body": "//using StandardSensors, BlockG, Actuation\ndef obstacle : Boolean = sense(\"obstacle\")\ndef source : Boolean = sense(\"source\")\ndef target : Boolean = sense(\"target\")\ndef channel(source: Boolean, target: Boolean, width: Double): Boolean = {\n  distanceTo(source) + distanceTo(target) <= distanceBetween(source, target) + width\n}\nval inChannel = branch(obstacle){ false }{ channel(source, target, 1.0) }\nval channelColor = mux(inChannel) { ledAll to \"white\" } { ledAll to off }\nval nodeColor = mux(source) { ledAll to \"blue\" } {\n  mux(target) { ledAll to \"green\" } {\n    mux(obstacle) { ledAll to \"red\" } { channelColor }\n  }\n}\n(inChannel, nodeColor)",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            },
+            "source": false,
+            "obstacle": false,
+            "target": false
+          },
+          "initialValues": {
+            "1": { "source": true },
+            "40": { "obstacle": true },
+            "41": { "obstacle": true },
+            "42": { "obstacle": true },
+            "43": { "obstacle": true },
+            "44": { "obstacle": true },
+            "100": { "target": true }
+          }
+        }
+      },
+      {
+        "name": "Collect data",
+        "body": "//using StandardSensors, BlockG, BlockC\nimport scala.util.Random\ndef source : Boolean = sense(\"source\")\ndef temperature : Double = Random.nextInt(20) + 10\nval potential = distanceTo(source)\nval totalTemperature = C[Double,Double](potential, _+_, temperature, 0)\nval count = C[Double, Double](potential, _ + _, 1.0, 0)\nval avg = totalTemperature / count\nmux[Any](source) { avg } { \"\" }",
+        "devices": {
+          "sensors": {
+            "source": false,
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          },
+          "initialValues": {
+            "1": { "source": true }
+          }
+        }
+      },
+      {
+        "name": "Block S",
+        "body": "//using BlockS, StandardSensors, Actuation\nval leader = S(200, nbrRange)\n(leader, mux(leader) { ledAll to \"red\" } { ledAll to \"white\" })",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "groupName": "Matrix led",
+    "examples": [
+      {
+        "name": "Turn on matrix with colors",
+        "body": "//using Actuation\nmux(mid().toInt < 50) { ledAll to \"green\" } { ledAll to \"#FF00FF\" }",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Hsl colors",
+        "body": "//using Actuation\nval colors = 50\nval color = rep(0)(c => (c + 1) % colors)\nledAll to hsl(color / colors.toDouble, 0.5, 0.5)",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Sensor based colors",
+        "body": "//using Actuation\nval sourceColor = mux(sense(\"source\")) { \"red\" } { \"white\" }\nval obstacleColor = mux(sense(\"obstacle\")) { \"green\" } { \"white\" }\nval targetColor = mux(sense(\"target\")) { \"yellow\" } { \"white\" }\n(ledCol(0) to sourceColor, ledCol(1) to obstacleColor, ledCol(2) to targetColor)",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            },
+            "source": false,
+            "obstacle": false,
+            "target": false
+          },
+          "initialValues": {
+            "1": { "source": true },
+            "50": { "obstacle": true },
+            "100": { "target": true }
+          }
+        }
+      },
+      {
+        "name": "complex shape",
+        "body": "//using Actuation\nval eyes = Seq(ledAll to \"white\", led(1,1) to off, led(1,3) to off)\nval mouth = Seq(led(3,0) to off, led(3,4) to off, led(4,1) to off, led(4,2) to off, led(4,3) to off)\neyes ++ mouth",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 5,
+              "pixels": [[[0,2],"#ffffff"],[[0,0],"#ffffff"],[[4,0],"#ffffff"],[[3,4],"#ffffff"],[[3,1],"#ffffff"],[[4,1],"#ffffff"],[[2,0],"#ffffff"],[[0,3],"#ffffff"],[[4,4],"#ffffff"],[[3,0],"#ffffff"],[[1,1],"#ffffff"],[[1,4],"#ffffff"],[[0,4],"#ffffff"],[[3,2],"#ffffff"],[[1,3],"#ffffff"],[[2,2],"#ffffff"],[[4,2],"#ffffff"],[[2,4],"#ffffff"],[[0,1],"#ffffff"],[[3,3],"#ffffff"],[[2,3],"#ffffff"],[[1,2],"#ffffff"],[[2,1],"#ffffff"],[[4,3],"#ffffff"],[[1,0],"#ffffff"]]
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "groupName": "Movement",
+    "examples": [
+      {
+        "name": "Change velocity",
+        "body": "//using Actuation\nmux(mid().toInt < 50) { velocity set Cartesian(1, 0) } { velocity set Polar(2, Math.PI) }",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Movement with rep",
+        "body": "//using Actuation\nval angle = rep(0.0)(v => v + 0.1)\nvelocity set Polar(1, angle)",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Movement 2D lib: rotation",
+        "body": "//using Actuation, Movement2D, StandardSensors\nval direction = mux(sense(\"source\")) { clockwiseRotation(100.0, 100.0) } { anticlockwiseRotation(100.0, 100.0) }\nvelocity set direction",
+        "devices": {
+          "sensors": {
+            "source": false,
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          },
+          "initialValues": {
+            "1": { "source": true }
+          }
+        }
+      },
+      {
+        "name": "Movement 2D lib: go to",
+        "body": "//using Actuation, Movement2D, StandardSensors\nvelocity set goToPoint(100, 100)",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Movement 2D lib: explore",
+        "body": "//using Actuation, Movement2D, StandardSensors\nval zone = RectangularZone(center = (0.0, 0.0), width = 600, height = 600)\nvelocity set explore(zone, 100, 10.0)",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "groupName": "High level",
+    "examples": [
+      {
+        "name": "Pattern SCR",
+        "body": "//using StandardSensors, BlockG, BlockC, BlockS, StateManagement\ntrait Heater {\n  def temp : Double\n  def turnOn : Unit\n  def turnOff : Unit\n}\ncase class FakeHeater(baseline : Double) extends Heater {\n  private var _temp = baseline\n  private var on : Boolean = false\n  override def temp: Double = {\n    _temp += (if(on) { 0.1 } else { -0.1 })\n    _temp\n  }\n  def turnOn : Unit = on = true\n  def turnOff : Unit = on = false\n}\nval heater = remember(FakeHeater(20))\nval leader = S(200, nbrRange)\nval potential = distanceTo(leader, nbrRange)\nval count = C[Double, Double](potential, _ + _, 1.0, 0.0)\nval temperature = C[Double, Double](potential, _ + _, heater.temp, 0.0)\nval avg = temperature / count\nval action : Heater => String = if(avg < 12) {\n  h => { h.turnOn; \"turn on\" }\n} else if (avg > 25) {\n  h => { h.turnOff; \"turn off\" }\n} else {\n  _ => \"ok\"\n}\nbranch(leader) { \"leader\" } { action(heater) }",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      },
+      {
+        "name": "Pattern SCR building areas",
+        "body": "//using StandardSensors, Actuation, BlockG, BlockS\ndef remap(min: Double, max: Double, newMin: Double, newMax: Double, x: Double): Double = {\n  val nx = if(x < min) min else if(x > max) max else x\n  (nx-min)/(max-min) * (newMax-newMin) + newMin\n}\nval leader = S(500, nbrRange)\nval distance = distanceTo(leader)\nval ledColor = mux(leader) { \"red\" } { s\"#0000${remap(0, 500, 255, 16, distance).toLong.toHexString}\" }\nledAll to ledColor",
+        "devices": {
+          "sensors": {
+            "matrix": {
+              "$type": "it.unibo.scafi.js.model.MatrixLed.MatrixMap",
+              "dimension": 3,
+              "pixels": [[[0,2],"#bb86fc"],[[0,0],"#bb86fc"],[[2,0],"#bb86fc"],[[1,1],"#bb86fc"],[[2,2],"#bb86fc"],[[0,1],"#bb86fc"],[[1,2],"#bb86fc"],[[2,1],"#bb86fc"],[[1,0],"#bb86fc"]]
+            }
+          }
+        }
+      }
+    ]
+  }
+]

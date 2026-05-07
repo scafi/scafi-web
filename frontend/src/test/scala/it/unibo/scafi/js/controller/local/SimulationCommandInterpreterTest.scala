@@ -1,8 +1,7 @@
 package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.js.controller.local.SimulationCommand.{ChangeSensor, Executed, Move, ToggleSensor}
-import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs}
-import it.unibo.scafi.space.Point3D
+import it.unibo.scafi.js.model.Vec3
 
 class SimulationCommandInterpreterTest extends SupportTesterLike {
   import SimulationCommandInterpreterTest._
@@ -10,7 +9,7 @@ class SimulationCommandInterpreterTest extends SupportTesterLike {
   private var forwardingPlatform: ForwardingSupportWrapper = _
 
   override def beforeEach(): Unit = {
-    forwardingPlatform = new ForwardingSupportWrapper()(SupportTesterLike.TestLang)
+    forwardingPlatform = new ForwardingSupportWrapper()
     localPlatform = forwardingPlatform
   }
 
@@ -18,7 +17,7 @@ class SimulationCommandInterpreterTest extends SupportTesterLike {
     it("forwards move commands to the active standalone runtime") {
       forwardingPlatform.execute(Move(Map("1" -> (12.0, 24.0)))).map { result =>
         result shouldBe Executed
-        forwardingPlatform.forwardedMoves.last shouldBe Map("1" -> Point3D(12.0, 24.0, 0.0))
+        forwardingPlatform.forwardedMoves.last shouldBe Map("1" -> Vec3.from2D(12.0, 24.0))
       }
     }
 
@@ -40,14 +39,14 @@ class SimulationCommandInterpreterTest extends SupportTesterLike {
 }
 
 object SimulationCommandInterpreterTest {
-  class ForwardingSupportWrapper(implicit interpreterJs: ScafiInterpreterJs[BasicWebIncarnation])
-      extends SupportTesterLike.SimulationSupportWrapper()(interpreterJs) {
-    var forwardedMoves: List[Map[String, Point3D]] = List.empty
+  class ForwardingSupportWrapper
+      extends SupportTesterLike.SimulationSupportWrapper {
+    var forwardedMoves: List[Map[String, Vec3]] = List.empty
     var forwardedSensorChanges: List[(String, Set[String], Any)] = List.empty
 
-    def sensorValue(sensor: String, id: String): Any = backend.localSensor[Any](sensor)(id)
+    def sensorValue(sensor: String, id: String): Any = backend.localSensor[Any](sensor)(id).orNull
 
-    override protected def forwardStandaloneMove(positionMap: Map[String, Point3D]): Unit = {
+    override protected def forwardStandaloneMove(positionMap: Map[String, Vec3]): Unit = {
       forwardedMoves = forwardedMoves :+ positionMap
     }
 

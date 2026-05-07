@@ -1,6 +1,6 @@
 package it.unibo.scafi.js.model
 
-import it.unibo.scafi.space.Point3D
+import it.unibo.scafi.js.model.Vec3
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -66,7 +66,7 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
 
     it("insert node update existing node") {
       val label = Map("label" -> 10)
-      val newNode = Node("1", Point3D.Zero, label)
+      val newNode = Node("1", Vec3.Zero, label)
       val newGraph = standardGraph.insertNode(newNode)
       newGraph("1").labels shouldBe label
     }
@@ -112,6 +112,6 @@ class NaiveGraphTest extends AnyFunSpec with Matchers {
 }
 
 object NaiveGraphTest {
-  def node(id : String) : Node = Node(id, Point3D.Zero)
+  def node(id : String) : Node = Node(id, Vec3.Zero)
   val standardGraph = NaiveGraph(Set(node("1"), node("2")), Set(Vertex("1", "2")))
 }

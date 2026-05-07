@@ -1,7 +1,7 @@
 package it.unibo.scafi.js.controller.local
 
 import it.unibo.scafi.js.model.MatrixLed.MatrixMap
-import it.unibo.scafi.space.Point3D
+import it.unibo.scafi.js.model.Vec3
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import ujson.read
@@ -27,8 +27,8 @@ class StandaloneRuntimeConfigTest extends AnyFunSpec with Matchers {
         StandaloneRuntimeConfig.toJson(
           config,
           positions = Map(
-            "1" -> Point3D(12, 34, 0),
-            "2" -> Point3D(56, 78, 0)
+            "1" -> Vec3(12, 34, 0),
+            "2" -> Vec3(56, 78, 0)
           )
         )
       )

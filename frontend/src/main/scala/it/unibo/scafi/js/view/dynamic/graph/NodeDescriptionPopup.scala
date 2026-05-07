@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.view.dynamic.graph
 
-import it.unibo.scafi.js.dsl.BasicWebIncarnation
 import it.unibo.scafi.js.facade.phaser.Phaser.{Input, Scene}
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{Container, GameObject}
 import it.unibo.scafi.js.facade.phaser.namespaces.gameobjects.ComponentsNamespace.Transform
@@ -29,8 +28,6 @@ object NodeDescriptionPopup {
   def apply(container: Container, scene: Scene): NodeDescriptionPopup = new NodeDescriptionPopupImpl(container, scene)
 
   private class NodeDescriptionPopupImpl(container: Container, scene: Scene) extends NodeDescriptionPopup {
-    type Path = BasicWebIncarnation#Path
-    type Export = BasicWebIncarnation#EXPORT
     private val width = 200
     private val heigth = 150
     var selectedId: Option[String] = None
@@ -63,21 +60,8 @@ object NodeDescriptionPopup {
       val sensorsContent = node.labels.map { case (name, value) => name -> LabelRender.normalizeValue(value) }.map {
         case (name, value) => s"$name : $value"
       }
-
-      val exports = node.labels
-        .collect { case (name, value: Export) => value }
-        .flatMap(value => value.paths.toSeq)
-
-      val exportsTreeMap = exports
-        .filter(!_._1.isRoot)
-        .map { case (path, value) => path.pull() -> (path, value) }
-        .groupBy(_._1)
-        .mapValues(paths => paths.map(_._2))
-
-      val root = exports.find(_._1.isRoot)
-
-      exportTree.refreshContents(buildTreeFrom(root, exportsTreeMap.toMap))
       sensorList.refreshContents(sensorsContent)
+      exportTree.refreshContents(Tree[String, String]("export", "no data", Seq.empty))
     }
     def focusOn(node: Transform with GameObject): Unit = {
       gameElement.x = node.x
@@ -93,21 +77,6 @@ object NodeDescriptionPopup {
       el.width(if (newWidth < width) width else newWidth)
       el.height(if (newHeight < heigth) heigth else newHeight)
       false
-    }
-
-    private def buildTreeFrom(root: Option[(Path, Any)], map: Map[Path, Iterable[(Path, Any)]]): Tree[String, String] =
-      root match {
-        case Some(node) =>
-          Tree
-            .fromMap[Path, Any](node, map)
-            .map[String, String] { case (k, v) => pathToString(k) -> v.toString }
-        case None => Tree[String, String]("root", "no data", Seq.empty)
-      }
-
-    private def pathToString(path: Path): String = if (path.isRoot) {
-      "P:/"
-    } else {
-      path.head.toString + "/"
     }
   }
 }

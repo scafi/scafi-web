@@ -1,6 +1,5 @@
 package it.unibo.scafi.js.view.dynamic.graph
 
-import it.unibo.scafi.js.dsl.BasicWebIncarnation
 import it.unibo.scafi.js.facade.phaser.Implicits._
 import it.unibo.scafi.js.facade.phaser.Phaser.Scene
 import it.unibo.scafi.js.facade.phaser.namespaces.GameObjectsNamespace.{BitmapText, GameObject, Shape, Text}
@@ -132,12 +131,7 @@ object LabelRender {
         world: Graph,
         scene: Scene
     ): Output = {
-      val exp = elements
-        .collect { case ("export", e: BasicWebIncarnation#EXPORT) => e }
-        .map {
-          _.root[Any]()
-        }
-        .collectFirst { case e: Boolean => e }
+      val exp = elements.collectFirst { case ("export", e: Boolean) => e }
       exp match {
         case None => Seq.empty
         case Some(value) =>
@@ -160,9 +154,7 @@ object LabelRender {
     ): Output = {
       val label = "export"
       val circleSize = node.width / 2
-      val result = elements.collect { case (`label`, e: BasicWebIncarnation#EXPORT) => e.root[Any]() }.collect {
-        case e: Double => e
-      }
+      val result = elements.collect { case (`label`, e: Double) => e }
       type FoldType = (Int, Seq[(GameObject, Seq[String])])
       result.flatMap { gradient =>
         val nodeColor = ColorNamespace.HSLToColor(gradient / 1920, 0.5, 0.5)
@@ -211,7 +203,8 @@ object LabelRender {
 
   def normalizeValue(any: Any): String = {
     val realValue = any match {
-      case e: BasicWebIncarnation#EXPORT => removeActuationFrom(e.root[Any]())
+      case e: Iterable[_] => e.mkString("(", ",", ")")
+      case p: Product => p.productIterator.mkString("(", ",", ")")
       case other => other
     }
     realValue match {

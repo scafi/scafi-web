@@ -3,8 +3,6 @@ import upickle.default._
 import it.unibo.scafi.js.code.{ExampleGroup, _}
 import it.unibo.scafi.js.controller.local
 import it.unibo.scafi.js.controller.local._
-import it.unibo.scafi.js.dsl.semantics._
-import it.unibo.scafi.js.dsl.{BasicWebIncarnation, ScafiInterpreterJs, WebIncarnation}
 import it.unibo.scafi.js.utils.{Cookie, Execution, appendOnce}
 import it.unibo.scafi.js.view.dynamic._
 import it.unibo.scafi.js.view.dynamic.graph.LabelRender.{LabelRender, MatrixLedRender, TextifyBitmap}
@@ -22,12 +20,6 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 object Index {
 
   import org.scalajs.dom._
-  implicit val incarnation: BasicWebIncarnation = WebIncarnation // incarnation chosen
-
-  /** Interpreter chosen. */
-  @JSExportTopLevel("Lang")
-  implicit val languageJsInterpreter: ScafiInterpreterJs[BasicWebIncarnation] =
-    new ScafiInterpreterJs("Lang") with BlockGJs with LanguageJs with BlockTJs with StandardSensorJs with BuiltinsJs
 
   val configuration: SupportConfiguration = SupportConfiguration(
     GridLikeNetwork(10, 10, 60, 60, 10),
@@ -52,11 +44,7 @@ object Index {
       spaPage()
     }
     // to improve, support for ScaFi.js
-    val defaultMode = if (queryParams.has("javascript")) {
-      EditorSection.JavascriptMode
-    } else {
-      EditorSection.ScalaModeEasy
-    }
+    val defaultMode = EditorSection.ScalaModeEasy
     scafiInitialization(defaultMode)
     ThemeSwitcher.render(SkeletonPage.navRightSide) // attach the theme switcher
   }
@@ -118,13 +106,9 @@ object Index {
     }
     PageBus.publish(configuration) // tell to all component the new configuration installed on the frontend
     PageStructure.resizable()
-    if (mode == EditorSection.JavascriptMode) {
-      editor.setCode("", mode)
-    } else {
-      ExampleProvider
-        .race(ExampleProvider.fromGlobal(), ExampleProvider.fromRemote())
-        .foreach(examples => new ExampleChooser(SkeletonPage.selectionProgram, examples, configurationSection, editor))
-    }
+    ExampleProvider
+      .race(ExampleProvider.fromGlobal(), ExampleProvider.fromRemote())
+      .foreach(examples => new ExampleChooser(SkeletonPage.selectionProgram, examples, configurationSection, editor))
   }
   @JSExportTopLevel("ScafiBackend")
   val interpreter = new local.SimulationCommandInterpreter.JsConsole(support)

@@ -58,7 +58,7 @@ lazy val noPublishSettings = Seq(
 lazy val `scafi-web` = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
-  .aggregate(frontend)
+  .aggregate(frontend, `standalone-runtime`)
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
   .settings(
@@ -67,9 +67,49 @@ lazy val `scafi-web` = project
     ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject
   )
 
+lazy val `standalone-runtime` = project
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "scafi-standalone-runtime",
+    organization := "it.unibo.scafi",
+    libraryDependencies ++= Seq(
+      "it.unibo.scafi" %%% "scafi-core" % scafiVersion,
+      "it.unibo.scafi" %%% "scafi-commons" % scafiVersion,
+      "it.unibo.scafi" %%% "scafi-simulator" % scafiVersion
+    ),
+    Compile / sourceGenerators += Def.task {
+      val templateFile = baseDirectory.value / "src" / "main" / "template" / "ScafiStandaloneRuntime.template.scala"
+      val outputFile = (Compile / sourceManaged).value / "it" / "unibo" / "scafi" / "standalone" / "RuntimeTemplate.scala"
+      val templateLines = scala.io.Source.fromFile(templateFile).getLines().toVector
+      val escapedLines = templateLines.map { line =>
+        val escaped = line
+          .replace("\\", "\\\\")
+          .replace("\"", "\\\"")
+        if (escaped.trim == "// $$USER_CODE$$")
+          "\"__USER_CODE_PLACEHOLDER__\""
+        else
+          "\"" + escaped + "\""
+      }.mkString(",\n    ")
+      val content =
+        s"""package it.unibo.scafi.standalone
+           |
+           |object RuntimeTemplate {
+           |  private val template: String = Seq[String](
+           |    $escapedLines
+           |  ).mkString("\\n")
+           |
+           |  def wrapCode(core: String): String = template.replace("__USER_CODE_PLACEHOLDER__", core)
+           |}
+           |""".stripMargin
+      IO.createDirectory(outputFile.getParentFile)
+      IO.write(outputFile, content)
+      Seq(outputFile)
+    }.taskValue
+  )
+
 lazy val frontend = project
   .enablePlugins(ScalaJSBundlerPlugin)
-  // .dependsOn(commonsCross.js, coreCross.js, simulatorCross.js)
+  .dependsOn(`standalone-runtime`)
   .settings(
     name := "frontend",
     scalaJSUseMainModuleInitializer := true,
@@ -80,10 +120,7 @@ lazy val frontend = project
       "com.github.japgolly.scalacss" %%% "ext-scalatags" % "1.0.0",
       "io.monix" %%% "monix-reactive" % "3.2.2",
       "org.querki" %%% "jquery-facade" % "2.1",
-      "it.unibo.scafi" %%% "scafi-core" % scafiVersion,
-      "org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0",
-      "it.unibo.scafi" %%% "scafi-commons" % scafiVersion,
-      "it.unibo.scafi" %%% "scafi-simulator" % scafiVersion
+      "org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0"
     ),
     installJsdom / version := "12.0.0",
     Test / requireJsDomEnv := true,
