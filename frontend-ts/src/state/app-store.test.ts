@@ -110,7 +110,18 @@ class FakeRuntime implements StandaloneRuntimeApi {
     };
   }
 
-  dispose(): void {}
+  dispose(): void {
+    this.labels = {
+      "1": { source: true, obstacle: false },
+      "2": { source: false, obstacle: false },
+    };
+    this.positions = {
+      "1": { x: 0, y: 0 },
+      "2": { x: 10, y: 0 },
+    };
+    this.ticks = 0;
+    this.lastConfigJson = "";
+  }
 }
 
 class BlockingTickRuntime extends FakeRuntime {
@@ -170,6 +181,25 @@ class WorldDrivenRuntime extends FakeRuntime {
         labels: this.labels[id],
       })),
       edges: [["101", "102"]] as Array<[string, string]>,
+    };
+  }
+}
+
+class StaleAfterTickRuntime extends FakeRuntime {
+  override setSensorValue(sensorName: string, nodeIds: string[], value: unknown): void {
+    // Do NOT update labels — simulate a lagging sync where the runtime hasn't processed the change yet
+  }
+
+  override getState() {
+    // Return state based on tick-modified labels (sensor changes NOT reflected)
+    return {
+      nodes: Object.entries(this.positions).map(([id, position]) => ({
+        id,
+        x: position.x,
+        y: position.y,
+        labels: this.labels[id],
+      })),
+      edges: [["1", "2"]] as Array<[string, string]>,
     };
   }
 }
@@ -473,5 +503,226 @@ describe("AppStore", () => {
     );
 
     expect(store.previewCompiledSource("program", "full-scala", "world.dsl")).toBe("compiled(full-scala)::world.dsl::program");
+  });
+
+  it("emits graph state immediately when changing a sensor in standalone mode", () => {
+    const runtime = new FakeRuntime();
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => compileResult(runtime),
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    store.moveNodes({ "1": { x: 5, y: 0 } });
+
+    expect(store.getState().graph.nodes.find((node) => node.id === "1")?.position).toEqual({ x: 5, y: 0 });
+  });
+
+  it("emits graph state immediately when changing a sensor in non-standalone mode", () => {
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: vi.fn(async () => compileResult(new FakeRuntime())),
+        },
+        runtimeLoader: new StandaloneRuntimeLoader(),
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    store.changeSensor("source", ["1"], true);
+
+    expect(store.getState().graph.nodes.find((node) => node.id === "1")?.labels.source).toBe(true);
+  });
+
+  it("applies sensor changes to multiple nodes at once", () => {
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: vi.fn(async () => compileResult(new FakeRuntime())),
+        },
+        runtimeLoader: new StandaloneRuntimeLoader(),
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    store.changeSensor("obstacle", ["1", "2"], true);
+
+    expect(store.getState().graph.nodes.find((node) => node.id === "1")?.labels.obstacle).toBe(true);
+    expect(store.getState().graph.nodes.find((node) => node.id === "2")?.labels.obstacle).toBe(true);
+  });
+
+  it("preserves pending sensor changes across interleaved ticks", async () => {
+    const runtime = new StaleAfterTickRuntime();
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => compileResult(runtime),
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    await store.loadScript("program", "full-scala");
+
+    // Tick modifies obstacle on node 2 (tick 1: obstacle = true)
+    await store.tick();
+    expect(runtime.labels["2"]?.obstacle).toBe(true);
+
+    // User changes obstacle on node 2 to false — this is recorded as pending
+    store.changeSensor("obstacle", ["2"], false);
+
+    // Local state immediately reflects the change (immediate emit)
+    expect(store.getState().graph.nodes.find((node) => node.id === "2")?.labels.obstacle).toBe(false);
+
+    // Runtime labels are unchanged because StaleAfterTickRuntime ignores setSensorValue
+    expect(runtime.labels["2"]?.obstacle).toBe(true);
+
+    // Another tick runs — it modifies obstacle on node 2 (tick 2: obstacle = false)
+    await store.tick();
+    // Runtime now matches the user-requested value
+    expect(runtime.labels["2"]?.obstacle).toBe(false);
+
+    // The local state should still have the user-requested value, which now matches runtime
+    expect(store.getState().graph.nodes.find((node) => node.id === "2")?.labels.obstacle).toBe(false);
+  });
+
+  it("clears pending changes when loading a new script", async () => {
+    const runtime = new FakeRuntime();
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => compileResult(runtime),
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    await store.loadScript("program", "full-scala");
+
+    store.changeSensor("obstacle", ["1"], true);
+
+    // Verify the local change is visible immediately
+    expect(store.getState().graph.nodes.find((node) => node.id === "1")?.labels.obstacle).toBe(true);
+
+    // Load a new script — pending changes should be cleared
+    await store.loadScript("program2", "full-scala");
+
+    // The new runtime state from loadScript should be authoritative
+    expect(store.getState().graph.nodes.find((node) => node.id === "1")?.labels.obstacle).toBe(false);
+  });
+
+  it("clears pending changes on reset execution", async () => {
+    const runtime = new FakeRuntime();
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => compileResult(runtime),
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    await store.loadScript("program", "full-scala");
+
+    store.changeSensor("obstacle", ["1"], true);
+    expect(store.getState().graph.nodes.find((node) => node.id === "1")?.labels.obstacle).toBe(true);
+
+    store.resetExecution();
+
+    expect(store.getState().standalone.active).toBe(false);
+  });
+
+  it("moveNodes emits immediately even when standalone sync is in flight", async () => {
+    const runtime = new FakeRuntime();
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => compileResult(runtime),
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    await store.loadScript("program", "full-scala");
+
+    store.moveNodes({ "1": { x: 42, y: 7 } });
+
+    expect(store.getState().graph.nodes.find((node) => node.id === "1")?.position).toEqual({ x: 42, y: 7 });
+    expect(runtime.positions["1"]).toEqual({ x: 42, y: 7 });
+  });
+
+  it("does not start sync operations when generation is stale", async () => {
+    const runtime = new FakeRuntime();
+    let compileCallCount = 0;
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => {
+            compileCallCount += 1;
+            return compileResult(runtime);
+          },
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    await store.loadScript("program", "full-scala");
+
+    store.changeSensor("source", ["1"], true);
+
+    await store.loadScript("program2", "full-scala");
+
+    // The original sync should have been discarded by generation check
+    expect(compileCallCount).toBe(2);
+    expect(store.getState().graph.nodes.find((node) => node.id === "1")?.labels.source).toBe(true);
   });
 });

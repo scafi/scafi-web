@@ -388,7 +388,7 @@ export class ScafiWebUiShell {
     if (selectedNodes.length === 0 || !this.selectionPanelOpen) {
       return "";
     }
-    const primaryNode = selectedNodes[0];
+    const daemonRunning = state.execution.status === "daemon";
     return `
       <div class="selection-tray is-open">
         <div class="selection-tray-header">
@@ -404,7 +404,7 @@ export class ScafiWebUiShell {
         <div class="selection-list">
           ${selectedNodes.map((node) => `<button class="selection-chip ${selectedNodes[0]?.id === node.id ? "is-active" : ""}" data-select-node="${escapeHtml(node.id)}">${escapeHtml(node.id)}</button>`).join("")}
         </div>
-        ${primaryNode ? this.renderInspector(primaryNode, selectedNodes.length) : ""}
+        ${this.renderInspector(selectedNodes, daemonRunning)}
       </div>
     `;
   }
@@ -467,7 +467,10 @@ export class ScafiWebUiShell {
     const selectedNodes = this.selectedNodes(state.graph.nodes);
     if (selectedNodes.length === 0) return;
     const primaryNode = selectedNodes[0];
+    const isGroup = selectedNodes.length > 1;
+    const consensus = this.buildSensorConsensus(selectedNodes);
     const exportValue = primaryNode.labels.export ?? null;
+    const daemonRunning = state.execution.status === "daemon";
 
     const summaryEl = this.root.querySelector<HTMLElement>("[data-inspector-export-summary]");
     if (summaryEl) {
@@ -480,21 +483,39 @@ export class ScafiWebUiShell {
 
     const moveX = this.root.querySelector<HTMLInputElement>("#move-x");
     if (moveX) {
-      moveX.value = primaryNode.position.x.toFixed(2);
+      moveX.value = isGroup ? "0" : primaryNode.position.x.toFixed(2);
+      moveX.disabled = daemonRunning;
     }
     const moveY = this.root.querySelector<HTMLInputElement>("#move-y");
     if (moveY) {
-      moveY.value = primaryNode.position.y.toFixed(2);
+      moveY.value = isGroup ? "0" : primaryNode.position.y.toFixed(2);
+      moveY.disabled = daemonRunning;
     }
 
-    for (const [name, value] of Object.entries(primaryNode.labels)) {
-      if (name === "export" || name === "matrix") continue;
+    const moveBtn = this.root.querySelector<HTMLButtonElement>("#apply-move");
+    if (moveBtn) {
+      moveBtn.disabled = daemonRunning;
+    }
+
+    for (const entry of consensus) {
       const input = this.root.querySelector<HTMLInputElement>(
-        `[data-runtime-sensor-input="${cssEscape(name)}"]`,
+        `[data-runtime-sensor-input="${cssEscape(entry.name)}"]`,
       );
-      if (input) {
-        input.value = String(value);
+      if (!input) continue;
+      input.disabled = daemonRunning;
+      if (entry.mixed) {
+        input.dataset.sensorMixed = "true";
+        input.value = "";
+        input.placeholder = "(mixed)";
+      } else {
+        delete input.dataset.sensorMixed;
+        input.value = String(entry.value);
+        input.placeholder = "";
       }
+      const applyBtn = this.root.querySelector<HTMLButtonElement>(`[data-apply-sensor="${cssEscape(entry.name)}"]`);
+      if (applyBtn) applyBtn.disabled = daemonRunning;
+      const toggleBtn = this.root.querySelector<HTMLButtonElement>(`[data-toggle-runtime-sensor="${cssEscape(entry.name)}"]`);
+      if (toggleBtn) toggleBtn.disabled = daemonRunning;
     }
   }
 
@@ -813,18 +834,24 @@ export class ScafiWebUiShell {
     }
   }
 
-  private renderInspector(node: GraphNode, selectionSize: number): string {
-    const sensorEntries = Object.entries(node.labels).filter(([label]) => label !== "export" && label !== "matrix");
-    const exportValue = node.labels.export ?? null;
+  private renderInspector(selectedNodes: GraphNode[], disabled: boolean): string {
+    const primaryNode = selectedNodes[0];
+    const sensorConsensus = this.buildSensorConsensus(selectedNodes);
+    const exportValue = primaryNode.labels.export ?? null;
+    const isGroup = selectedNodes.length > 1;
+    const moveLabel = isGroup ? "ΔX" : "X";
+    const moveLabelY = isGroup ? "ΔY" : "Y";
+    const moveDefault = isGroup ? 0 : Number(primaryNode.position.x.toFixed(2));
+    const moveDefaultY = isGroup ? 0 : Number(primaryNode.position.y.toFixed(2));
     return `
       <div class="inspector-stack">
         <div class="inspector-card inspector-card-export">
           <div class="selection-node-header">
             <div>
               <p class="section-kicker">Node</p>
-              <h3>${escapeHtml(node.id)}</h3>
+              <h3>${escapeHtml(primaryNode.id)}</h3>
             </div>
-            <p class="muted">${selectionSize} node${selectionSize === 1 ? "" : "s"} selected</p>
+            <p class="muted">${selectedNodes.length} node${selectedNodes.length === 1 ? "" : "s"} selected${selectedNodes.length > 1 ? ` — showing ${escapeHtml(primaryNode.id)}` : ""}</p>
           </div>
           <div class="export-callout">
             <span class="export-callout-label">Current output</span>
@@ -836,13 +863,13 @@ export class ScafiWebUiShell {
         <div class="inspector-card">
           <div class="inline-heading">
             <h3>Move</h3>
-            <span class="muted">selection transform</span>
+            <span class="muted">${isGroup ? "delta to selection" : "selection transform"}</span>
           </div>
           <div class="config-grid compact-grid">
-            ${numberField("X", "move-x", Number(node.position.x.toFixed(2)))}
-            ${numberField("Y", "move-y", Number(node.position.y.toFixed(2)))}
+            <label class="field"><span>${escapeHtml(moveLabel)}</span><input id="move-x" type="number" value="${moveDefault}" ${disabled ? "disabled" : ""} /></label>
+            <label class="field"><span>${escapeHtml(moveLabelY)}</span><input id="move-y" type="number" value="${moveDefaultY}" ${disabled ? "disabled" : ""} /></label>
           </div>
-          <button id="apply-move" class="primary" type="button">Move selection</button>
+          <button id="apply-move" class="primary" type="button" ${disabled ? "disabled" : ""}>Move selection</button>
         </div>
 
         <div class="inspector-card">
@@ -850,23 +877,40 @@ export class ScafiWebUiShell {
             <h3>Sensors</h3>
             <span class="muted">apply to selection</span>
           </div>
-          ${sensorEntries.length > 0 ? sensorEntries.map(([name, value]) => this.renderSensorEditor(name, value)).join("") : `<p class="muted">No scalar sensors available.</p>`}
+          ${sensorConsensus.length > 0 ? sensorConsensus.map((entry) => this.renderSensorEditor(entry.name, entry.value, entry.mixed, disabled)).join("") : `<p class="muted">No scalar sensors available.</p>`}
         </div>
 
       </div>
     `;
   }
 
-  private renderSensorEditor(name: string, value: unknown): string {
-    const isBoolean = typeof value === "boolean";
+  private buildSensorConsensus(selectedNodes: GraphNode[]): Array<{ name: string; value: unknown; mixed: boolean }> {
+    const seen = new Set<string>();
+    const result: Array<{ name: string; value: unknown; mixed: boolean }> = [];
+    for (const node of selectedNodes) {
+      for (const [label, value] of Object.entries(node.labels)) {
+        if (label === "export" || label === "matrix") continue;
+        if (seen.has(label)) continue;
+        seen.add(label);
+        const allSame = selectedNodes.every((other) => other.labels[label] === value);
+        result.push({ name: label, value: allSame ? value : undefined, mixed: !allSame });
+      }
+    }
+    return result;
+  }
+
+  private renderSensorEditor(name: string, value: unknown, mixed = false, disabled = false): string {
+    const displayValue = mixed ? "" : String(value);
+    const isBoolean = typeof value === "boolean" && !mixed;
+    const mixedAttr = mixed ? ' data-sensor-mixed="true"' : "";
     return `
       <div class="sensor-editor">
         <label class="field grow-field">
-          <span>${escapeHtml(name)}</span>
-          <input data-runtime-sensor-input="${escapeHtml(name)}" type="text" value="${escapeHtml(String(value))}" />
+          <span>${escapeHtml(name)}${mixed ? ` <small class="sensor-mixed-hint">(mixed)</small>` : ""}</span>
+          <input data-runtime-sensor-input="${escapeHtml(name)}"${mixedAttr} type="text" value="${escapeHtml(displayValue)}" placeholder="${mixed ? "(mixed)" : ""}" ${disabled ? "disabled" : ""} />
         </label>
-        <button class="ghost" type="button" data-apply-sensor="${escapeHtml(name)}">Apply</button>
-        ${isBoolean ? `<button class="ghost" type="button" data-toggle-runtime-sensor="${escapeHtml(name)}">Toggle</button>` : ""}
+        <button class="ghost" type="button" data-apply-sensor="${escapeHtml(name)}" ${disabled ? "disabled" : ""}>Apply</button>
+        ${isBoolean ? `<button class="ghost" type="button" data-toggle-runtime-sensor="${escapeHtml(name)}" ${disabled ? "disabled" : ""}>Toggle</button>` : ""}
       </div>
     `;
   }
@@ -1184,8 +1228,17 @@ export class ScafiWebUiShell {
     this.bindButton("apply-move", () => {
       const x = Number((this.root.querySelector<HTMLInputElement>("#move-x")?.value ?? "0").trim());
       const y = Number((this.root.querySelector<HTMLInputElement>("#move-y")?.value ?? "0").trim());
-      const positionMap = Object.fromEntries(this.selectedNodeIds.map((nodeId) => [nodeId, { x, y }]));
-      this.app.moveNodes(positionMap);
+      if (this.selectedNodeIds.length > 1) {
+        const nodes = this.selectedNodes(this.app.store.getState().graph.nodes);
+        const positionMap: Record<string, Vec2> = {};
+        for (const node of nodes) {
+          positionMap[node.id] = { x: node.position.x + x, y: node.position.y + y };
+        }
+        this.app.moveNodes(positionMap);
+      } else if (this.selectedNodeIds.length === 1) {
+        const nodeId = this.selectedNodeIds[0];
+        this.app.moveNodes({ [nodeId]: { x, y } });
+      }
     });
     for (const button of this.root.querySelectorAll<HTMLButtonElement>("[data-apply-sensor]")) {
       button.addEventListener("click", () => {

@@ -92,6 +92,8 @@ export class AppStore {
   private backend: BackendState;
   private state: AppState;
   private daemon?: { cancel(): void };
+  private pendingSensorChanges = new Map<NodeId, Map<string, unknown>>();
+  private pendingPositionChanges = new Map<NodeId, Vec2>();
 
   constructor(
     private readonly dependencies: AppStoreDependencies,
@@ -128,6 +130,8 @@ export class AppStore {
   evolve(configuration: SupportConfiguration): void {
     this.stopDaemon();
     this.backend = buildBackend(configuration);
+    this.pendingSensorChanges.clear();
+    this.pendingPositionChanges.clear();
     this.state = {
       ...this.state,
       configuration,
@@ -150,6 +154,8 @@ export class AppStore {
 
   async loadScript(code: string, mode: ScalaSourceMode, worldDocument?: string): Promise<void> {
     this.stopDaemon();
+    this.pendingSensorChanges.clear();
+    this.pendingPositionChanges.clear();
     const generation = this.state.execution.generation + 1;
     this.patch({
       execution: {
@@ -283,6 +289,8 @@ export class AppStore {
 
   resetExecution(): void {
     this.stopDaemon();
+    this.pendingSensorChanges.clear();
+    this.pendingPositionChanges.clear();
     void this.sessionManager.clear();
     this.patch({
       execution: {
@@ -303,13 +311,13 @@ export class AppStore {
       const device = this.backend.devices.get(id);
       if (device) {
         this.backend.devices.set(id, { ...device, position });
+        this.pendingPositionChanges.set(id, { ...position });
       }
     }
+    this.refreshLocalGraph();
     if (this.state.standalone.active) {
       void this.syncStandalonePositions(positionMap);
-      return;
     }
-    this.refreshLocalGraph();
   }
 
   changeSensor(sensorName: string, nodeIds: NodeId[], value: unknown): void {
@@ -323,13 +331,15 @@ export class AppStore {
           ...device,
           sensors: { ...device.sensors, [sensorName]: value },
         });
+        const nodePending = this.pendingSensorChanges.get(nodeId) ?? new Map<string, unknown>();
+        nodePending.set(sensorName, value);
+        this.pendingSensorChanges.set(nodeId, nodePending);
       }
     }
+    this.refreshLocalGraph();
     if (this.state.standalone.active) {
       void this.syncStandaloneSensors(sensorName, nodeIds, value);
-      return;
     }
-    this.refreshLocalGraph();
   }
 
   toggleSensor(sensorName: string, nodeIds: NodeId[]): void {
@@ -400,6 +410,9 @@ export class AppStore {
 
   private async syncStandalonePositions(positionMap: Record<NodeId, Vec2>): Promise<void> {
     const generation = this.state.execution.generation;
+    if (!this.isStandaloneGenerationCurrent(generation)) {
+      return;
+    }
     try {
       await this.sessionManager.setPositions(positionMap);
       if (!this.isStandaloneGenerationCurrent(generation)) {
@@ -420,6 +433,9 @@ export class AppStore {
 
   private async syncStandaloneSensors(sensorName: string, nodeIds: NodeId[], value: unknown): Promise<void> {
     const generation = this.state.execution.generation;
+    if (!this.isStandaloneGenerationCurrent(generation)) {
+      return;
+    }
     try {
       await this.sessionManager.setSensorValue(sensorName, nodeIds, value);
       if (!this.isStandaloneGenerationCurrent(generation)) {
@@ -445,8 +461,30 @@ export class AppStore {
     }
     this.backend = backendFromGraph(parsed.graph);
 
+    for (const [nodeId, sensors] of this.pendingSensorChanges) {
+      const device = this.backend.devices.get(nodeId);
+      if (!device) {
+        continue;
+      }
+      for (const [sensorName, pendingValue] of sensors) {
+        if (device.sensors[sensorName] !== pendingValue) {
+          device.sensors[sensorName] = pendingValue;
+        }
+      }
+    }
+
+    for (const [nodeId, pendingPos] of this.pendingPositionChanges) {
+      const device = this.backend.devices.get(nodeId);
+      if (!device) {
+        continue;
+      }
+      if (device.position.x !== pendingPos.x || device.position.y !== pendingPos.y) {
+        device.position = { ...pendingPos };
+      }
+    }
+
     this.patch({
-      graph: parsed.graph,
+      graph: graphFromBackend(this.backend),
       execution: {
         ...this.state.execution,
         warnings: parsed.warnings,
