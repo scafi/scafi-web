@@ -398,7 +398,11 @@ export class ScafiWebUiShell {
           </div>
           <div class="selection-tray-actions">
             <p class="muted">${selectedNodes.length} node${selectedNodes.length === 1 ? "" : "s"} selected</p>
-            <button class="ghost selection-close" type="button" data-hide-selection-panel>Close</button>
+            <div style="display: flex; gap: 8px;">
+              <button id="inspector-start-daemon" class="ghost" type="button" ${disabled(state.execution.status !== "ready")}>${iconPlay()} Start</button>
+              <button id="inspector-stop-daemon" class="ghost" type="button" ${disabled(state.execution.status !== "daemon")}>${iconSquare()} Stop</button>
+              <button class="ghost selection-close" type="button" data-hide-selection-panel>Close</button>
+            </div>
           </div>
         </div>
         <div class="selection-list">
@@ -424,7 +428,9 @@ export class ScafiWebUiShell {
   }
 
   private shouldPatchLiveState(state: AppState): boolean {
-    return this.lastRenderedExecutionStatus === "daemon" && state.execution.status === "daemon" && this.root.childElementCount > 0;
+    const wasLive = this.lastRenderedExecutionStatus === "daemon" || this.lastRenderedExecutionStatus === "ready";
+    const isLive = state.execution.status === "daemon" || state.execution.status === "ready";
+    return wasLive && isLive && this.root.childElementCount > 0;
   }
 
   private patchLiveState(state: AppState): void {
@@ -440,6 +446,16 @@ export class ScafiWebUiShell {
     if (runtimeFeedback) {
       runtimeFeedback.innerHTML = this.renderRuntimeFeedback(state);
     }
+    
+    const loadScriptBtn = this.root.querySelector<HTMLButtonElement>("#load-script");
+    if (loadScriptBtn) loadScriptBtn.disabled = state.execution.status === "compiling";
+    const tickOnceBtn = this.root.querySelector<HTMLButtonElement>("#tick-once");
+    if (tickOnceBtn) tickOnceBtn.disabled = !(state.execution.status === "ready" || state.execution.status === "daemon");
+    const startDaemonBtn = this.root.querySelector<HTMLButtonElement>("#start-daemon");
+    if (startDaemonBtn) startDaemonBtn.disabled = state.execution.status !== "ready";
+    const stopDaemonBtn = this.root.querySelector<HTMLButtonElement>("#stop-daemon");
+    if (stopDaemonBtn) stopDaemonBtn.disabled = state.execution.status !== "daemon";
+
     let shouldRebindGraphListeners = false;
     const graphStage = this.root.querySelector<HTMLElement>("[data-graph-stage]");
     if (graphStage) {
@@ -479,6 +495,15 @@ export class ScafiWebUiShell {
     const previewEl = this.root.querySelector<HTMLElement>("[data-inspector-export-preview]");
     if (previewEl) {
       previewEl.textContent = formatInspectorJson(exportValue);
+    }
+
+    const inspectorStartDaemon = this.root.querySelector<HTMLButtonElement>("#inspector-start-daemon");
+    if (inspectorStartDaemon) {
+      inspectorStartDaemon.disabled = state.execution.status !== "ready";
+    }
+    const inspectorStopDaemon = this.root.querySelector<HTMLButtonElement>("#inspector-stop-daemon");
+    if (inspectorStopDaemon) {
+      inspectorStopDaemon.disabled = state.execution.status !== "daemon";
     }
 
     const moveX = this.root.querySelector<HTMLInputElement>("#move-x");
@@ -1224,6 +1249,12 @@ export class ScafiWebUiShell {
         this.render();
       });
     }
+
+    this.bindButton("inspector-start-daemon", () => {
+      const selectedSpeed = this.root.querySelector<HTMLButtonElement>(".speed-pill.is-active")?.dataset.speed;
+      this.app.startDaemon(Number(selectedSpeed ?? 90));
+    });
+    this.bindButton("inspector-stop-daemon", () => this.app.stopDaemon());
 
     this.bindButton("apply-move", () => {
       const x = Number((this.root.querySelector<HTMLInputElement>("#move-x")?.value ?? "0").trim());

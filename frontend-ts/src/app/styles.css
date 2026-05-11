@@ -1063,6 +1063,14 @@ textarea {
   align-items: start;
   justify-content: space-between;
   gap: 12px;
+  position: sticky;
+  top: -12px;
+  margin: -12px -12px 0;
+  padding: 12px;
+  background: var(--panel);
+  z-index: 10;
+  border-bottom: 1px solid var(--line);
+  border-radius: 18px 18px 0 0;
 }
 
 .selection-tray-actions {
