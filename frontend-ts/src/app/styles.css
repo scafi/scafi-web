@@ -936,7 +936,6 @@ textarea {
 }
 
 .graph-node circle {
-  fill: var(--accent-cool);
   stroke: rgba(12, 16, 20, 0.92);
   stroke-width: 3;
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.22));
@@ -987,7 +986,6 @@ textarea {
 }
 
 .graph-node.is-selected circle {
-  fill: var(--accent);
   stroke: rgba(255, 243, 227, 0.98);
   stroke-width: 3.4;
   filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)) drop-shadow(0 0 20px rgba(240, 140, 74, 0.34));

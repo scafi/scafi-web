@@ -279,4 +279,85 @@ describe("renderer-document", () => {
     expect(mutedEdge?.className).toContain("graph-edge is-muted");
     expect(mutedEdge?.strokeOpacity).toBe(0.2);
   });
+
+  it("maps export value to node size via sizeRange renderer", () => {
+    const evaluator = compileRendererDocument(`
+      return {
+        renderNode(context) {
+          return RendererKit.composeNode(
+            context,
+            RendererKit.node.sizeRange(0, 100, 6, 30),
+          );
+        },
+      };
+    `);
+
+    const output = evaluator({
+      graph: {
+        nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: { export: 50 } }],
+        edges: [],
+      },
+      execution: { status: "ready", generation: 0, warnings: [] },
+      selectedNodeIds: [],
+      availableSensors: [],
+      defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),
+    });
+
+    const nodeOutput = output?.renderNode?.({
+      node: { id: "1", position: { x: 0, y: 0 }, labels: { export: 50 } },
+      graph: { nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: { export: 50 } }], edges: [] },
+      execution: { status: "ready", generation: 0, warnings: [] },
+      selected: false,
+      nodeIndex: 0,
+      totalNodes: 1,
+      incidentEdges: [],
+      availableSensors: [],
+      defaults: {
+        fill: "#7db5ff", fillOpacity: 1, stroke: "#000", strokeWidth: 3,
+        nodeSize: 10, fontSize: 12, labels: [],
+        renderMatrix: true, renderBooleans: false,
+        renderGradient: false, renderExportEffect: false, overlays: [],
+      },
+    });
+
+    expect(nodeOutput?.nodeSize).toBe(18);
+
+    const fullRange = output?.renderNode?.({
+      node: { id: "2", position: { x: 1, y: 0 }, labels: { export: 100 } },
+      graph: { nodes: [{ id: "2", position: { x: 1, y: 0 }, labels: { export: 100 } }], edges: [] },
+      execution: { status: "ready", generation: 0, warnings: [] },
+      selected: false,
+      nodeIndex: 1,
+      totalNodes: 2,
+      incidentEdges: [],
+      availableSensors: [],
+      defaults: {
+        fill: "#7db5ff", fillOpacity: 1, stroke: "#000", strokeWidth: 3,
+        nodeSize: 10, fontSize: 12, labels: [],
+        renderMatrix: true, renderBooleans: false,
+        renderGradient: false, renderExportEffect: false, overlays: [],
+      },
+    });
+
+    expect(fullRange?.nodeSize).toBe(30);
+
+    const stringExport = output?.renderNode?.({
+      node: { id: "3", position: { x: 2, y: 0 }, labels: { export: "25.50" } },
+      graph: { nodes: [{ id: "3", position: { x: 2, y: 0 }, labels: { export: "25.50" } }], edges: [] },
+      execution: { status: "ready", generation: 0, warnings: [] },
+      selected: false,
+      nodeIndex: 2,
+      totalNodes: 3,
+      incidentEdges: [],
+      availableSensors: [],
+      defaults: {
+        fill: "#7db5ff", fillOpacity: 1, stroke: "#000", strokeWidth: 3,
+        nodeSize: 10, fontSize: 12, labels: [],
+        renderMatrix: true, renderBooleans: false,
+        renderGradient: false, renderExportEffect: false, overlays: [],
+      },
+    });
+
+    expect(stringExport?.nodeSize).toBeCloseTo(12.12, 1);
+  });
 });

@@ -961,8 +961,19 @@ export class ScafiWebUiShell {
       ? renderMatrixOverlay(node, effectiveVisualization, this.app.store.getState().graph.nodes.length, selectedNode)
       : "";
     const customOverlays = renderNodeOverlays(nodeRenderState.overlays, nodeRenderState);
+    const styleParts = [`fill:${nodeRenderState.fill}`];
+    if (nodeRenderState.fillOpacity !== 1) {
+      styleParts.push(`fill-opacity:${nodeRenderState.fillOpacity}`);
+    }
+    if (nodeRenderState.stroke) {
+      styleParts.push(`stroke:${nodeRenderState.stroke}`);
+    }
+    if (nodeRenderState.strokeWidth) {
+      styleParts.push(`stroke-width:${nodeRenderState.strokeWidth}`);
+    }
+    const circleStyle = styleParts.join(";");
     return `
-      <circle r="${nodeRenderState.nodeSize}" fill="${escapeHtml(nodeRenderState.fill)}" fill-opacity="${nodeRenderState.fillOpacity}" stroke="${escapeHtml(nodeRenderState.stroke)}" stroke-width="${nodeRenderState.strokeWidth}" />
+      <circle r="${nodeRenderState.nodeSize}" style="${circleStyle}" />
       ${matrixOverlay}
       ${booleanBadges}
       ${customOverlays}
@@ -1599,10 +1610,17 @@ export class ScafiWebUiShell {
     }
     const nodeVisual = computeNodeVisual(node, visualization, this.selectedNodeIds.includes(node.id));
     circle.setAttribute("r", String(visualization.nodeSize));
-    circle.setAttribute("fill", nodeVisual.fill);
-    circle.setAttribute("fill-opacity", String(nodeVisual.fillOpacity));
-    circle.setAttribute("stroke", nodeVisual.stroke);
-    circle.setAttribute("stroke-width", String(nodeVisual.strokeWidth));
+    const styleParts = [`fill:${nodeVisual.fill}`];
+    if (nodeVisual.fillOpacity !== 1) {
+      styleParts.push(`fill-opacity:${nodeVisual.fillOpacity}`);
+    }
+    if (nodeVisual.stroke) {
+      styleParts.push(`stroke:${nodeVisual.stroke}`);
+    }
+    if (nodeVisual.strokeWidth) {
+      styleParts.push(`stroke-width:${nodeVisual.strokeWidth}`);
+    }
+    circle.setAttribute("style", styleParts.join(";"));
     if (nodeElement.childElementCount !== 1) {
       nodeElement.replaceChildren(circle);
     }
@@ -2184,19 +2202,22 @@ function computeNodeVisual(
   visualization: VisualizationState,
   selectedNode: boolean,
 ): { fill: string; fillOpacity: number; stroke: string; strokeWidth: number } {
-  let fill = selectedNode ? "#f08c4a" : "#7db5ff";
+  let fill = selectedNode ? "var(--accent)" : "var(--accent-cool)";
   let fillOpacity = 1;
-  let stroke = "rgba(12, 16, 20, 0.92)";
-  let strokeWidth = 3;
+  let stroke = "";
+  let strokeWidth = 0;
 
-  if (visualization.renderGradient && typeof node.labels.export === "number") {
-    fill = gradientColor(node.labels.export);
+  if (visualization.renderGradient) {
+    const num = resolveExportNumber(node.labels.export);
+    if (num !== undefined) {
+      fill = gradientColor(num);
+    }
   }
 
   if (visualization.renderExportEffect && typeof node.labels.export === "boolean") {
-    fillOpacity = node.labels.export ? 1 : 0.3;
-    stroke = node.labels.export ? "#00ffff" : stroke;
-    strokeWidth = node.labels.export ? 2 : strokeWidth;
+    fillOpacity = node.labels.export ? 0.92 : 0.3;
+    stroke = node.labels.export ? "#00ffff" : "";
+    strokeWidth = node.labels.export ? 2 : 0;
   }
 
   return { fill, fillOpacity, stroke, strokeWidth };
@@ -2288,8 +2309,18 @@ function renderNodeOverlays(overlays: NodeRenderOverlay[], nodeRenderState: Reso
 }
 
 function gradientColor(value: number): string {
+  if (!Number.isFinite(value)) return "#7db5ff";
   const hue = ((value % 1920) + 1920) % 1920 / 1920;
   return `hsl(${Math.round(hue * 360)} 70% 58%)`;
+}
+
+function resolveExportNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.length > 0) {
+    const parsed = parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
 }
 
 function booleanColor(index: number): string {

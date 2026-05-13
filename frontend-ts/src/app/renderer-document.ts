@@ -308,6 +308,20 @@ const RENDERER_KIT_SOURCE = String.raw`const RendererKit = (() => {
           };
         };
       },
+      sizeRange(minInput, maxInput, minOutput, maxOutput, label) {
+        return ({ node, defaults }) => {
+          const value = node.labels[label ?? "export"];
+          const num =
+            typeof value === "number"
+              ? value
+              : typeof value === "string" && value.length > 0
+                ? parseFloat(value)
+                : NaN;
+          if (isNaN(num)) return undefined;
+          const t = Math.max(0, Math.min(1, (num - minInput) / (maxInput - minInput)));
+          return { nodeSize: minOutput + t * (maxOutput - minOutput) };
+        };
+      },
     },
     edge: {
       highlightNeighborhood(widthDelta = 0.6, options = {}) {
