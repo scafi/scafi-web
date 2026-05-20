@@ -559,6 +559,11 @@ object ScafiStandalone {
         if (expVal != null) {
           labels.updateDynamic("export")(expVal)
         }
+        val matrixOps = exports.get(id).flatten.map(e => flattenValues(e.root[scala.Any]()).collect { case op: RuntimeMatrixOp => op }).getOrElse(Seq.empty)
+        val ledAllOp = matrixOps.find(_.cells == All)
+        ledAllOp.foreach { op =>
+          labels.updateDynamic("ledAll")(op.color)
+        }
         node.updateDynamic("labels")(labels)
         nodes.push(node.asInstanceOf[js.Any])
       }
