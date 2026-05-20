@@ -168,6 +168,7 @@ function resolveExampleRenderer(groupName: string, example: ExampleGroup["exampl
       });
     case "Gradient":
       return createGradientRenderer(["sensor"], {
+        rendererType: "lightweight",
         renderNodeOptions: {
           selectedRing: true,
           exportText: true,
@@ -297,6 +298,7 @@ type ExampleRendererOptions = {
   nodeSizeExpr: string;
   fontSizeExpr: string;
   showIdExpr: string;
+  rendererType?: "standard" | "lightweight";
   renderNodeOptions?: NodeRendererSourceOptions;
   renderEdgeSource?: string;
 };
@@ -399,10 +401,12 @@ function createMovementRenderer(sensors: string[], overrides: ExampleRendererOve
 }
 
 function buildRendererTemplate(options: ExampleRendererOptions): string {
+  const rendererType = options.rendererType ?? "standard";
   const sections = [
     `  nodeSize: ${options.nodeSizeExpr},`,
     `  fontSize: ${options.fontSizeExpr},`,
     `  showId: ${options.showIdExpr},`,
+    `  rendererType: "${rendererType}",`,
   ];
   const renderNodeSource = createNodeRendererSource(options.renderNodeOptions);
   if (renderNodeSource) {

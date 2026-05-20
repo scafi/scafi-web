@@ -360,4 +360,22 @@ describe("renderer-document", () => {
 
     expect(stringExport?.nodeSize).toBeCloseTo(12.12, 1);
   });
+
+  it("supports rendererType selection in the output", () => {
+    const evaluator = compileRendererDocument(`
+      return {
+        rendererType: "lightweight",
+      };
+    `);
+
+    const output = evaluator({
+      graph: { nodes: [], edges: [] },
+      execution: { status: "ready", generation: 0, warnings: [] },
+      selectedNodeIds: [],
+      availableSensors: [],
+      defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),
+    });
+
+    expect(output?.rendererType).toBe("lightweight");
+  });
 });
