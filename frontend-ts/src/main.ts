@@ -1,4 +1,5 @@
 import "./app/styles.css";
+
 import { renderBootstrap } from "./app/bootstrap";
 
 const root = document.querySelector("#app");

@@ -1,20 +1,20 @@
 :root {
   color-scheme: dark;
-  --bg: #111315;
-  --bg-soft: #171b1f;
-  --panel: rgba(21, 25, 30, 0.94);
-  --panel-strong: #0f1317;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.18);
-  --text: #f4f0e8;
-  --muted: #b0b6bd;
-  --accent: #f08c4a;
-  --accent-soft: rgba(240, 140, 74, 0.18);
-  --accent-cool: #7db5ff;
-  --danger: #d55c4d;
-  --success: #57b37d;
-  --warning: #e0b45c;
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  --bg: #0a0b10;
+  --bg-soft: #11131c;
+  --panel: rgba(18, 20, 32, 0.85);
+  --panel-strong: #08090e;
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.15);
+  --text: #f5f6fa;
+  --muted: #939ab5;
+  --accent: #bb66ff;
+  --accent-soft: rgba(187, 102, 255, 0.15);
+  --accent-cool: #39f3ff;
+  --danger: #ff5e7e;
+  --success: #00f29b;
+  --warning: #ffd000;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   --shell-gap: 10px;
   --panel-radius: 18px;
   --editor-min-height: 360px;
@@ -24,21 +24,21 @@
 
 [data-theme="light"] {
   color-scheme: light;
-  --bg: #f5f5f5;
+  --bg: #f3f4fa;
   --bg-soft: #ffffff;
-  --panel: rgba(255, 255, 255, 0.96);
-  --panel-strong: #f0f0f0;
-  --line: rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.18);
-  --text: #1a1a1a;
-  --muted: #666666;
-  --accent: #e07030;
-  --accent-soft: rgba(224, 112, 48, 0.18);
-  --accent-cool: #4a90d9;
-  --danger: #c0392b;
-  --success: #27ae60;
-  --warning: #f39c12;
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  --panel: rgba(255, 255, 255, 0.88);
+  --panel-strong: #eaecf5;
+  --line: rgba(10, 11, 16, 0.06);
+  --line-strong: rgba(10, 11, 16, 0.15);
+  --text: #1c1d24;
+  --muted: #686b85;
+  --accent: #9b30ff;
+  --accent-soft: rgba(155, 48, 255, 0.12);
+  --accent-cool: #00a2e0;
+  --danger: #e0244d;
+  --success: #00b26b;
+  --warning: #d99c00;
+  --shadow: 0 20px 60px rgba(10, 11, 16, 0.08);
 }
 
 * {
@@ -49,9 +49,9 @@ body {
   margin: 0;
   height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(125, 181, 255, 0.14), transparent 24%),
-    radial-gradient(circle at top right, rgba(240, 140, 74, 0.18), transparent 22%),
-    linear-gradient(180deg, #171a1d 0%, #101214 100%);
+    radial-gradient(circle at top left, rgba(57, 243, 255, 0.15), transparent 30%),
+    radial-gradient(circle at top right, rgba(187, 102, 255, 0.18), transparent 28%),
+    linear-gradient(180deg, #11131c 0%, #0a0b10 100%);
   color: var(--text);
 }
 
@@ -87,7 +87,7 @@ textarea {
   align-items: center;
   padding: 8px 12px;
   border-bottom: 1px solid var(--line);
-  background: rgba(36, 40, 46, 0.92);
+  background: rgba(17, 19, 28, 0.92);
   backdrop-filter: blur(12px);
 }
 
@@ -598,17 +598,19 @@ textarea {
   height: 100%;
 }
 
-.editor-surface .CodeMirror {
+.editor-surface .CodeMirror,
+.editor-surface .cm-editor {
   height: 100%;
   border: 1px solid var(--line-strong);
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(12, 15, 19, 0.96);
+  background: var(--bg-soft);
   font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
   line-height: 1.45;
 }
 
-.editor-surface .CodeMirror-gutters {
+.editor-surface .CodeMirror-gutters,
+.editor-surface .cm-gutters {
   background: rgba(255, 255, 255, 0.03);
   border-right: 1px solid var(--line);
 }
@@ -1318,7 +1320,8 @@ textarea {
   }
 
   .editor-surface,
-  .editor-surface .CodeMirror {
+  .editor-surface .CodeMirror,
+  .editor-surface .cm-editor {
     min-height: 420px;
     height: 420px;
   }
@@ -1477,9 +1480,9 @@ textarea {
 /* Light theme overrides */
 [data-theme="light"] body {
   background:
-    radial-gradient(circle at top left, rgba(74, 144, 217, 0.12), transparent 24%),
-    radial-gradient(circle at top right, rgba(224, 112, 48, 0.14), transparent 22%),
-    linear-gradient(180deg, #eef2f6 0%, #e2e6ea 100%);
+    radial-gradient(circle at top left, rgba(0, 162, 224, 0.1), transparent 26%),
+    radial-gradient(circle at top right, rgba(155, 48, 255, 0.12), transparent 24%),
+    linear-gradient(180deg, #f3f4fa 0%, #eaecf5 100%);
 }
 
 [data-theme="light"] .app-nav {
@@ -1494,12 +1497,14 @@ textarea {
   background: rgba(0, 0, 0, 0.015);
 }
 
-[data-theme="light"] .editor-surface .CodeMirror {
+[data-theme="light"] .editor-surface .CodeMirror,
+[data-theme="light"] .editor-surface .cm-editor {
   background: rgba(250, 250, 250, 0.96);
   border-color: var(--line-strong);
 }
 
-[data-theme="light"] .editor-surface .CodeMirror-gutters {
+[data-theme="light"] .editor-surface .CodeMirror-gutters,
+[data-theme="light"] .editor-surface .cm-gutters {
   background: rgba(0, 0, 0, 0.03);
   border-right-color: var(--line);
 }
@@ -1836,6 +1841,127 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 280px;
+}
+
+/* --- CodeMirror 6 Autocomplete Tooltip Premium Styling --- */
+.cm-tooltip-autocomplete {
+  background: var(--panel) !important;
+  backdrop-filter: blur(14px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+  padding: 6px !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  max-height: 260px !important;
+  z-index: 1000 !important;
+}
+
+[data-theme="light"] .cm-tooltip-autocomplete {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.cm-tooltip-autocomplete ul {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-height: 250px !important;
+  overflow-y: auto !important;
+}
+
+.cm-tooltip-autocomplete ul li {
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  color: var(--text) !important;
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  transition: all 120ms ease !important;
+  margin-bottom: 2px !important;
+}
+
+.cm-tooltip-autocomplete ul li:last-child {
+  margin-bottom: 0 !important;
+}
+
+.cm-tooltip-autocomplete ul li[aria-selected="true"] {
+  background-color: var(--accent-soft) !important;
+  color: var(--text) !important;
+  outline: none !important;
+  box-shadow: inset 0 0 0 1px var(--accent) !important;
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionIcon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 6px !important;
+  margin-right: 10px !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  flex-shrink: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionIcon::after {
+  content: "v";
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionIcon-function::after {
+  content: "f" !important;
+}
+.cm-tooltip-autocomplete ul li .cm-completionIcon-function {
+  background: rgba(74, 144, 217, 0.16) !important;
+  color: var(--accent-cool) !important;
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionIcon-keyword::after {
+  content: "k" !important;
+}
+.cm-tooltip-autocomplete ul li .cm-completionIcon-keyword {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionIcon-class::after {
+  content: "c" !important;
+}
+.cm-tooltip-autocomplete ul li .cm-completionIcon-class {
+  background: rgba(87, 179, 125, 0.16) !important;
+  color: var(--success) !important;
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionIcon-text::after {
+  content: "s" !important;
+}
+.cm-tooltip-autocomplete ul li .cm-completionIcon-text {
+  background: rgba(162, 102, 235, 0.16) !important;
+  color: #c084fc !important;
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionIcon-variable::after {
+  content: "v" !important;
+}
+.cm-tooltip-autocomplete ul li .cm-completionIcon-variable {
+  background: rgba(224, 180, 92, 0.16) !important;
+  color: var(--warning) !important;
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionLabel {
+  font-weight: 500 !important;
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace !important;
+}
+
+.cm-tooltip-autocomplete ul li .cm-completionDetail {
+  font-size: 11px !important;
+  color: var(--muted) !important;
+  margin-left: 8px !important;
+  font-style: normal !important;
 }
 
 /* --- Schermata di Compilazione (Loading Overlay & Animations) --- */
