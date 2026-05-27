@@ -29,12 +29,12 @@ describe("LightweightSimulationRenderer", () => {
       lineWidth: 1,
     };
 
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation((type) => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(((type: any) => {
       if (type === "2d") {
         return mockCtx;
       }
       return null;
-    });
+    }) as any);
 
     parent = document.createElement("div");
     parent.style.width = "800px";

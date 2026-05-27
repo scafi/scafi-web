@@ -84,6 +84,13 @@ export class SvgSimulationRenderer implements SimulationRenderer {
 
   mount(parent: HTMLElement): void {
     this.parent = parent;
+
+    if (this.container) {
+      parent.appendChild(this.container);
+      this.updateSize();
+      return;
+    }
+
     this.container = document.createElement("div");
     this.container.className = "graph-workspace-container";
     this.container.style.width = "100%";

@@ -132,7 +132,7 @@ export type NodeRendererEvaluator = (context: NodeRendererContext) => NodeRender
 export type EdgeRendererEvaluator = (context: EdgeRendererContext) => EdgeRenderOutput | void;
 
 export type RendererDocumentOutput = Partial<RendererDocumentDefaults> & {
-  rendererType?: "standard" | "lightweight";
+  rendererType?: "standard" | "lightweight" | "pixi";
   visibleSensors?: string[] | "all";
   renderNode?: NodeRendererEvaluator;
   renderEdge?: EdgeRendererEvaluator;
