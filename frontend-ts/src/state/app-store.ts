@@ -484,7 +484,7 @@ export class AppStore {
     }
 
     this.patch({
-      graph: graphFromBackend(this.backend),
+      graph: graphFromBackend(this.backend, parsed.graph.edges),
       execution: {
         ...this.state.execution,
         warnings: parsed.warnings,
@@ -497,19 +497,26 @@ export class AppStore {
   }
 
   private currentPositions(): Record<NodeId, Vec2> {
-    return Object.fromEntries(
-      Array.from(this.backend.devices.entries()).map(([id, device]) => [id, { ...device.position }]),
-    );
+    const positions: Record<NodeId, Vec2> = {};
+    for (const [id, device] of this.backend.devices.entries()) {
+      positions[id] = { ...device.position };
+    }
+    return positions;
   }
 
   private currentSensorValues(): SensorMap {
     const tracked = trackedSensorNames(this.state.configuration);
     const values: SensorMap = {};
     for (const [id, device] of this.backend.devices.entries()) {
-      const sensors = Object.fromEntries(
-        Object.entries(device.sensors).filter(([sensorName]) => tracked.has(sensorName)),
-      );
-      if (Object.keys(sensors).length > 0) {
+      const sensors: Record<string, unknown> = {};
+      let hasTracked = false;
+      for (const [sensorName, value] of Object.entries(device.sensors)) {
+        if (tracked.has(sensorName)) {
+          sensors[sensorName] = value;
+          hasTracked = true;
+        }
+      }
+      if (hasTracked) {
         values[id] = sensors;
       }
     }
@@ -518,7 +525,7 @@ export class AppStore {
 
   private refreshLocalGraph(): void {
     this.patch({
-      graph: graphFromBackend(this.backend),
+      graph: graphFromBackend(this.backend, this.state.graph.edges),
       standalone: {
         ...this.state.standalone,
         authoritative: false,
@@ -567,7 +574,9 @@ function backendFromGraph(graph: GraphSnapshot): BackendState {
   const exports = new Map<NodeId, unknown>();
 
   for (const node of graph.nodes) {
-    const sensors = Object.fromEntries(Object.entries(node.labels).filter(([label]) => label !== "export"));
+    const sensors = { ...node.labels };
+    delete sensors.export;
+
     devices.set(node.id, {
       id: node.id,
       position: { ...node.position },
@@ -580,10 +589,8 @@ function backendFromGraph(graph: GraphSnapshot): BackendState {
   }
 
   for (const edge of graph.edges) {
-    const fromNeighbours = neighbours.get(edge.from);
-    const toNeighbours = neighbours.get(edge.to);
-    fromNeighbours?.add(edge.to);
-    toNeighbours?.add(edge.from);
+    neighbours.get(edge.from)?.add(edge.to);
+    neighbours.get(edge.to)?.add(edge.from);
   }
 
   return { devices, neighbours, exports };
@@ -606,6 +613,66 @@ function stringifyError(error: unknown): string {
     return error.message;
   }
   return String(error);
+}
+
+function computeNeighbours(
+  positions: Map<NodeId, Vec2>,
+  range: number
+): Map<NodeId, Set<NodeId>> {
+  const neighbours = new Map<NodeId, Set<NodeId>>();
+  for (const id of positions.keys()) {
+    neighbours.set(id, new Set<NodeId>());
+  }
+
+  if (range <= 0) {
+    return neighbours;
+  }
+
+  const cellSize = range;
+  const grid = new Map<string, { id: NodeId; position: Vec2 }[]>();
+
+  const getCellKey = (cx: number, cy: number) => `${cx},${cy}`;
+
+  for (const [id, position] of positions.entries()) {
+    const cx = Math.floor(position.x / cellSize);
+    const cy = Math.floor(position.y / cellSize);
+    const key = getCellKey(cx, cy);
+    let cell = grid.get(key);
+    if (!cell) {
+      cell = [];
+      grid.set(key, cell);
+    }
+    cell.push({ id, position });
+  }
+
+  const rangeSq = range * range;
+  for (const [id, position] of positions.entries()) {
+    const cx = Math.floor(position.x / cellSize);
+    const cy = Math.floor(position.y / cellSize);
+    const linked = neighbours.get(id)!;
+
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const otherCell = grid.get(getCellKey(cx + dx, cy + dy));
+        if (!otherCell) {
+          continue;
+        }
+        for (const other of otherCell) {
+          if (other.id === id) {
+            continue;
+          }
+          const distDx = position.x - other.position.x;
+          const distDy = position.y - other.position.y;
+          const distSq = distDx * distDx + distDy * distDy;
+          if (distSq <= rangeSq) {
+            linked.add(other.id);
+          }
+        }
+      }
+    }
+  }
+
+  return neighbours;
 }
 
 function buildBackend(configuration: SupportConfiguration): BackendState {
@@ -631,17 +698,10 @@ function buildBackend(configuration: SupportConfiguration): BackendState {
     for (const [id, position] of positions.entries()) {
       const sensors = { ...configuration.deviceShape.sensors };
       devices.set(id, { id, position, sensors });
-      const linked = new Set<NodeId>();
-      for (const [otherId, otherPosition] of positions.entries()) {
-        if (otherId === id) {
-          continue;
-        }
-        const dx = position.x - otherPosition.x;
-        const dy = position.y - otherPosition.y;
-        if (Math.sqrt(dx * dx + dy * dy) <= range) {
-          linked.add(otherId);
-        }
-      }
+    }
+
+    const computed = computeNeighbours(positions, range);
+    for (const [id, linked] of computed.entries()) {
       neighbours.set(id, linked);
     }
   } else if (configuration.network.kind === "random") {
@@ -662,17 +722,10 @@ function buildBackend(configuration: SupportConfiguration): BackendState {
     for (const [id, position] of positions.entries()) {
       const sensors = { ...configuration.deviceShape.sensors };
       devices.set(id, { id, position, sensors });
-      const linked = new Set<NodeId>();
-      for (const [otherId, otherPosition] of positions.entries()) {
-        if (otherId === id) {
-          continue;
-        }
-        const dx = position.x - otherPosition.x;
-        const dy = position.y - otherPosition.y;
-        if (Math.sqrt(dx * dx + dy * dy) <= range) {
-          linked.add(otherId);
-        }
-      }
+    }
+
+    const computed = computeNeighbours(positions, range);
+    for (const [id, linked] of computed.entries()) {
       neighbours.set(id, linked);
     }
   }
@@ -690,7 +743,7 @@ function buildBackend(configuration: SupportConfiguration): BackendState {
   return { devices, neighbours, exports };
 }
 
-function graphFromBackend(backend: BackendState): GraphSnapshot {
+function graphFromBackend(backend: BackendState, existingEdges?: { from: NodeId; to: NodeId }[]): GraphSnapshot {
   return {
     nodes: Array.from(backend.devices.values()).map((device) => ({
       id: device.id,
@@ -699,7 +752,7 @@ function graphFromBackend(backend: BackendState): GraphSnapshot {
         ? { ...device.sensors, export: backend.exports.get(device.id) }
         : { ...device.sensors },
     })),
-    edges: Array.from(backend.neighbours.entries()).flatMap(([id, ids]) =>
+    edges: existingEdges ?? Array.from(backend.neighbours.entries()).flatMap(([id, ids]) =>
       Array.from(ids).map((otherId) => ({ from: id, to: otherId })),
     ),
   };

@@ -8,12 +8,16 @@ const mockCodeMirrorInstance = {
   on: vi.fn(),
   getValue: vi.fn(() => "current value"),
   toTextArea: vi.fn(),
+  setOption: vi.fn(),
+  showHint: vi.fn(),
+  state: {},
 };
 
 vi.mock("codemirror", () => {
   return {
     default: {
       fromTextArea: vi.fn(() => mockCodeMirrorInstance),
+      Pos: (line: number, ch: number) => ({ line, ch }),
     },
   };
 });
@@ -142,5 +146,56 @@ describe("CodeEditorComponent", () => {
 
     expect(onContentChanged).toHaveBeenCalled();
     expect(mockApp.saveEditor).toHaveBeenCalled();
+  });
+
+  it("provides intelligent context-aware autocompletion hints", () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    component.attachCodeEditor("dark");
+
+    const setOptionCall = mockCodeMirrorInstance.setOption;
+    expect(setOptionCall).toHaveBeenCalledWith("hint", expect.any(Function));
+    const hintCallback = setOptionCall.mock.calls.find(c => c[0] === "hint")?.[1];
+
+    expect(hintCallback).toBeDefined();
+
+    // 1. Full prefix match: 'RendererKit.node.ma'
+    const mockCm1 = {
+      getCursor: () => ({ line: 0, ch: 19 }),
+      getLine: () => "RendererKit.node.ma",
+      getTokenAt: () => ({ string: "ma", start: 17, end: 19 }),
+    };
+
+    component.setActivePlaygroundDocument("renderer");
+    const hints1 = hintCallback(mockCm1);
+    expect(hints1).toBeDefined();
+    expect(hints1.list.length).toBeGreaterThan(0);
+
+    const matrixHint1 = hints1.list.find((h: any) => h.displayText.includes("matrix"));
+    expect(matrixHint1).toBeDefined();
+    expect(matrixHint1.text).toBe("RendererKit.node.matrix()");
+
+    // 2. Nested substring match: 'node.ma'
+    const mockCm2 = {
+      getCursor: () => ({ line: 0, ch: 7 }),
+      getLine: () => "node.ma",
+      getTokenAt: () => ({ string: "ma", start: 5, end: 7 }),
+    };
+    const hints2 = hintCallback(mockCm2);
+    const matrixHint2 = hints2.list.find((h: any) => h.displayText.includes("matrix"));
+    expect(matrixHint2).toBeDefined();
+    expect(matrixHint2.text).toBe("node.matrix()");
+
+    // 3. Fallback matching when dots are absent: 'sin'
+    component.setActivePlaygroundDocument("code");
+    const mockCm3 = {
+      getCursor: () => ({ line: 0, ch: 3 }),
+      getLine: () => "sin",
+      getTokenAt: () => ({ string: "sin", start: 0, end: 3 }),
+    };
+    const hints3 = hintCallback(mockCm3);
+    const sinHint = hints3.list.find((h: any) => h.displayText.includes("sin"));
+    expect(sinHint).toBeDefined();
+    expect(sinHint.text).toBe("math.sin()");
   });
 });

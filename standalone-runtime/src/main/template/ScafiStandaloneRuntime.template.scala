@@ -494,9 +494,10 @@ object ScafiStandalone {
       }
       lastTickTime = now
       simulator.getAllNeighbours()
-      simulator.devs.foreach { case (id, _) =>
-        simulator.chgSensorValue(sensorNames.LSNS_DELTA_TIME, Set(id),
-          FiniteDuration((deltaSeconds * 1000).toLong, MILLISECONDS))
+      val allIds = simulator.devs.keySet
+      simulator.chgSensorValue(sensorNames.LSNS_DELTA_TIME, allIds,
+        FiniteDuration((deltaSeconds * 1000).toLong, MILLISECONDS))
+      simulator.devs.foreach { case (id, dev) =>
         simulator.exec(userProgram)
       }
       handleMatrixOps()
@@ -555,21 +556,26 @@ object ScafiStandalone {
           labels.updateDynamic("vx")(vx)
           labels.updateDynamic("vy")(vy)
         }
-        val expVal = exports.get(id).flatten.map(e => displayExport(e.root[scala.Any]())).orNull
-        if (expVal != null) {
-          labels.updateDynamic("export")(expVal)
-        }
-        val matrixOps = exports.get(id).flatten.map(e => flattenValues(e.root[scala.Any]()).collect { case op: RuntimeMatrixOp => op }).getOrElse(Seq.empty)
-        val ledAllOp = matrixOps.find(_.cells == All)
-        ledAllOp.foreach { op =>
-          labels.updateDynamic("ledAll")(op.color)
+        exports.get(id).flatten.foreach { e =>
+          val rootVal = e.root[scala.Any]()
+          val expVal = displayExport(rootVal)
+          if (expVal != null) {
+            labels.updateDynamic("export")(expVal)
+          }
+          val matrixOps = flattenValues(rootVal).collect { case op: RuntimeMatrixOp => op }
+          val ledAllOp = matrixOps.find(_.cells == All)
+          ledAllOp.foreach { op =>
+            labels.updateDynamic("ledAll")(op.color)
+          }
         }
         node.updateDynamic("labels")(labels)
         nodes.push(node.asInstanceOf[js.Any])
       }
       neighbours.foreach { case (from, tos) =>
         tos.foreach { to =>
-          edges.push(js.Array(from.toString, to.toString))
+          if (from < to) {
+            edges.push(js.Array(from.toString, to.toString))
+          }
         }
       }
       val result = js.Dynamic.literal()

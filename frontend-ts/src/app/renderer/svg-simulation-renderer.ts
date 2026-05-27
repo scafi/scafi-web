@@ -179,10 +179,15 @@ export class SvgSimulationRenderer implements SimulationRenderer {
     const projection = viewport.projection;
     const renderProfile = this.resolveGraphRenderProfile(state.execution.status, graph.nodes.length);
 
+    const nodeMap = new Map<string, GraphNode>();
+    for (const node of graph.nodes) {
+      nodeMap.set(node.id, node);
+    }
+
     const edgeMarkup = graph.edges
       .map((edge, index) => {
-        const from = graph.nodes.find((node) => node.id === edge.from);
-        const to = graph.nodes.find((node) => node.id === edge.to);
+        const from = nodeMap.get(edge.from);
+        const to = nodeMap.get(edge.to);
         if (!from || !to) {
           return "";
         }

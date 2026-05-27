@@ -180,13 +180,13 @@ function parseRuntimeValue(value: string): unknown {
   return value;
 }
 
-function summarizeInspectorValue(value: unknown): string {
+export function summarizeInspectorValue(value: unknown): string {
   if (value === null || value === undefined) return "None";
   if (typeof value === "object") return "Object";
   return String(value);
 }
 
-function formatInspectorJson(value: unknown): string {
+export function formatInspectorJson(value: unknown): string {
   if (value === null || value === undefined) return "None";
   try {
     return JSON.stringify(value, null, 2);

@@ -35,7 +35,7 @@ import { ScafiWebApp } from "./scafi-web-app";
 import { ThemeManager } from "./components/theme-manager";
 import { CodeEditorComponent, type PlaygroundDocument } from "./components/code-editor-component";
 import { SimulationControlsComponent } from "./components/simulation-controls-component";
-import { NodeInspectorComponent } from "./components/node-inspector-component";
+import { NodeInspectorComponent, summarizeInspectorValue, formatInspectorJson } from "./components/node-inspector-component";
 
 // Renderers
 import { SvgSimulationRenderer } from "./renderer/svg-simulation-renderer";
@@ -85,6 +85,9 @@ export class ScafiWebUiShell {
   private selectionPanelOpen = false;
   private visualizationSettingsOpen = false;
   private lastRenderedExecutionStatus: AppState["execution"]["status"] = "idle";
+  private lastRenderedSelectedNodeIds: string[] = [];
+  private lastRenderedSelectionPanelOpen = false;
+  private lastRenderedDaemonRunning = false;
   
   private activePlaygroundDocument: PlaygroundDocument = "code";
   private rendererDocumentError?: string;
@@ -349,6 +352,17 @@ export class ScafiWebUiShell {
                   <div class="graph-main">
                     <div id="renderer-mount-point" class="graph-stage-wrapper" style="width:100%; height:100%;"></div>
                     <aside class="selection-slot ${selectionPanelVisible ? "is-open" : ""}" data-selection-panel>${this.renderSelectionPanel(state)}</aside>
+                    ${status === "compiling" ? `
+                      <div class="compiling-overlay">
+                        <div class="compiling-loader-container">
+                          <div class="compiling-spinner"></div>
+                          <div class="compiling-text-wrapper">
+                            <h3 class="compiling-title">Compiling</h3>
+                            <p class="compiling-subtitle">Contacting compilation server...</p>
+                          </div>
+                        </div>
+                      </div>
+                    ` : ""}
                   </div>
                 </div>
               </section>
@@ -415,11 +429,40 @@ export class ScafiWebUiShell {
       onChangeSensor: (sensorName, value) => {
         if (this.selectedNodeIds.length > 0) {
           this.app.changeSensor(sensorName, this.selectedNodeIds, value);
+          if (this.app.store.getState().execution.status === "ready") {
+            this.app.tick();
+          }
         }
       },
       onToggleSensor: (sensorName) => {
         if (this.selectedNodeIds.length > 0) {
           this.app.toggleSensor(sensorName, this.selectedNodeIds);
+
+          // Aggiorna subito il valore visualizzato nell'input del sensore per un feedback immediato ed evita disallineamenti
+          const selectionSlot = this.root.querySelector<HTMLElement>("[data-selection-panel]");
+          if (selectionSlot) {
+            const escapedName = sensorName.replaceAll('"', '\\"');
+            const input = selectionSlot.querySelector<HTMLInputElement>(`[data-runtime-sensor-input="${escapedName}"]`);
+            if (input) {
+              const state = this.app.store.getState();
+              const primaryNode = this.selectedNodes(state.graph.nodes)[0];
+              if (primaryNode) {
+                const newValue = primaryNode.labels[sensorName];
+                if (newValue !== undefined) {
+                  input.value = String(newValue);
+                  input.removeAttribute("data-sensor-mixed");
+                  const small = input.parentElement?.querySelector("small.sensor-mixed-hint");
+                  if (small) {
+                    small.remove();
+                  }
+                }
+              }
+            }
+          }
+
+          if (this.app.store.getState().execution.status === "ready") {
+            this.app.tick();
+          }
         }
       },
       onSelectNode: (nodeId) => {
@@ -526,10 +569,42 @@ export class ScafiWebUiShell {
     if (selectionSlot) {
       selectionSlot.classList.toggle("is-open", selectionPanelVisible);
       if (selectionPanelVisible) {
-        selectionSlot.innerHTML = this.renderSelectionPanel(state);
-        this.nodeInspector.attachListeners();
-        this.attachSelectionExtraListeners(state);
+        const daemonRunning = state.execution.status === "daemon";
+        const selectionChanged =
+          this.selectedNodeIds.length !== this.lastRenderedSelectedNodeIds.length ||
+          !this.selectedNodeIds.every((id, idx) => id === this.lastRenderedSelectedNodeIds[idx]) ||
+          this.selectionPanelOpen !== this.lastRenderedSelectionPanelOpen ||
+          daemonRunning !== this.lastRenderedDaemonRunning;
+
+        if (selectionChanged) {
+          this.lastRenderedSelectedNodeIds = [...this.selectedNodeIds];
+          this.lastRenderedSelectionPanelOpen = this.selectionPanelOpen;
+          this.lastRenderedDaemonRunning = daemonRunning;
+
+          selectionSlot.innerHTML = this.renderSelectionPanel(state);
+          this.nodeInspector.attachListeners();
+          this.attachSelectionExtraListeners(state);
+        } else {
+          // Soltanto aggiornamento selettivo dei testi dinamici per evitare flicker e perdita di focus degli input
+          const selectedNodes = this.selectedNodes(state.graph.nodes);
+          if (selectedNodes.length > 0) {
+            const primaryNode = selectedNodes[0];
+            const exportValue = primaryNode.labels.export ?? null;
+
+            const summaryEl = selectionSlot.querySelector<HTMLElement>("[data-inspector-export-summary]");
+            const previewEl = selectionSlot.querySelector<HTMLElement>("[data-inspector-export-preview]");
+            if (summaryEl) {
+              summaryEl.textContent = summarizeInspectorValue(exportValue);
+            }
+            if (previewEl) {
+              previewEl.textContent = formatInspectorJson(exportValue);
+            }
+          }
+        }
       } else {
+        this.lastRenderedSelectedNodeIds = [];
+        this.lastRenderedSelectionPanelOpen = false;
+        this.lastRenderedDaemonRunning = false;
         selectionSlot.innerHTML = "";
       }
     }

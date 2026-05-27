@@ -1,4 +1,4 @@
-import type { Vec2, GraphNode, GraphEdge } from "../../domain/contracts";
+import type { Vec2, GraphNode } from "../../domain/contracts";
 import type { AppState } from "../../state/app-store";
 import type { SimulationRenderer, SimulationRendererCallbacks } from "./simulation-renderer";
 import type { VisualizationState } from "../renderer-document";
@@ -36,6 +36,8 @@ type SelectionBoxState = {
 export class LightweightSimulationRenderer implements SimulationRenderer {
   private parent?: HTMLElement;
   private container?: HTMLDivElement;
+  private canvas?: HTMLCanvasElement;
+  private ctx?: CanvasRenderingContext2D | null;
   private callbacks: SimulationRendererCallbacks = {};
 
   private graphViewportSize: GraphViewportSize = { width: 860, height: 520 };
@@ -54,6 +56,7 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
 
   private activeState?: AppState;
   private visualization?: VisualizationState;
+  private listenersAttached = false;
 
   constructor() {
     this.onPointerMove = this.onPointerMove.bind(this);
@@ -68,6 +71,16 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     this.container.style.height = "100%";
     this.container.style.position = "relative";
     parent.appendChild(this.container);
+
+    this.canvas = document.createElement("canvas");
+    this.canvas.className = "graph-canvas";
+    this.canvas.style.display = "block";
+    this.canvas.style.width = "100%";
+    this.canvas.style.height = "100%";
+    this.canvas.style.borderRadius = "14px";
+    this.canvas.style.border = "1px solid var(--line)";
+    this.container.appendChild(this.canvas);
+    this.ctx = this.canvas.getContext("2d");
 
     window.addEventListener("pointermove", this.onPointerMove);
     window.addEventListener("pointerup", this.onPointerUp);
@@ -89,7 +102,7 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   }
 
   updateSize(): boolean {
-    if (!this.container) {
+    if (!this.container || !this.canvas) {
       return false;
     }
     const bounds = this.container.getBoundingClientRect();
@@ -99,6 +112,13 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
       return false;
     }
     this.graphViewportSize = { width, height };
+
+    const dpr = window.devicePixelRatio || 1;
+    this.canvas.width = width * dpr;
+    this.canvas.height = height * dpr;
+    this.canvas.style.width = `${width}px`;
+    this.canvas.style.height = `${height}px`;
+
     this.renderedGraphViewport = undefined;
     this.targetGraphViewport = undefined;
     this.cancelGraphViewportAnimation();
@@ -112,6 +132,7 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     if (this.container && this.parent) {
       this.container.remove();
     }
+    this.listenersAttached = false;
   }
 
   update(
@@ -131,138 +152,92 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   }
 
   private render(): void {
-    if (!this.container || !this.activeState || !this.visualization) {
+    if (!this.container || !this.canvas || !this.activeState || !this.visualization) {
       return;
     }
     const state = this.activeState;
     const graph = state.graph;
-    const exportRange = getExportRange(graph.nodes);
     const isLoaded = state.execution.status === "ready" || state.execution.status === "daemon";
 
+    // Gestione degli overlay HTML di avvio o grafico vuoto
     if (!isLoaded) {
-      this.container.innerHTML = `<div class="viz-startup-overlay"><p>Press <strong>Load</strong> to start the simulation</p></div>`;
+      this.canvas.style.display = "none";
+      if (!this.container.querySelector(".viz-startup-overlay")) {
+        this.container.querySelectorAll(".viz-startup-overlay, .empty-graph").forEach((el) => el.remove());
+        const overlay = document.createElement("div");
+        overlay.className = "viz-startup-overlay";
+        overlay.innerHTML = `<p>Press <strong>Load</strong> to start the simulation</p>`;
+        this.container.appendChild(overlay);
+      }
       return;
     }
 
     if (graph.nodes.length === 0) {
-      this.container.innerHTML = `<div class="empty-graph">No nodes available for the current configuration.</div>`;
+      this.canvas.style.display = "none";
+      if (!this.container.querySelector(".empty-graph")) {
+        this.container.querySelectorAll(".viz-startup-overlay, .empty-graph").forEach((el) => el.remove());
+        const empty = document.createElement("div");
+        empty.className = "empty-graph";
+        empty.textContent = "No nodes available for the current configuration.";
+        this.container.appendChild(empty);
+      }
       return;
     }
 
-    const viewport = this.resolveGraphViewportState(graph.nodes);
-    const projection = viewport.projection;
+    // Nasconde gli overlay e mostra il Canvas attivo
+    this.canvas.style.display = "block";
+    this.container.querySelectorAll(".viz-startup-overlay, .empty-graph").forEach((el) => el.remove());
 
-    const edgeMarkup = graph.edges
-      .map((edge, index) => {
-        const from = graph.nodes.find((node) => node.id === edge.from);
-        const to = graph.nodes.find((node) => node.id === edge.to);
-        if (!from || !to) {
-          return "";
-        }
-        const fromPoint = projectPoint(from.position, projection);
-        const toPoint = projectPoint(to.position, projection);
-        
-        // Simpler static connection style
-        const isMuted = this.visualization!.showNeighborhood && this.selectedNodeIds.length > 0 &&
-          !this.selectedNodeIds.includes(edge.from) && !this.selectedNodeIds.includes(edge.to);
-        const className = isMuted ? "graph-edge is-muted" : "graph-edge";
+    // Cursore del Canvas in base alla modalità d'interazione
+    if (this.graphInteractionMode === "pan") {
+      this.canvas.style.cursor = this.viewportDragState ? "grabbing" : "grab";
+    } else {
+      this.canvas.style.cursor = "default";
+    }
 
-        return `<line class="${className}" data-edge-index="${index}" x1="${fromPoint.x}" y1="${fromPoint.y}" x2="${toPoint.x}" y2="${toPoint.y}" />`;
-      })
-      .join("");
+    // Assicura l'aggancio dei listener esattamente una volta sul Canvas
+    if (!this.listenersAttached) {
+      this.attachEventListeners();
+      this.listenersAttached = true;
+    }
 
-    const nodeMarkup = graph.nodes
-      .map((node) => {
-        const point = projectPoint(node.position, projection);
-        const selected = this.selectedNodeIds.includes(node.id);
-        
-        // 1. Base color (HSL Gradient support)
-        let fill = selected ? "var(--accent)" : "var(--accent-cool)";
-        if (this.visualization!.renderGradient) {
-          const num = resolveExportNumber(node.labels.export);
-          if (num !== undefined) {
-            fill = gradientColor(num, exportRange?.min, exportRange?.max);
-          }
-        }
-
-        // 2. Active Export stroke support (Stacked effect)
-        let stroke = "";
-        let strokeWidth = 0;
-        let fillOpacity = 1;
-        if (this.visualization!.renderExportEffect && typeof node.labels.export === "boolean") {
-          fillOpacity = node.labels.export ? 0.92 : 0.3;
-          stroke = node.labels.export ? "#00ffff" : "";
-          strokeWidth = node.labels.export ? 2 : 0;
-        }
-
-        const ledColor = node.labels.ledAll;
-        if (ledColor !== undefined && ledColor !== null && ledColor !== "") {
-          fill = String(ledColor);
-        }
-
-        const circleStyle = `fill:${fill};fill-opacity:${fillOpacity};` + (stroke ? `stroke:${stroke};stroke-width:${strokeWidth};` : "");
-
-        // 3. Selection ring support (Stacked effect)
-        const selectionRing = selected 
-          ? `<circle r="${this.visualization!.nodeSize + 3}" fill="none" stroke="var(--accent)" stroke-width="1.5" />` 
-          : "";
-
-        // 4. Compact label
-        const showLabel = this.visualization!.showId || (this.visualization!.showExport && node.labels.export !== undefined);
-        let labelText = "";
-        if (showLabel) {
-          const parts: string[] = [];
-          if (this.visualization!.showId) parts.push(node.id);
-          if (this.visualization!.showExport && node.labels.export !== undefined) {
-            const val = node.labels.export;
-            parts.push(typeof val === "number" ? val.toFixed(1) : String(val));
-          }
-          labelText = parts.join("·");
-        }
-
-        const labelMarkup = labelText 
-          ? `<text class="graph-node-label" y="${this.visualization!.nodeSize + this.visualization!.fontSize + 4}" style="font-size:${this.visualization!.fontSize}px">${escapeHtml(labelText)}</text>` 
-          : "";
-
-        return `
-          <g class="graph-node ${selected ? "is-selected" : ""}" data-node-id="${escapeHtml(node.id)}" transform="translate(${point.x}, ${point.y})">
-            <circle r="${this.visualization!.nodeSize}" style="${circleStyle}" />
-            ${selectionRing}
-            ${labelMarkup}
-          </g>
-        `;
-      })
-      .join("");
-
-    const selectionBoxHtml = this.renderSelectionBox();
-
-    this.container.innerHTML = `
-      <div class="graph-stage ${this.graphInteractionMode === "pan" ? "is-pan-mode" : "is-selection-mode"}" data-graph-stage style="width:100%; height:100%;">
-        <svg viewBox="0 0 ${projection.width} ${projection.height}" class="graph-svg" data-render-profile="lightweight" aria-label="Simulation graph" style="width:100%; height:100%; display:block;">
-          <rect x="0" y="0" width="${projection.width}" height="${projection.height}" rx="26" class="graph-surface" />
-          <g class="graph-viewport" transform="translate(${this.graphPan.x} ${this.graphPan.y})">
-            ${edgeMarkup}
-            ${nodeMarkup}
-          </g>
-          ${selectionBoxHtml}
-        </svg>
-      </div>
-    `;
-
-    this.attachEventListeners();
+    // Disegna l'intero grafico sul Canvas
+    this.draw();
     this.scheduleGraphViewportAnimation();
   }
 
   private attachEventListeners(): void {
-    const stage = this.container?.querySelector<HTMLElement>("[data-graph-stage]");
-    if (!stage) return;
+    if (!this.canvas) return;
 
-    stage.addEventListener("pointerdown", (event) => {
+    this.canvas.addEventListener("pointerdown", (event) => {
       if (event.button !== 0) return;
-      const target = event.target;
-      if (target instanceof Element && target.closest(".graph-node")) {
+
+      const node = this.findNodeAt(event.clientX, event.clientY);
+      if (node) {
+        if (this.graphInteractionMode !== "selection") return;
+        event.preventDefault();
+
+        if (!this.selectedNodeIds.includes(node.id)) {
+          this.callbacks.onNodeClick?.(node.id, event.shiftKey);
+        }
+
+        const nodes = this.activeState?.graph.nodes ?? [];
+        const positions = Object.fromEntries(
+          nodes
+            .filter((n) => this.selectedNodeIds.includes(n.id) || n.id === node.id)
+            .map((n) => [n.id, { ...n.position }]),
+        );
+
+        this.dragState = {
+          nodeIds: [...this.selectedNodeIds, node.id],
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          originalPositions: positions,
+        };
+        this.draw();
         return;
       }
+
       if (this.graphInteractionMode === "pan") {
         event.preventDefault();
         this.cancelGraphViewportAnimation();
@@ -271,9 +246,11 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
           startClientY: event.clientY,
           originalPan: { ...this.graphPan },
         };
-        stage.classList.add("is-dragging");
+        this.canvas?.classList.add("is-dragging");
+        this.draw();
         return;
       }
+
       this.selectionBoxState = {
         startClientX: event.clientX,
         startClientY: event.clientY,
@@ -281,40 +258,8 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
         currentClientY: event.clientY,
         additive: event.shiftKey,
       };
-      this.updateSelectionBoxVisual();
+      this.draw();
     });
-
-    for (const nodeElement of this.container?.querySelectorAll<SVGGElement>(".graph-node") ?? []) {
-      nodeElement.addEventListener("click", (event) => {
-        if (this.graphInteractionMode !== "selection") return;
-        const nodeId = nodeElement.dataset.nodeId;
-        if (!nodeId) return;
-        this.callbacks.onNodeClick?.(nodeId, event.shiftKey);
-      });
-
-      nodeElement.addEventListener("pointerdown", (event) => {
-        if (this.graphInteractionMode !== "selection") return;
-        const nodeId = nodeElement.dataset.nodeId;
-        if (!nodeId) return;
-        event.preventDefault();
-
-        if (!this.selectedNodeIds.includes(nodeId)) {
-          this.callbacks.onNodeClick?.(nodeId, event.shiftKey);
-        }
-
-        const nodes = this.activeState?.graph.nodes ?? [];
-        const positions = Object.fromEntries(
-          nodes.filter((n) => this.selectedNodeIds.includes(n.id) || n.id === nodeId).map((node) => [node.id, { ...node.position }]),
-        );
-
-        this.dragState = {
-          nodeIds: [...this.selectedNodeIds, nodeId],
-          startClientX: event.clientX,
-          startClientY: event.clientY,
-          originalPositions: positions,
-        };
-      });
-    }
   }
 
   private onPointerMove(event: PointerEvent): void {
@@ -330,16 +275,15 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
       if (this.targetGraphViewport) {
         this.targetGraphViewport.pan = { ...this.graphPan };
       }
-      this.container?.querySelector<SVGGElement>(".graph-viewport")
-        ?.setAttribute("transform", `translate(${this.graphPan.x} ${this.graphPan.y})`);
       this.callbacks.onViewportPanned?.(this.graphPan);
+      this.draw();
       return;
     }
 
     if (this.selectionBoxState) {
       this.selectionBoxState.currentClientX = event.clientX;
       this.selectionBoxState.currentClientY = event.clientY;
-      this.updateSelectionBoxVisual();
+      this.draw();
       return;
     }
 
@@ -357,14 +301,14 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   }
 
   private onPointerUp(): void {
-    this.container?.querySelector<HTMLElement>("[data-graph-stage]")?.classList.remove("is-dragging");
+    this.canvas?.classList.remove("is-dragging");
     this.viewportDragState = undefined;
     if (this.selectionBoxState) {
       this.applySelectionBox();
       this.selectionBoxState = undefined;
-      this.updateSelectionBoxVisual();
     }
     this.dragState = undefined;
+    this.draw();
   }
 
   private applySelectionBox(): void {
@@ -408,9 +352,8 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   }
 
   private clientPointToSvg(clientX: number, clientY: number): Vec2 | undefined {
-    const stage = this.container?.querySelector<HTMLElement>("[data-graph-stage]");
-    if (!stage || !this.graphProjection) return undefined;
-    const bounds = stage.getBoundingClientRect();
+    if (!this.canvas || !this.graphProjection) return undefined;
+    const bounds = this.canvas.getBoundingClientRect();
     if (bounds.width === 0 || bounds.height === 0) return undefined;
     return {
       x: ((clientX - bounds.left) / bounds.width) * this.graphProjection.width,
@@ -418,31 +361,201 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     };
   }
 
-  private updateSelectionBoxVisual(): void {
-    const selectionBox = this.container?.querySelector<SVGRectElement>("[data-selection-box]");
-    if (!selectionBox) return;
-    const rect = this.currentSelectionRect();
-    if (!rect) {
-      selectionBox.classList.add("is-hidden");
-      selectionBox.setAttribute("x", "0");
-      selectionBox.setAttribute("y", "0");
-      selectionBox.setAttribute("width", "0");
-      selectionBox.setAttribute("height", "0");
-      return;
+  private findNodeAt(clientX: number, clientY: number): GraphNode | undefined {
+    if (!this.canvas || !this.graphProjection || !this.activeState) return undefined;
+    const bounds = this.canvas.getBoundingClientRect();
+    const mouseX = clientX - bounds.left;
+    const mouseY = clientY - bounds.top;
+
+    const nodeSize = this.visualization?.nodeSize ?? 8;
+    const nodes = this.activeState.graph.nodes;
+
+    // Cerca dall'ultimo al primo per cliccare sul nodo visualmente in cima
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const node = nodes[i];
+      const projected = projectPoint(node.position, this.graphProjection);
+      const x = projected.x + this.graphPan.x;
+      const y = projected.y + this.graphPan.y;
+      const dx = mouseX - x;
+      const dy = mouseY - y;
+      if (dx * dx + dy * dy <= (nodeSize + 4) * (nodeSize + 4)) {
+        return node;
+      }
     }
-    selectionBox.classList.remove("is-hidden");
-    selectionBox.setAttribute("x", String(rect.x));
-    selectionBox.setAttribute("y", String(rect.y));
-    selectionBox.setAttribute("width", String(rect.width));
-    selectionBox.setAttribute("height", String(rect.height));
+    return undefined;
   }
 
-  private renderSelectionBox(): string {
-    const rect = this.currentSelectionRect();
-    if (!rect) {
-      return '<rect class="selection-box is-hidden" data-selection-box x="0" y="0" width="0" height="0" />';
+  private draw(): void {
+    if (!this.canvas || !this.ctx || !this.activeState || !this.visualization) {
+      return;
     }
-    return `<rect class="selection-box" data-selection-box x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" />`;
+    const state = this.activeState;
+    const graph = state.graph;
+
+    const dpr = window.devicePixelRatio || 1;
+    const width = this.graphViewportSize.width;
+    const height = this.graphViewportSize.height;
+
+    this.ctx.clearRect(0, 0, width * dpr, height * dpr);
+
+    const viewport = this.resolveGraphViewportState(graph.nodes);
+    const projection = viewport.projection;
+    const exportRange = getExportRange(graph.nodes);
+
+    this.ctx.save();
+    this.ctx.scale(dpr, dpr);
+
+    // 1. Sfondo del tabellone di gioco (Rounded Rect)
+    this.ctx.beginPath();
+    if (this.ctx.roundRect) {
+      this.ctx.roundRect(0, 0, width, height, 26);
+    } else {
+      this.ctx.rect(0, 0, width, height);
+    }
+    this.ctx.fillStyle = "rgba(0,0,0,0.15)";
+    this.ctx.fill();
+
+    const nodeMap = new Map<string, GraphNode>();
+    for (const node of graph.nodes) {
+      nodeMap.set(node.id, node);
+    }
+
+    const showNeighborhood = this.visualization.showNeighborhood && this.selectedNodeIds.length > 0;
+    const nodeSize = this.visualization.nodeSize;
+    const isLightTheme = document.documentElement.getAttribute("data-theme") === "light";
+
+    // 2. Disegno degli Archi (Collegamenti di rete)
+    this.ctx.save();
+    for (const edge of graph.edges) {
+      const from = nodeMap.get(edge.from);
+      const to = nodeMap.get(edge.to);
+      if (!from || !to) continue;
+
+      const fromPoint = projectPoint(from.position, projection);
+      const toPoint = projectPoint(to.position, projection);
+
+      const isMuted = showNeighborhood && !this.selectedNodeIds.includes(edge.from) && !this.selectedNodeIds.includes(edge.to);
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(fromPoint.x + this.graphPan.x, fromPoint.y + this.graphPan.y);
+      this.ctx.lineTo(toPoint.x + this.graphPan.x, toPoint.y + this.graphPan.y);
+      
+      if (isMuted) {
+        this.ctx.strokeStyle = isLightTheme ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.02)";
+        this.ctx.lineWidth = 0.75;
+      } else {
+        this.ctx.strokeStyle = isLightTheme ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)";
+        this.ctx.lineWidth = 1.25;
+      }
+      this.ctx.stroke();
+    }
+    this.ctx.restore();
+
+    // 3. Disegno dei Nodi
+    for (const node of graph.nodes) {
+      const point = projectPoint(node.position, projection);
+      const px = point.x + this.graphPan.x;
+      const py = point.y + this.graphPan.y;
+      const selected = this.selectedNodeIds.includes(node.id);
+
+      // Risolve il colore primario del nodo
+      let fill = selected ? "var(--accent)" : "var(--accent-cool)";
+      if (this.visualization.renderGradient) {
+        const num = resolveExportNumber(node.labels.export);
+        if (num !== undefined) {
+          fill = gradientColor(num, exportRange?.min, exportRange?.max);
+        }
+      }
+
+      const ledColor = node.labels.ledAll;
+      if (ledColor !== undefined && ledColor !== null && ledColor !== "") {
+        fill = String(ledColor);
+      }
+
+      // Risolve variabili CSS se presenti
+      let resolvedFill = fill;
+      if (fill.startsWith("var(")) {
+        const varName = fill.substring(4, fill.length - 1).trim();
+        resolvedFill = getComputedStyle(this.container!).getPropertyValue(varName) || (selected ? "#e07030" : "#7db5ff");
+      }
+
+      let fillOpacity = 1;
+      let stroke = "";
+      let strokeWidth = 0;
+      if (this.visualization.renderExportEffect && typeof node.labels.export === "boolean") {
+        fillOpacity = node.labels.export ? 0.92 : 0.3;
+        stroke = node.labels.export ? "#00ffff" : "";
+        strokeWidth = node.labels.export ? 2 : 0;
+      }
+
+      this.ctx.save();
+
+      // Disegna l'anello di selezione
+      if (selected) {
+        this.ctx.beginPath();
+        this.ctx.arc(px, py, nodeSize + 3, 0, Math.PI * 2);
+        this.ctx.strokeStyle = getComputedStyle(this.container!).getPropertyValue("--accent") || "#e07030";
+        this.ctx.lineWidth = 1.5;
+        this.ctx.stroke();
+      }
+
+      // Disegna il nodo (cerchio pieno)
+      this.ctx.beginPath();
+      this.ctx.arc(px, py, nodeSize, 0, Math.PI * 2);
+      this.ctx.fillStyle = resolvedFill;
+      this.ctx.globalAlpha = fillOpacity;
+      this.ctx.fill();
+
+      // Disegna il contorno dell'effetto export attivo
+      if (stroke) {
+        this.ctx.beginPath();
+        this.ctx.arc(px, py, nodeSize, 0, Math.PI * 2);
+        this.ctx.strokeStyle = stroke;
+        this.ctx.lineWidth = strokeWidth;
+        this.ctx.globalAlpha = 1;
+        this.ctx.stroke();
+      }
+
+      this.ctx.restore();
+
+      // 4. Disegno dei Testi (Label del nodo)
+      const showLabel = this.visualization.showId || (this.visualization.showExport && node.labels.export !== undefined);
+      if (showLabel) {
+        const parts: string[] = [];
+        if (this.visualization.showId) parts.push(node.id);
+        if (this.visualization.showExport && node.labels.export !== undefined) {
+          const val = node.labels.export;
+          parts.push(typeof val === "number" ? val.toFixed(1) : String(val));
+        }
+        const labelText = parts.join("·");
+
+        this.ctx.save();
+        this.ctx.font = `500 ${this.visualization.fontSize}px sans-serif`;
+        this.ctx.fillStyle = isLightTheme ? "#333333" : "#b0b6bd";
+        this.ctx.textAlign = "center";
+        this.ctx.textBaseline = "top";
+        this.ctx.fillText(labelText, px, py + nodeSize + 4);
+        this.ctx.restore();
+      }
+    }
+
+    // 5. Disegno della Scatola di Selezione (Selection Box)
+    if (this.selectionBoxState) {
+      const rect = this.currentSelectionRect();
+      if (rect) {
+        this.ctx.save();
+        this.ctx.strokeStyle = isLightTheme ? "rgba(74, 144, 217, 0.8)" : "rgba(125, 181, 255, 0.8)";
+        this.ctx.fillStyle = isLightTheme ? "rgba(74, 144, 217, 0.08)" : "rgba(125, 181, 255, 0.08)";
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.rect(rect.x, rect.y, rect.width, rect.height);
+        this.ctx.fill();
+        this.ctx.stroke();
+        this.ctx.restore();
+      }
+    }
+
+    this.ctx.restore();
   }
 
   private resolveGraphViewportState(nodes: GraphNode[]): GraphViewportState {
@@ -504,7 +617,9 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
       this.renderedGraphViewport = settledViewport;
       this.graphProjection = settledViewport.projection;
       this.graphPan = settledViewport.pan;
+
       if (!this.patchAnimatedGraphViewport(settledViewport)) return;
+
       if (settledViewport !== this.targetGraphViewport) {
         this.graphViewportAnimationFrame = window.requestAnimationFrame(step);
       }
@@ -520,43 +635,7 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   }
 
   private patchAnimatedGraphViewport(viewport: GraphViewportState): boolean {
-    if (!this.activeState) return false;
-    const graph = this.activeState.graph;
-    const graphViewport = this.container?.querySelector<SVGGElement>(".graph-viewport");
-    const edgeElements = Array.from(this.container?.querySelectorAll<SVGLineElement>(".graph-edge") ?? []);
-    const nodeElements = Array.from(this.container?.querySelectorAll<SVGGElement>(".graph-node") ?? []);
-    if (!graphViewport || edgeElements.length !== graph.edges.length || nodeElements.length !== graph.nodes.length) {
-      return false;
-    }
-    const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
-    graphViewport.setAttribute("transform", `translate(${viewport.pan.x} ${viewport.pan.y})`);
-
-    edgeElements.forEach((edgeElement) => {
-      const indexStr = edgeElement.dataset.edgeIndex;
-      if (!indexStr) return;
-      const index = parseInt(indexStr, 10);
-      const edge = graph.edges[index];
-      if (!edge) return;
-      const from = nodeById.get(edge.from);
-      const to = nodeById.get(edge.to);
-      if (!from || !to) return;
-      const fromPoint = projectPoint(from.position, viewport.projection);
-      const toPoint = projectPoint(to.position, viewport.projection);
-      edgeElement.setAttribute("x1", String(fromPoint.x));
-      edgeElement.setAttribute("y1", String(fromPoint.y));
-      edgeElement.setAttribute("x2", String(toPoint.x));
-      edgeElement.setAttribute("y2", String(toPoint.y));
-    });
-
-    nodeElements.forEach((nodeElement) => {
-      const nodeId = nodeElement.dataset.nodeId;
-      if (!nodeId) return;
-      const node = nodeById.get(nodeId);
-      if (!node) return;
-      const point = projectPoint(node.position, viewport.projection);
-      nodeElement.setAttribute("transform", `translate(${point.x}, ${point.y})`);
-    });
-
+    this.draw();
     return true;
   }
 }
@@ -591,19 +670,11 @@ function getExportRange(nodes: GraphNode[]): { min: number; max: number } | unde
 function gradientColor(value: number, min?: number, max?: number): string {
   if (!Number.isFinite(value)) return "#7db5ff";
   if (min === undefined || max === undefined) {
-    const hue = ((value % 1920) + 1920) % 1920 / 1920;
+    const hue = (((value % 1920) + 1920) % 1920) / 1920;
     return `hsl(${Math.round(hue * 360)} 70% 58%)`;
   }
   const range = max - min;
   const t = range <= 0 ? 0.5 : Math.max(0, Math.min(1, (value - min) / range));
   const hue = (1 - t) * 240;
   return `hsl(${Math.round(hue)} 70% 58%)`;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
 }

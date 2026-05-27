@@ -1736,3 +1736,209 @@ textarea {
   background: rgba(0, 0, 0, 0.08);
   color: var(--muted);
 }
+
+/* --- CodeMirror Autocomplete / show-hint addon premium styling --- */
+.CodeMirror-hints {
+  background: var(--panel) !important;
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+  padding: 6px !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  max-height: 260px !important;
+  z-index: 1000 !important;
+}
+
+[data-theme="light"] .CodeMirror-hints {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.CodeMirror-hint {
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  color: var(--text) !important;
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  transition: all 120ms ease !important;
+  margin-bottom: 2px !important;
+}
+
+.CodeMirror-hint:last-child {
+  margin-bottom: 0 !important;
+}
+
+.CodeMirror-hint-active {
+  background-color: var(--accent-soft) !important;
+  color: var(--text) !important;
+  outline: none !important;
+  box-shadow: inset 0 0 0 1px var(--accent) !important;
+}
+
+.cm-hint-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.hint-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  margin-right: 10px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.icon-function {
+  background: rgba(74, 144, 217, 0.16);
+  color: var(--accent-cool);
+}
+
+.icon-keyword {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.icon-class {
+  background: rgba(87, 179, 125, 0.16);
+  color: var(--success);
+}
+
+.icon-snippet {
+  background: rgba(162, 102, 235, 0.16);
+  color: #c084fc;
+}
+
+.icon-variable {
+  background: rgba(224, 180, 92, 0.16);
+  color: var(--warning);
+}
+
+.hint-name {
+  font-weight: 500;
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+}
+
+.hint-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+/* --- Schermata di Compilazione (Loading Overlay & Animations) --- */
+
+/* Animazione di rotazione per le icone di stato e caricamento */
+.spin-icon {
+  animation: spin 1s linear infinite;
+  transform-origin: center;
+  display: inline-block;
+}
+
+.compiling-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 19, 23, 0.72); /* Glassmorphism intonato a --panel-strong */
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  z-index: 100;
+  border-radius: 14px;
+  animation: compileFadeIn 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border: 1px solid var(--line-strong);
+}
+
+[data-theme="light"] .compiling-overlay {
+  background: rgba(255, 255, 255, 0.78); /* Glassmorphism per tema chiaro */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.compiling-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.compiling-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3.5px solid var(--line-strong);
+  border-top: 3.5px solid var(--accent-cool); /* Blu brillante della terna ScaFi */
+  border-right: 3.5px solid var(--accent-cool);
+  border-radius: 50%;
+  animation: spin 0.85s cubic-bezier(0.5, 0.15, 0.5, 0.85) infinite;
+  box-shadow: 0 0 20px rgba(125, 181, 255, 0.25);
+}
+
+[data-theme="light"] .compiling-spinner {
+  box-shadow: 0 0 15px rgba(74, 144, 217, 0.2);
+}
+
+.compiling-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.compiling-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.compiling-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+  animation: compileTextPulse 1.8s ease-in-out infinite;
+}
+
+/* Animazioni CSS ad alte prestazioni */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes compileFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes compileTextPulse {
+  0%, 100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
