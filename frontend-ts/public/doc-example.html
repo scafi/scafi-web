@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScaFi Web Embedded Documentation Example</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090a10;
+      --bg-soft: #121420;
+      --text: #f5f6fa;
+      --muted: #939ab5;
+      --accent: #bb66ff;
+      --accent-cool: #39f3ff;
+      --line: rgba(255, 255, 255, 0.08);
+      --panel: rgba(18, 20, 32, 0.7);
+      --radius: 16px;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* 1. Sidebar Navigation */
+    aside {
+      width: 280px;
+      background-color: var(--bg-soft);
+      border-right: 1px solid var(--line);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .brand-logo {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      color: var(--accent);
+      letter-spacing: -1px;
+    }
+
+    .brand-badge {
+      background: rgba(187, 102, 255, 0.15);
+      color: var(--accent);
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-item a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: block;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item.active a, .nav-item a:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-item.active a {
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding-left: 11px;
+    }
+
+    /* 2. Main Content Container */
+    main {
+      flex-grow: 1;
+      padding: 48px 64px;
+      max-width: 1000px;
+      box-sizing: border-box;
+    }
+
+    .doc-kicker {
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--accent-cool);
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 42px;
+      font-weight: 800;
+      margin: 0 0 16px 0;
+      letter-spacing: -1px;
+    }
+
+    .lead {
+      font-size: 18px;
+      color: var(--muted);
+      margin-bottom: 40px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 48px 0;
+    }
+
+    section {
+      margin-bottom: 64px;
+    }
+
+    h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 16px 0;
+      color: #fff;
+    }
+
+    p {
+      color: var(--muted);
+      font-size: 15px;
+      margin: 0 0 24px 0;
+    }
+
+    code {
+      font-family: 'Fira Code', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 14px;
+      color: var(--accent-cool);
+    }
+
+    /* 3. Embedded Iframes */
+    .embed-card {
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 32px 0;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+    }
+
+    .embed-card-header {
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .embed-card-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .embed-card-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-cool);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-cool);
+    }
+
+    .embed-iframe {
+      width: 100%;
+      height: 480px;
+      border: none;
+      display: block;
+    }
+
+    .doc-tip {
+      background: rgba(57, 243, 255, 0.06);
+      border-left: 4px solid var(--accent-cool);
+      padding: 16px 20px;
+      border-radius: 0 12px 12px 0;
+      margin-top: 24px;
+    }
+
+    .doc-tip strong {
+      color: #fff;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .doc-tip p {
+      margin: 0;
+      font-size: 13.5px;
+    }
+
+    .embed-links {
+      display: flex;
+      gap: 16px;
+      margin-top: 40px;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-action:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside>
+    <div class="brand">
+      <span class="brand-logo">ScaFi</span>
+      <span class="brand-badge">Docs</span>
+    </div>
+    <ul class="nav-list">
+      <li class="nav-item active"><a href="#intro">Introduction</a></li>
+      <li class="nav-item"><a href="#gradient">Gradient Fields</a></li>
+      <li class="nav-item"><a href="#sensing">Sensing & Sensors</a></li>
+      <li class="nav-item"><a href="#channel">Complex Channels</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main>
+    <span class="doc-kicker">Interactive Manual</span>
+    <h1 id="intro">Aggregate Programming in ScaFi</h1>
+    <p class="lead">ScaFi is a comprehensive toolkit for Aggregate Programming, enabling decentralized coordination, collective intelligence, and complex self-organizing spatial patterns.</p>
+    
+    <p>This interactive manual presents multiple real-time, side-by-side simulations directly connected to live compiled Scala scripts. You can interact with each node, modify values, or customize code in-place to explore how aggregate computations organize dynamically across physical space.</p>
+
+    <hr>
+
+    <!-- Section 1 -->
+    <section id="gradient">
+      <h2>1. The Classic Gradient Field</h2>
+      <p>A fundamental construct in Aggregate Programming is the <strong>Gradient Field</strong> (also called field evolution). A source node emits a signal (for example, <code>sensor("sensor")</code>), and all other nodes calculate their shortest metric distance to the closest source by sharing information dynamically with their physical neighbors.</p>
+      
+      <p>The code below defines this logic using <code>rep</code> to recursively estimate distances. Notice how the simulation on the right dynamically adapts as the spatial network changes or as you drag nodes around.</p>
+
+      <div class="embed-card">
+        <div class="embed-card-header">
+          <div class="embed-card-title">Gradient Field Live Simulation & Editor (Split Layout)</div>
+        </div>
+        <!-- Embedded Gradient Simulation using the custom embed shell we built -->
+        <iframe class="embed-iframe" src="./index.html?embed=true&example=Gradient&autoplay=true" allow="clipboard-write"></iframe>
+      </div>
+
+      <div class="doc-tip">
+        <strong>Try it yourself:</strong>
+        <p>In the simulation above, click and drag any node to reposition it. The system will automatically recalculate neighborhood links in real-time, showing how self-healing routing algorithms react dynamically to spatial changes.</p>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- Section 2 -->
+    <section id="sensing">
+      <h2>2. Spatial Sensing and Basic Values</h2>
+      <p>By leveraging local physical sensors, nodes can partition themselves into sub-groups or propagate binary statuses. Here, we demonstrate a basic <code>Sense</code> program where nodes close to a source evaluate local states and toggle boolean highlights.</p>
+      
+      <p>To fit perfectly into more compact document layouts, this simulation is embedded using a <strong>Vertical Stacked split</strong>. The Code Editor is loaded on top, and the simulation screen displays right below it.</p>
+
+      <div class="embed-card">
+        <div class="embed-card-header">
+          <div class="embed-card-title">Sensing Script (Vertical Stacked Layout)</div>
+        </div>
+        <!-- Embedded Sense Simulation with vertical layout -->
+        <iframe class="embed-iframe" src="./index.html?embed=true&example=Sense&layout=split-v&autoplay=true" style="height: 580px;" allow="clipboard-write"></iframe>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- Section 3 -->
+    <section id="channel">
+      <h2>3. Communication Channels</h2>
+      <p>This advanced scenario demonstrates how nodes build a reliable <strong>Channel</strong> (a path of active nodes) connecting a specified <code>source</code> node and a <code>target</code> node, while dynamically routing around physical <code>obstacles</code> in the field.</p>
+      
+      <p>In many documentation styles, you might want to show <em>only</em> the visual result of a running algorithm without the distraction of code. In the embed below, we have disabled the code editor pane and execution controls, presenting a **pure visual simulator widget**:</p>
+
+      <div class="embed-card">
+        <div class="embed-card-header">
+          <div class="embed-card-title">Channel routing around obstacles (Simulation-only Widget)</div>
+        </div>
+        <!-- Embedded Channel with Obstacles Simulation-Only, No Controls, No Editor -->
+        <iframe class="embed-iframe" src="./index.html?embed=true&example=Channel+with+obstacles&layout=sim-only&controls=false&autoplay=true" style="height: 380px;" allow="clipboard-write"></iframe>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- Outro and Embed Generator link -->
+    <section>
+      <h2>Generate Your Own Embeds</h2>
+      <p>Would you like to embed your own custom ScaFi algorithms and simulations into your tutorials, blogs, or internal documentation? Use our interactive visual generator tool to build custom code links in seconds!</p>
+      
+      <div class="embed-links">
+        <a href="./index.html?generator=true" class="btn-action" target="_blank">Open Embed Generator</a>
+        <a href="./index.html" class="btn-action btn-secondary" target="_blank">Go to Standard Playground</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Simple smooth scroll navigation
+    document.querySelectorAll('aside a').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        document.querySelector(targetId).scrollIntoView({
+          behavior: 'smooth'
+        });
+        
+        document.querySelectorAll('aside li').forEach(li => li.classList.remove('active'));
+        this.parentElement.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

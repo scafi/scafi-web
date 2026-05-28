@@ -2068,3 +2068,618 @@ textarea {
     opacity: 1;
   }
 }
+
+/* ==========================================================================
+   INTERACTIVE EMBEDS & CONFIGURATOR GENERATOR STYLES
+   ========================================================================== */
+
+/* 1. Embed Shell Container & Layout Rules */
+.embed-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Hide scrollbars globally in embed modes */
+.embed-shell ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.embed-shell ::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 4px;
+}
+
+/* 2. Compact Embed Toolbar */
+.embed-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.embed-logo-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.embed-brand {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.embed-status .badge {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.embed-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Elegant Embed Buttons */
+.embed-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--panel-strong);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.embed-btn:hover:not(:disabled) {
+  background: var(--line-strong);
+  border-color: var(--accent);
+}
+
+.embed-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.embed-btn.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.embed-btn.primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.embed-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+}
+
+/* Compact speed pill selectors */
+.embed-speed-group {
+  display: inline-flex;
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.embed-speed-pill {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.embed-speed-pill.is-active {
+  background: var(--bg);
+  color: var(--accent-cool);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* 3. Fluid Embed Workspaces */
+.embed-content {
+  display: grid;
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Split variants mapping */
+.layout-split-h .embed-content {
+  grid-template-columns: 1fr 1fr;
+}
+
+.layout-split-v .embed-content {
+  grid-template-rows: 1fr 1fr;
+}
+
+.layout-sim-only .embed-content {
+  grid-template-columns: 1fr;
+}
+
+.layout-code-only .embed-content {
+  grid-template-columns: 1fr;
+}
+
+/* Embedded pane borders and layouts */
+.embed-pane-editor {
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+}
+
+.layout-split-v .embed-pane-editor {
+  border-right: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.embed-pane-editor .editor-surface {
+  flex-grow: 1;
+  height: 100%;
+  min-height: 0;
+  background: var(--panel-strong);
+}
+
+.embed-pane-viz {
+  position: relative;
+  min-height: 0;
+  height: 100%;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* Floating overlay visualization tools */
+.embed-viz-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+
+.embed-icon-btn {
+  width: 28px;
+  height: 28px;
+  background: rgba(var(--panel), 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.embed-icon-btn:hover {
+  background: var(--panel-strong);
+  border-color: var(--accent);
+}
+
+/* Compiling and Feedback Overlays */
+.embed-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #fff;
+  z-index: 20;
+  font-size: 13px;
+  animation: compileFadeIn 0.25s ease-out forwards;
+}
+
+.embed-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent-cool);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.embed-error-banner {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: rgba(255, 94, 126, 0.16);
+  border: 1px solid var(--danger);
+  padding: 8px 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 500;
+  z-index: 10;
+}
+
+/* Responsive Embed rules */
+@media (max-width: 600px) {
+  .layout-split-h .embed-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+}
+
+/* ==========================================================================
+   4. EMBED GENERATOR STYLES (?generator=true)
+   ========================================================================== */
+.generator-page-mode {
+  overflow: auto !important;
+}
+
+.gen-shell {
+  min-height: 100vh;
+  background: #06070a;
+  color: #f5f6fa;
+  font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.gen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 18px;
+  margin-bottom: 24px;
+}
+
+.gen-brand-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.gen-kicker {
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--accent-cool);
+  margin-bottom: 4px;
+}
+
+.gen-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #fff, #bb66ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gen-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f5f6fa;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gen-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent);
+}
+
+.gen-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 24px;
+  flex-grow: 1;
+}
+
+.gen-panel {
+  background: rgba(18, 20, 32, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  backdrop-filter: blur(12px);
+}
+
+.gen-panel-header {
+  margin-bottom: 20px;
+}
+
+.gen-panel-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: #fff;
+}
+
+.gen-panel-subtitle {
+  font-size: 12px;
+  color: #939ab5;
+  margin: 0;
+}
+
+.gen-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gen-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.gen-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gen-field span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #939ab5;
+}
+
+.gen-field select, .gen-textarea {
+  background: #0c0d15;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.gen-field select:focus, .gen-textarea:focus {
+  border-color: var(--accent);
+}
+
+.gen-checkbox-card {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.gen-checkbox-card h3 {
+  font-size: 12px;
+  margin: 0 0 10px 0;
+  color: #f5f6fa;
+}
+
+.gen-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gen-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.gen-checkbox-row input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.gen-checkbox-label strong {
+  font-size: 12px;
+  color: #fff;
+  display: block;
+}
+
+.gen-checkbox-label p {
+  font-size: 10px;
+  color: #939ab5;
+  margin: 2px 0 0 0;
+}
+
+.gen-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.gen-btn-link {
+  background: none;
+  border: none;
+  color: var(--accent-cool);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gen-btn-link:hover {
+  text-decoration: underline;
+}
+
+.gen-textarea {
+  height: 120px;
+  font-family: monospace;
+  resize: vertical;
+}
+
+/* Right Panel: Preview and Code */
+.gen-iframe-wrapper {
+  flex-grow: 1;
+  min-height: 240px;
+  background: #0c0d15;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
+  box-shadow: inset 0 20px 40px rgba(0,0,0,0.5);
+}
+
+.gen-snippet-box {
+  background: #090a10;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.gen-snippet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.gen-snippet-header h3 {
+  font-size: 12px;
+  color: #939ab5;
+  margin: 0;
+}
+
+.gen-btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gen-btn-copy:hover {
+  opacity: 0.9;
+}
+
+.gen-btn-copy.copied {
+  background: #00f29b;
+}
+
+.gen-snippet-code {
+  margin: 0;
+  background: #05060a;
+  padding: 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.gen-snippet-code code {
+  font-family: monospace;
+  font-size: 11px;
+  color: #a78bfa;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+@media (max-width: 900px) {
+  .gen-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Collapsed editor styles */
+.embed-shell.editor-collapsed .embed-pane-editor {
+  display: none !important;
+}
+.embed-shell.editor-collapsed .embed-content {
+  grid-template-columns: 1fr !important;
+  grid-template-rows: 1fr !important;
+}
+
+/* Startup lazy load compilation overlay */
+.embed-startup-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 11, 16, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 15;
+  padding: 24px;
+  text-align: center;
+}
+
+.large-play-btn {
+  font-size: 14px !important;
+  padding: 12px 24px !important;
+  border-radius: 30px !important;
+  background: linear-gradient(135deg, var(--accent), #9b30ff) !important;
+  box-shadow: 0 4px 20px rgba(187, 102, 255, 0.4);
+  font-weight: 600 !important;
+  letter-spacing: 0.5px;
+  border: none !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.large-play-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px rgba(187, 102, 255, 0.6);
+}
+
+.embed-startup-note {
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 320px;
+  margin: 0;
+  line-height: 1.5;
+}

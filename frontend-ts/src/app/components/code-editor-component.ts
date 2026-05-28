@@ -113,6 +113,7 @@ export class CodeEditorComponent {
   private worldDocument = "";
   private rendererDocument = defaultRendererDocument;
   private rendererDocumentDebounce?: number;
+  private readOnly = false;
 
   private callbacks: CodeEditorCallbacks = {};
 
@@ -120,6 +121,10 @@ export class CodeEditorComponent {
     private readonly root: HTMLElement,
     private readonly app: ScafiWebApp,
   ) {}
+
+  setReadOnly(readOnly: boolean): void {
+    this.readOnly = readOnly;
+  }
 
   initialize(initialConfig: SupportConfiguration): void {
     this.editorDocument = this.app.loadPersistedEditor(defaultEditorDocument);
@@ -216,7 +221,7 @@ export class CodeEditorComponent {
 
 
 
-    if (this.activePlaygroundDocument === "compiled") {
+    if (this.activePlaygroundDocument === "compiled" || this.readOnly) {
       extensions.push(EditorState.readOnly.of(true));
       extensions.push(EditorView.editable.of(false));
     } else {
