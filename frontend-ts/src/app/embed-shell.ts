@@ -107,6 +107,12 @@ export class ScafiWebEmbedShell {
       this.renderMatrixOverride = true;
     }
 
+    const bgParam = params.get("bg");
+    const glowParam = params.get("glow");
+    if (bgParam === "clean" || glowParam === "false") {
+      this.root.classList.add("is-clean-bg");
+    }
+
     this.codeEditor.setReadOnly(!this.isEditable);
 
     // 3. Load or override script, configuration and renderer

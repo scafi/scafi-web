@@ -2683,3 +2683,8 @@ textarea {
   margin: 0;
   line-height: 1.5;
 }
+
+/* Option to selectively disable background glow (e.g. inside docs frames) */
+.is-clean-bg .graph-stage::before {
+  background: transparent !important;
+}
