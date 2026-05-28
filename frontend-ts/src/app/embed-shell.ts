@@ -54,6 +54,7 @@ export class ScafiWebEmbedShell {
 
   private renderer!: SimulationRenderer;
   private selectedRendererType: "standard" | "lightweight" | "pixi" = "standard";
+  private selectedNodeId: string | null = null;
 
   // Embed Customizations
   private layout: "split-h" | "split-v" | "sim-only" | "code-only" = "split-h";
@@ -298,7 +299,12 @@ export class ScafiWebEmbedShell {
 
     this.renderer.setCallbacks({
       onNodeClick: (nodeId) => {
-        // In simulation embedded, we do not want to toggle/disable the source/sensor on node click.
+        if (this.selectedNodeId === nodeId) {
+          this.selectedNodeId = null;
+        } else {
+          this.selectedNodeId = nodeId;
+        }
+        this.patchLiveState(this.app.store.getState());
       },
       onNodesDragged: (movedPositions) => {
         if (this.isEditable) {
@@ -308,8 +314,18 @@ export class ScafiWebEmbedShell {
       onViewportPanned: (pan) => {
         this.graphPan = pan;
       },
-      onSelectionApplied: () => {},
-      onSelectionCleared: () => {},
+      onSelectionApplied: (selectedIds) => {
+        if (selectedIds.length > 0) {
+          this.selectedNodeId = selectedIds[0];
+        } else {
+          this.selectedNodeId = null;
+        }
+        this.patchLiveState(this.app.store.getState());
+      },
+      onSelectionCleared: () => {
+        this.selectedNodeId = null;
+        this.patchLiveState(this.app.store.getState());
+      },
       onResetView: () => {
         this.graphPan = { x: 0, y: 0 };
         this.renderer.setGraphPan(this.graphPan);
@@ -481,7 +497,7 @@ export class ScafiWebEmbedShell {
     if (this.layout !== "code-only" && this.renderer) {
       this.renderer.update(
         state,
-        [],
+        this.selectedNodeId ? [this.selectedNodeId] : [],
         this.graphInteractionMode,
         this.graphPan,
         this.visualization,
@@ -607,6 +623,23 @@ export class ScafiWebEmbedShell {
           console.error("Auto restart and play failed", e);
         }
       })();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (this.selectedNodeId && this.isEditable && event.key === "1") {
+        const activeEl = document.activeElement;
+        if (activeEl && (
+          activeEl.tagName === "TEXTAREA" || 
+          activeEl.tagName === "INPUT" || 
+          activeEl.classList.contains("cm-content")
+        )) {
+          return;
+        }
+        this.app.toggleSensor("sensor", [this.selectedNodeId]);
+        if (this.app.store.getState().execution.status === "ready") {
+          this.app.tick();
+        }
+      }
     });
   }
 
