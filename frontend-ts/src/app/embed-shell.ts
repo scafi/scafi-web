@@ -298,12 +298,7 @@ export class ScafiWebEmbedShell {
 
     this.renderer.setCallbacks({
       onNodeClick: (nodeId) => {
-        if (this.isEditable) {
-          this.app.toggleSensor("sensor", [nodeId]);
-          if (this.app.store.getState().execution.status === "ready") {
-            this.app.tick();
-          }
-        }
+        // In simulation embedded, we do not want to toggle/disable the source/sensor on node click.
       },
       onNodesDragged: (movedPositions) => {
         if (this.isEditable) {
