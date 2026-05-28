@@ -62,6 +62,8 @@ export class ScafiWebEmbedShell {
   private autoPlay = false;
   private daemonInterval = 30;
   private isEditorCollapsed = false;
+  private showIdOverride: boolean | undefined = undefined;
+  private renderMatrixOverride: boolean | undefined = undefined;
 
   constructor(
     private readonly root: HTMLElement,
@@ -87,9 +89,23 @@ export class ScafiWebEmbedShell {
     }
     this.showControls = params.get("controls") !== "false";
     this.isEditable = params.get("editable") !== "false";
-    this.autoPlay = params.get("autoplay") === "true";
+    this.autoPlay = false;
     this.daemonInterval = Number(params.get("interval") ?? 30);
     if (Number.isNaN(this.daemonInterval)) this.daemonInterval = 30;
+
+    const showIdParam = params.get("showId");
+    if (showIdParam === "false") {
+      this.showIdOverride = false;
+    } else if (showIdParam === "true") {
+      this.showIdOverride = true;
+    }
+
+    const renderMatrixParam = params.get("renderMatrix") ?? params.get("matrix");
+    if (renderMatrixParam === "false") {
+      this.renderMatrixOverride = false;
+    } else if (renderMatrixParam === "true") {
+      this.renderMatrixOverride = true;
+    }
 
     this.codeEditor.setReadOnly(!this.isEditable);
 
@@ -153,6 +169,36 @@ export class ScafiWebEmbedShell {
       customRendererDoc = decodeBase64(rendererB64);
     }
 
+    // E. Grid size overrides from query parameters
+    const rowsParam = params.get("rows");
+    const colsParam = params.get("cols");
+    if (rowsParam || colsParam) {
+      if (initialConfig.network.kind === "grid") {
+        initialConfig = {
+          ...initialConfig,
+          network: {
+            ...initialConfig.network,
+            rows: rowsParam ? Number(rowsParam) : initialConfig.network.rows,
+            cols: colsParam ? Number(colsParam) : initialConfig.network.cols,
+          }
+        };
+      }
+    }
+    const gridParam = params.get("grid");
+    if (gridParam) {
+      const match = gridParam.match(/^(\d+)[xX](\d+)$/);
+      if (match && initialConfig.network.kind === "grid") {
+        initialConfig = {
+          ...initialConfig,
+          network: {
+            ...initialConfig.network,
+            rows: Number(match[1]),
+            cols: Number(match[2]),
+          }
+        };
+      }
+    }
+
     // 4. Initialize State
     this.app.store.evolve(initialConfig);
     this.codeEditor.initialize(initialConfig);
@@ -200,6 +246,28 @@ export class ScafiWebEmbedShell {
         this.patchLiveState(this.app.store.getState());
       }
     });
+
+    let isVisible = false;
+    let wasDaemonRunning = false;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        isVisible = entry.isIntersecting;
+        const state = this.app.store.getState();
+        const isCurrentlyRunning = state.execution.status === "daemon";
+        
+        if (isVisible) {
+          if (wasDaemonRunning && !isCurrentlyRunning) {
+            this.app.startDaemon(this.daemonInterval);
+          }
+        } else {
+          if (isCurrentlyRunning) {
+            wasDaemonRunning = true;
+            this.app.stopDaemon();
+          }
+        }
+      }
+    }, { threshold: 0.1 });
+    observer.observe(this.root);
   }
 
   private initRenderer(): void {
@@ -308,6 +376,9 @@ export class ScafiWebEmbedShell {
                 <button id="toggle-interaction-mode" class="embed-icon-btn" title="${this.graphInteractionMode === "pan" ? "Modalità Selezione (muovi nodi)" : "Modalità Navigazione (pan vista)"}" style="${this.graphInteractionMode === "selection" ? "color: var(--accent-cool); border-color: var(--accent-cool);" : ""}">
                   ${this.graphInteractionMode === "pan" ? iconMove() : iconMousePointer()}
                 </button>
+                 <button id="floating-toggle-daemon" class="embed-icon-btn" title="${status === "daemon" ? "Ferma Simulazione" : "Avvia Simulazione"}" ${disabled(status !== "ready" && status !== "daemon")}>
+                  ${status === "daemon" ? iconSquare() : iconPlay()}
+                </button>
                 <button id="restart-simulation" class="embed-icon-btn" title="Riavvia Simulazione" ${disabled(status === "compiling")}>
                   ${iconRestart()}
                 </button>
@@ -382,6 +453,13 @@ export class ScafiWebEmbedShell {
         const speedVal = Number(btn.dataset.speed);
         btn.classList.toggle("is-active", speedVal === activeSpeedMs);
       }
+    }
+
+    const floatingToggleBtn = this.root.querySelector<HTMLButtonElement>("#floating-toggle-daemon");
+    if (floatingToggleBtn) {
+      floatingToggleBtn.disabled = state.execution.status !== "ready" && state.execution.status !== "daemon";
+      floatingToggleBtn.title = state.execution.status === "daemon" ? "Ferma Simulazione" : "Avvia Simulazione";
+      floatingToggleBtn.innerHTML = state.execution.status === "daemon" ? iconSquare() : iconPlay();
     }
 
     const restartBtn = this.root.querySelector<HTMLButtonElement>("#restart-simulation");
@@ -463,6 +541,18 @@ export class ScafiWebEmbedShell {
         });
       }
     }
+
+    this.bindButton("floating-toggle-daemon", () => {
+      const state = this.app.store.getState();
+      if (state.execution.status === "daemon") {
+        this.app.stopDaemon();
+      } else if (state.execution.status === "ready") {
+        const activeSpeedBtn = this.root.querySelector<HTMLButtonElement>(".embed-speed-pill.is-active") ||
+                               this.root.querySelector<HTMLButtonElement>(".speed-pill.is-active");
+        const speed = Number(activeSpeedBtn?.dataset.speed ?? 30);
+        this.app.startDaemon(speed);
+      }
+    });
 
     this.bindButton("reset-view", () => {
       this.graphPan = { x: 0, y: 0 };
@@ -546,6 +636,12 @@ export class ScafiWebEmbedShell {
   private resolveVisualization(state: AppState): VisualizationState {
     const availableSensors = Object.keys(state.configuration.deviceShape.sensors).filter((sensor) => sensor !== "matrix");
     const fallback = createDefaultVisualizationState();
+    if (this.showIdOverride !== undefined) {
+      fallback.showId = this.showIdOverride;
+    }
+    if (this.renderMatrixOverride !== undefined) {
+      fallback.renderMatrix = this.renderMatrixOverride;
+    }
     fallback.visibleSensors = new Set(availableSensors);
     const evaluator = this.getRendererEvaluator();
     if (!evaluator) {

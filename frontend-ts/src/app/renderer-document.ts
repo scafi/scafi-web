@@ -361,12 +361,12 @@ export const defaultRendererDocument = `const dense = graph.nodes.length > 180;
 return {
   nodeSize: dense ? 8 : defaults.nodeSize,
   fontSize: dense ? 10 : defaults.fontSize,
-  showId: !dense,
+  showId: defaults.showId && !dense,
   rendererType: "standard",
   renderNode(context) {
     return RendererKit.composeNode(
       context,
-      RendererKit.node.matrix(),
+      ...(context.defaults.renderMatrix ? [RendererKit.node.matrix()] : []),
       RendererKit.node.selectedRing(),
       RendererKit.node.exportText(),
       RendererKit.node.sensorDot("source"),

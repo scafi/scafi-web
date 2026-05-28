@@ -32,7 +32,7 @@ export function serializeWorldDocument(configuration: SupportConfiguration): str
     }
   }
   lines.push(
-    `  .seed(config = ${normalized.seed.configSeed}, simulation = ${normalized.seed.simulationSeed}, randomSensor = ${normalized.seed.randomSensorSeed})`,
+    `  .seed(config = ${normalized.seed.configSeed}L, simulation = ${normalized.seed.simulationSeed}L, randomSensor = ${normalized.seed.randomSensorSeed}L)`,
   );
   return `${lines.join("\n")}\n`;
 }
@@ -252,7 +252,8 @@ function parseScalarLiteral(value: string): unknown {
 }
 
 function parseNumericLiteral(value: string, errorMessage: string): number {
-  const numeric = Number(value.trim());
+  const cleaned = value.trim().replace(/[Ll]$/, "");
+  const numeric = Number(cleaned);
   if (!Number.isFinite(numeric)) {
     throw new Error(errorMessage);
   }

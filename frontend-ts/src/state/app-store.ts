@@ -346,17 +346,28 @@ export class AppStore {
     if (nodeIds.length === 0) {
       return;
     }
-    const byValue = new Map<boolean, NodeId[]>();
+    const byNextValue = new Map<unknown, NodeId[]>();
     for (const nodeId of nodeIds) {
       const currentValue = this.backend.devices.get(nodeId)?.sensors[sensorName];
+      let nextValue: unknown;
       if (typeof currentValue === "boolean") {
-        const group = byValue.get(currentValue) ?? [];
-        group.push(nodeId);
-        byValue.set(currentValue, group);
+        nextValue = !currentValue;
+      } else if (typeof currentValue === "number") {
+        nextValue = currentValue > 0 ? 0 : 1;
+      } else {
+        const defaultVal = this.state.configuration.deviceShape.sensors[sensorName];
+        if (typeof defaultVal === "number") {
+          nextValue = 1;
+        } else {
+          nextValue = true;
+        }
       }
+      const group = byNextValue.get(nextValue) ?? [];
+      group.push(nodeId);
+      byNextValue.set(nextValue, group);
     }
-    for (const [currentValue, ids] of byValue.entries()) {
-      this.changeSensor(sensorName, ids, !currentValue);
+    for (const [nextValue, ids] of byNextValue.entries()) {
+      this.changeSensor(sensorName, ids, nextValue);
     }
   }
 
