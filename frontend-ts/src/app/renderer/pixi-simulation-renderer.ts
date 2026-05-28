@@ -67,6 +67,10 @@ export class PixiSimulationRenderer implements SimulationRenderer {
   private isInitialized = false;
   private isDestroyed = false;
 
+  private cachedTheme?: string;
+  private cachedAccentColor = 0xbb66ff;
+  private cachedAccentCoolColor = 0x39f3ff;
+
   constructor() {
     this.onPointerMove = this.onPointerMove.bind(this);
     this.onPointerUp = this.onPointerUp.bind(this);
@@ -280,10 +284,14 @@ export class PixiSimulationRenderer implements SimulationRenderer {
     const nodeSize = this.visualization.nodeSize;
     const isLightTheme = document.documentElement.getAttribute("data-theme") === "light";
 
-    // Update styling for labels
+    // Update styling for labels only if changed
+    const targetFill = isLightTheme ? "#333333" : "#b0b6bd";
+    const targetFontSize = this.visualization.fontSize || 12;
     if (this.textStyle) {
-      this.textStyle.fill = isLightTheme ? "#333333" : "#b0b6bd";
-      this.textStyle.fontSize = this.visualization.fontSize || 12;
+      if (this.textStyle.fill !== targetFill || this.textStyle.fontSize !== targetFontSize) {
+        this.textStyle.fill = targetFill;
+        this.textStyle.fontSize = targetFontSize;
+      }
     }
 
     // Resolve projection & active anim viewport
@@ -295,7 +303,7 @@ export class PixiSimulationRenderer implements SimulationRenderer {
     this.resetTextPool();
 
     // 1. Draw Edges (Links)
-    if (graph.edges.length > 0) {
+    if (this.visualization.showLinks !== false && graph.edges.length > 0) {
       const showNeighborhood = this.visualization.showNeighborhood && this.selectedNodeIds.length > 0;
       const lineColor = isLightTheme ? 0xd0d5e3 : 0x222436; // WebGL uses numeric hex representation
       const lineOpacity = isLightTheme ? 0.6 : 0.45;
@@ -326,6 +334,19 @@ export class PixiSimulationRenderer implements SimulationRenderer {
     // Prepare Node gradient calculation ranges if enabled
     const exportRange = this.visualization.renderGradient ? getExportRange(graph.nodes) : undefined;
 
+    // Pre-resolve CSS theme variable colors once per frame to prevent layout thrashing
+    const theme = document.documentElement.getAttribute("data-theme") || "dark";
+    if (this.cachedTheme !== theme) {
+      this.cachedTheme = theme;
+      const rootStyle = getComputedStyle(document.documentElement);
+      const accentHex = rootStyle.getPropertyValue("--accent").trim();
+      this.cachedAccentColor = hexToNumber(accentHex) || 0xbb66ff;
+      const accentCoolHex = rootStyle.getPropertyValue("--accent-cool").trim();
+      this.cachedAccentCoolColor = hexToNumber(accentCoolHex) || 0x39f3ff;
+    }
+    const accentColor = this.cachedAccentColor;
+    const accentCoolColor = this.cachedAccentCoolColor;
+
     // 2. Draw Nodes
     for (const node of graph.nodes) {
       const point = projectPoint(node.position, projection);
@@ -334,27 +355,17 @@ export class PixiSimulationRenderer implements SimulationRenderer {
       const selected = this.selectedNodeIds.includes(node.id);
 
       // Resolve filled color code
-      let fillStr = selected ? "var(--accent)" : "var(--accent-cool)";
+      let fillColor = selected ? accentColor : accentCoolColor;
       if (this.visualization.renderGradient) {
         const num = resolveExportNumber(node.labels.export);
         if (num !== undefined) {
-          fillStr = gradientColor(num, exportRange?.min, exportRange?.max);
+          fillColor = gradientColorHex(num, exportRange?.min, exportRange?.max);
         }
       }
 
       const ledColor = node.labels.ledAll;
       if (ledColor !== undefined && ledColor !== null && ledColor !== "") {
-        fillStr = String(ledColor);
-      }
-
-      // Convert CSS variables to numeric hex for PixiJS drawing operations
-      let fillColor = 0x39f3ff; // Fallback cyan
-      if (fillStr.startsWith("var(")) {
-        const varName = fillStr.substring(4, fillStr.length - 1).trim();
-        const hexStr = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-        fillColor = hexToNumber(hexStr) || (selected ? 0xbb66ff : 0x39f3ff);
-      } else {
-        fillColor = hexToNumber(fillStr) || (selected ? 0xbb66ff : 0x39f3ff);
+        fillColor = hexToNumber(String(ledColor)) || (selected ? accentColor : accentCoolColor);
       }
 
       let fillOpacity = 1;
@@ -368,8 +379,6 @@ export class PixiSimulationRenderer implements SimulationRenderer {
 
       // Draw Selection Outline Rings
       if (selected) {
-        const accentHex = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
-        const accentColor = hexToNumber(accentHex) || 0xbb66ff;
         this.graphics.circle(px, py, nodeSize + 3);
         this.graphics.stroke({ width: 1.5, color: accentColor });
       }
@@ -428,8 +437,9 @@ export class PixiSimulationRenderer implements SimulationRenderer {
     let textNode: Text;
     if (this.textPoolUsed < this.textPool.length) {
       textNode = this.textPool[this.textPoolUsed];
-      textNode.text = content;
-      textNode.style = this.textStyle!;
+      if (textNode.text !== content) {
+        textNode.text = content;
+      }
       textNode.visible = true;
     } else {
       textNode = new Text({ text: content, style: this.textStyle });
@@ -732,6 +742,35 @@ function gradientColor(value: number, min?: number, max?: number): string {
   const t = range <= 0 ? 0.5 : Math.max(0, Math.min(1, (value - min) / range));
   const hue = (1 - t) * 240;
   return `hsl(${Math.round(hue)} 70% 58%)`;
+}
+
+function gradientColorHex(value: number, min?: number, max?: number): number {
+  if (!Number.isFinite(value)) return 0x7db5ff;
+  
+  let hue = 240; // Default
+  if (min === undefined || max === undefined) {
+    const norm = (((value % 1920) + 1920) % 1920) / 1920;
+    hue = Math.round(norm * 360);
+  } else {
+    const range = max - min;
+    const t = range <= 0 ? 0.5 : Math.max(0, Math.min(1, (value - min) / range));
+    hue = Math.round((1 - t) * 240);
+  }
+  
+  return hslToHex(hue, 70, 58);
+}
+
+function hslToHex(h: number, s: number, l: number): number {
+  s /= 100;
+  l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) =>
+    l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const r = Math.round(255 * f(0));
+  const g = Math.round(255 * f(8));
+  const b = Math.round(255 * f(4));
+  return (r << 16) + (g << 8) + b;
 }
 
 function hexToNumber(hex: string): number | null {

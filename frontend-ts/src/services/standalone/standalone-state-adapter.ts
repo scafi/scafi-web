@@ -118,6 +118,56 @@ export class StandaloneStateAdapter {
       return undefined;
     }
 
+    if (state.compact === true) {
+      const rawNodes = Array.isArray(state.nodes) ? state.nodes : [];
+      const nodes: Array<{ id: string; position: { x: number; y: number }; labels: Record<string, unknown> }> = [];
+      const knownIds = new Set<string>();
+      const warnings: string[] = [];
+
+      for (const n of rawNodes) {
+        if (!Array.isArray(n) || n.length < 3) {
+          continue;
+        }
+        const id = String(n[0]);
+        const x = parseNumber(n[1]);
+        const y = parseNumber(n[2]);
+        if (x === undefined || y === undefined) {
+          continue;
+        }
+        const labels = (n.length >= 4 && isRecord(n[3])) ? parseLabels({ labels: n[3] }) : {};
+        nodes.push({ id, position: { x, y }, labels });
+        knownIds.add(id);
+      }
+
+      if (nodes.length !== rawNodes.length) {
+        warnings.push(`Dropped ${rawNodes.length - nodes.length} malformed standalone nodes`);
+      }
+
+      const rawEdges = Array.isArray(state.edges) ? state.edges : [];
+      const edges: Array<{ from: string; to: string }> = [];
+
+      for (let i = 0; i < rawEdges.length; i += 2) {
+        if (i + 1 >= rawEdges.length) {
+          break;
+        }
+        const from = String(rawEdges[i]);
+        const to = String(rawEdges[i + 1]);
+        if (knownIds.has(from) && knownIds.has(to)) {
+          edges.push({ from, to });
+        } else {
+          warnings.push(`Dropping standalone edge ${from} -> ${to} because at least one node is missing`);
+        }
+      }
+
+      return {
+        graph: {
+          nodes,
+          edges,
+        },
+        warnings,
+      };
+    }
+
     const rawNodes = Array.isArray(state.nodes) ? state.nodes : [];
     const nodes = rawNodes.map(parseNode).filter((node): node is StandaloneNodeState => node !== undefined);
     const knownIds = new Set(nodes.map((node) => node.id));

@@ -159,7 +159,6 @@ describe("CodeEditorComponent", () => {
     const example: ExampleDefinition = {
       name: "Test Example",
       body: "mid() + 1",
-      devices: { sensors: {}, initialValues: {} },
       world: '{"network":{"kind":"grid"}}',
       renderer: "return { nodeSize: 15 };",
     };

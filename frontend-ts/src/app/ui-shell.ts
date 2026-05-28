@@ -138,6 +138,10 @@ export class ScafiWebUiShell {
     this.app.subscribe((event) => {
       if (event.type === "state-changed") {
         this.reconcileSelection();
+        const status = event.state.execution.status;
+        if (status === "ready" || status === "daemon") {
+          this.configurationDraft = configurationToDraft(event.state.configuration);
+        }
         if (this.shouldPatchLiveState(event.state)) {
           this.scheduleLiveStatePatch(event.state);
           return;
@@ -162,6 +166,41 @@ export class ScafiWebUiShell {
     window.addEventListener("resize", () => {
       if (this.renderer && this.renderer.updateSize()) {
         this.patchLiveState(this.app.store.getState());
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      const activeEl = document.activeElement;
+      if (activeEl) {
+        const tagName = activeEl.tagName.toUpperCase();
+        if (
+          tagName === "INPUT" ||
+          tagName === "TEXTAREA" ||
+          tagName === "SELECT" ||
+          activeEl.hasAttribute("contenteditable") ||
+          (activeEl as HTMLElement).isContentEditable
+        ) {
+          return;
+        }
+      }
+
+      if (this.selectedNodeIds.length === 0) {
+        return;
+      }
+
+      const keyMatch = /^[1-9]$/.exec(event.key);
+      if (!keyMatch) {
+        return;
+      }
+
+      const numValue = parseInt(event.key, 10);
+      const sensorIndex = numValue - 1;
+
+      const sensorsList = this.getSelectedSensorsList();
+      if (sensorIndex >= 0 && sensorIndex < sensorsList.length) {
+        const sensorName = sensorsList[sensorIndex];
+        this.triggerToggleSensor(sensorName);
+        event.preventDefault();
       }
     });
   }
@@ -213,7 +252,6 @@ export class ScafiWebUiShell {
         } else {
           this.selectedNodeIds = [nodeId];
         }
-        this.selectionPanelOpen = true;
         this.patchLiveState(this.app.store.getState());
       },
       onNodesDragged: (movedPositions) => {
@@ -224,7 +262,9 @@ export class ScafiWebUiShell {
       },
       onSelectionApplied: (selectedIds) => {
         this.selectedNodeIds = selectedIds;
-        this.selectionPanelOpen = selectedIds.length > 0;
+        if (selectedIds.length === 0) {
+          this.selectionPanelOpen = false;
+        }
         this.patchLiveState(this.app.store.getState());
       },
       onSelectionCleared: () => {
@@ -454,35 +494,7 @@ export class ScafiWebUiShell {
         }
       },
       onToggleSensor: (sensorName) => {
-        if (this.selectedNodeIds.length > 0) {
-          this.app.toggleSensor(sensorName, this.selectedNodeIds);
-
-          // Aggiorna subito il valore visualizzato nell'input del sensore per un feedback immediato ed evita disallineamenti
-          const selectionSlot = this.root.querySelector<HTMLElement>("[data-selection-panel]");
-          if (selectionSlot) {
-            const escapedName = sensorName.replaceAll('"', '\\"');
-            const input = selectionSlot.querySelector<HTMLInputElement>(`[data-runtime-sensor-input="${escapedName}"]`);
-            if (input) {
-              const state = this.app.store.getState();
-              const primaryNode = this.selectedNodes(state.graph.nodes)[0];
-              if (primaryNode) {
-                const newValue = primaryNode.labels[sensorName];
-                if (newValue !== undefined) {
-                  input.value = String(newValue);
-                  input.removeAttribute("data-sensor-mixed");
-                  const small = input.parentElement?.querySelector("small.sensor-mixed-hint");
-                  if (small) {
-                    small.remove();
-                  }
-                }
-              }
-            }
-          }
-
-          if (this.app.store.getState().execution.status === "ready") {
-            this.app.tick();
-          }
-        }
+        this.triggerToggleSensor(sensorName);
       },
       onSelectNode: (nodeId) => {
         this.selectedNodeIds = [nodeId];
@@ -779,15 +791,22 @@ export class ScafiWebUiShell {
     const visibleSensors = Array.from(this.visualization.visibleSensors);
     return `
       <div class="settings-tray">
-        <div class="settings-group settings-group-wide">
+        <div class="settings-group">
+          <p class="settings-group-title">Performance Options</p>
+          <p class="control-card-summary">Disable expensive rendering features to significantly improve simulation speed in dense networks.</p>
+          <label class="settings-switch-label" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); cursor: pointer; margin-top: 8px;">
+            <input id="toggle-render-links" type="checkbox" ${this.visualization.showLinks !== false ? "checked" : ""} style="cursor: pointer; accent-color: var(--accent);" />
+            <span>Render neighborhood links (connections)</span>
+          </label>
+        </div>
+        <div class="settings-group">
           <p class="settings-group-title">Renderer (JavaScript)</p>
-          <p class="control-card-summary">Use the Renderer tab to script node size, visible sensors, and renderers in JavaScript instead of enabling or disabling UI toggles.</p>
-          <div class="viz-inline-actions">
+          <p class="control-card-summary">Use the Renderer tab to script node size, visible sensors, and custom renderers in JavaScript.</p>
+          <div class="viz-inline-actions" style="margin-top: 8px;">
             <button id="open-renderer-document" class="ghost" type="button">Open Renderer (JS)</button>
           </div>
-          <p class="control-card-summary">Current node size: ${this.visualization.nodeSize}px · font size: ${this.visualization.fontSize}px</p>
+          <p class="control-card-summary" style="margin-top: 8px;">Current node size: ${this.visualization.nodeSize}px · font size: ${this.visualization.fontSize}px</p>
           <p class="control-card-summary">Active renderers: ${escapeHtml(summarizeActiveRenderers(this.visualization))}</p>
-          <p class="control-card-summary">Visible sensors: ${visibleSensors.length > 0 ? escapeHtml(visibleSensors.join(", ")) : "none"}</p>
         </div>
       </div>
     `;
@@ -881,6 +900,13 @@ export class ScafiWebUiShell {
       this.codeEditor.setActivePlaygroundDocument("renderer");
       this.visualizationSettingsOpen = false;
       this.render();
+    });
+
+    this.root.querySelector<HTMLInputElement>("#toggle-render-links")?.addEventListener("change", (event) => {
+      const checked = (event.currentTarget as HTMLInputElement).checked;
+      this.visualization.showLinks = checked;
+      this.app.store.setLinksEnabled(checked);
+      this.patchLiveState(this.app.store.getState());
     });
 
     this.bindButton("tick-once", () => this.app.tick());
@@ -1023,9 +1049,13 @@ export class ScafiWebUiShell {
   private resolveVisualization(state: AppState): VisualizationState {
     const availableSensors = availableSensorNames(this.configurationDraft).filter((sensor) => sensor !== "matrix");
     const fallback = createDefaultVisualizationState();
+    fallback.showLinks = this.visualization?.showLinks !== false;
     fallback.visibleSensors = new Set(availableSensors);
     const evaluator = this.getRendererEvaluator();
     if (!evaluator) {
+      Promise.resolve().then(() => {
+        this.app.store.setLinksEnabled(fallback.showLinks);
+      });
       return fallback;
     }
     const context: RendererDocumentContext = {
@@ -1050,11 +1080,18 @@ export class ScafiWebUiShell {
       }
       this.nodeRenderer = output?.renderNode;
       this.edgeRenderer = output?.renderEdge;
-      return resolveVisualizationState(fallback, output, availableSensors);
+      const resolved = resolveVisualizationState(fallback, output, availableSensors);
+      Promise.resolve().then(() => {
+        this.app.store.setLinksEnabled(resolved.showLinks);
+      });
+      return resolved;
     } catch (error) {
       this.rendererDocumentError = stringifyError(error);
       this.nodeRenderer = undefined;
       this.edgeRenderer = undefined;
+      Promise.resolve().then(() => {
+        this.app.store.setLinksEnabled(fallback.showLinks);
+      });
       return fallback;
     }
   }
@@ -1079,6 +1116,54 @@ export class ScafiWebUiShell {
   private invalidateRendererEvaluator(): void {
     this.rendererEvaluatorSource = undefined;
     this.rendererEvaluator = undefined;
+  }
+
+  private triggerToggleSensor(sensorName: string): void {
+    if (this.selectedNodeIds.length > 0) {
+      this.app.toggleSensor(sensorName, this.selectedNodeIds);
+
+      // Aggiorna subito il valore visualizzato nell'input del sensore per un feedback immediato ed evita disallineamenti
+      const selectionSlot = this.root.querySelector<HTMLElement>("[data-selection-panel]");
+      if (selectionSlot) {
+        const escapedName = sensorName.replaceAll('"', '\\"');
+        const input = selectionSlot.querySelector<HTMLInputElement>(`[data-runtime-sensor-input="${escapedName}"]`);
+        if (input) {
+          const state = this.app.store.getState();
+          const primaryNode = this.selectedNodes(state.graph.nodes)[0];
+          if (primaryNode) {
+            const newValue = primaryNode.labels[sensorName];
+            if (newValue !== undefined) {
+              input.value = String(newValue);
+              input.removeAttribute("data-sensor-mixed");
+              const small = input.parentElement?.querySelector("small.sensor-mixed-hint");
+              if (small) {
+                small.remove();
+              }
+            }
+          }
+        }
+      }
+
+      if (this.app.store.getState().execution.status === "ready") {
+        this.app.tick();
+      }
+    }
+  }
+
+  private getSelectedSensorsList(): string[] {
+    const state = this.app.store.getState();
+    const selectedNodes = this.selectedNodes(state.graph.nodes);
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const node of selectedNodes) {
+      for (const label of Object.keys(node.labels)) {
+        if (label === "export" || label === "matrix") continue;
+        if (seen.has(label)) continue;
+        seen.add(label);
+        result.push(label);
+      }
+    }
+    return result;
   }
 }
 
@@ -1170,7 +1255,7 @@ function buildExampleConfiguration(example: ExampleDefinition): SupportConfigura
       neighbour: {
         range: 70,
       },
-      deviceShape: example.devices,
+      deviceShape: { sensors: {}, initialValues: {} },
       seed: {
         configSeed: 0,
         simulationSeed: 0,

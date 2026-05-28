@@ -228,6 +228,7 @@ object ScafiRuntime extends BasicAbstractSpatialSimulationIncarnation with Stand
 @JSExportAll
 object ScafiStandalone {
   import ScafiRuntime._
+  private val lId = linearID
   private var simulator: SpaceAwareSimulator = _
   private var userProgram: AggregateProgram = _
   private var lastTickTime: Double = 0L
@@ -383,6 +384,44 @@ object ScafiStandalone {
     def sensorsEncoded(entries: (String, js.Any)*): WorldDocumentBuilder =
       entries.foldLeft(this) { case (current, (name, value)) => current.sensorEncoded(name, value) }
 
+    def randomSensor(name: String, min: Double, max: Double): WorldDocumentBuilder = {
+      configure { encoded =>
+        val network = encoded.selectDynamic("network").asInstanceOf[js.Dynamic]
+        val kind = network.selectDynamic("kind").toString
+        val howMany = if (kind == "grid") {
+          asInt(network.selectDynamic("rows")) * asInt(network.selectDynamic("cols"))
+        } else if (kind == "random") {
+          asInt(network.selectDynamic("howMany"))
+        } else {
+          100
+        }
+
+        val seeds = encoded.selectDynamic("seeds").asInstanceOf[js.Dynamic]
+        val seed = asLong(seeds.selectDynamic("randomSensorSeed"))
+        val rng = new scala.util.Random(seed ^ name.hashCode)
+
+        val initialValues = encoded.selectDynamic("initialValues")
+        val dict = if (initialValues != null && !js.isUndefined(initialValues)) {
+          initialValues.asInstanceOf[js.Dictionary[js.Dictionary[js.Any]]]
+        } else {
+          js.Dictionary.empty[js.Dictionary[js.Any]]
+        }
+
+        for (i <- 1 to howMany) {
+          val nodeId = i.toString
+          val nodeDict = dict.getOrElse(nodeId, js.Dictionary.empty[js.Any])
+          
+          val randValue = min + (rng.nextDouble() * (max - min))
+          
+          if (!nodeDict.contains(name)) {
+            nodeDict.update(name, js.Dynamic.literal(kind = "double", value = randValue))
+            dict.update(nodeId, nodeDict)
+          }
+        }
+        encoded.updateDynamic("initialValues")(dict.asInstanceOf[js.Any])
+      }
+    }
+
     def initial[A](nodeId: String, sensorName: String, value: A)(implicit encoder: RuntimeValueEncoder[A]): WorldDocumentBuilder =
       initialEncoded(nodeId, sensorName, encoder.encode(value))
 
@@ -530,58 +569,125 @@ object ScafiStandalone {
     velocities.clear()
   }
 
-  def getState(): js.Dynamic = {
+  def getState(options: js.UndefOr[js.Dynamic] = js.undefined): js.Dynamic = {
+    var excludeEdges = false
+    var compact = false
+    if (options.isDefined) {
+      val opts = options.get
+      if (!js.isUndefined(opts.excludeEdges)) {
+        excludeEdges = opts.excludeEdges.asInstanceOf[Boolean]
+      }
+      if (!js.isUndefined(opts.compact)) {
+        compact = opts.compact.asInstanceOf[Boolean]
+      }
+    }
+
     if (simulator == null) {
       val e = js.Dynamic.literal()
-      e.nodes = js.Array[js.Any]()
-      e.edges = js.Array[js.Array[String]]()
+      if (compact) {
+        e.compact = true
+        e.nodes = js.Array[js.Any]()
+        e.edges = js.Array[String]()
+      } else {
+        e.nodes = js.Array[js.Any]()
+        e.edges = js.Array[js.Array[String]]()
+      }
       e
     } else {
       val exports = simulator.exports()
       val devs = simulator.devs
-      val neighbours = simulator.getAllNeighbours()
-      val nodes = js.Array[js.Any]()
-      val edges = js.Array[js.Array[String]]()
-      devs.foreach { case (id, dev) =>
-        val position = simulator.space.getLocation(id)
-        val node = js.Dynamic.literal()
-        val labels = js.Dynamic.literal()
-        node.updateDynamic("id")(id.toString)
-        node.updateDynamic("x")(position.x)
-        node.updateDynamic("y")(position.y)
-        dev.lsns.foreach { case (name, value) =>
-          labels.updateDynamic(name)(encodeSensorValue(value))
-        }
-        velocities.get(id).foreach { case (vx, vy) =>
-          labels.updateDynamic("vx")(vx)
-          labels.updateDynamic("vy")(vy)
-        }
-        exports.get(id).flatten.foreach { e =>
-          val rootVal = e.root[scala.Any]()
-          val expVal = displayExport(rootVal)
-          if (expVal != null) {
-            labels.updateDynamic("export")(expVal)
+      val neighbours = if (excludeEdges) Map.empty[ID, Set[ID]] else simulator.getAllNeighbours()
+
+      if (compact) {
+        val nodes = js.Array[js.Any]()
+        devs.foreach { case (id, dev) =>
+          val position = simulator.space.getLocation(id)
+          val labels = js.Dynamic.literal()
+          dev.lsns.foreach { case (name, value) =>
+            labels.updateDynamic(name)(encodeSensorValue(value))
           }
-          val matrixOps = flattenValues(rootVal).collect { case op: RuntimeMatrixOp => op }
-          val ledAllOp = matrixOps.find(_.cells == All)
-          ledAllOp.foreach { op =>
-            labels.updateDynamic("ledAll")(op.color)
+          velocities.get(id).foreach { case (vx, vy) =>
+            labels.updateDynamic("vx")(vx)
+            labels.updateDynamic("vy")(vy)
+          }
+          exports.get(id).flatten.foreach { e =>
+            val rootVal = e.root[scala.Any]()
+            val expVal = displayExport(rootVal)
+            if (expVal != null) {
+              labels.updateDynamic("export")(expVal)
+            }
+            val matrixOps = flattenValues(rootVal).collect { case op: RuntimeMatrixOp => op }
+            val ledAllOp = matrixOps.find(_.cells == All)
+            ledAllOp.foreach { op =>
+              labels.updateDynamic("ledAll")(op.color)
+            }
+          }
+          nodes.push(js.Array[js.Any](id.toString, position.x, position.y, labels))
+        }
+
+        val edges = js.Array[String]()
+        if (!excludeEdges) {
+          neighbours.foreach { case (from, tos) =>
+            tos.foreach { to =>
+              if (from < to) {
+                edges.push(from.toString)
+                edges.push(to.toString)
+              }
+            }
           }
         }
-        node.updateDynamic("labels")(labels)
-        nodes.push(node.asInstanceOf[js.Any])
+
+        val result = js.Dynamic.literal()
+        result.updateDynamic("compact")(true)
+        result.updateDynamic("nodes")(nodes.asInstanceOf[js.Any])
+        result.updateDynamic("edges")(edges.asInstanceOf[js.Any])
+        result
+      } else {
+        val nodes = js.Array[js.Any]()
+        val edges = js.Array[js.Array[String]]()
+        devs.foreach { case (id, dev) =>
+          val position = simulator.space.getLocation(id)
+          val node = js.Dynamic.literal()
+          val labels = js.Dynamic.literal()
+          node.updateDynamic("id")(id.toString)
+          node.updateDynamic("x")(position.x)
+          node.updateDynamic("y")(position.y)
+          dev.lsns.foreach { case (name, value) =>
+            labels.updateDynamic(name)(encodeSensorValue(value))
+          }
+          velocities.get(id).foreach { case (vx, vy) =>
+            labels.updateDynamic("vx")(vx)
+            labels.updateDynamic("vy")(vy)
+          }
+          exports.get(id).flatten.foreach { e =>
+            val rootVal = e.root[scala.Any]()
+            val expVal = displayExport(rootVal)
+            if (expVal != null) {
+              labels.updateDynamic("export")(expVal)
+            }
+            val matrixOps = flattenValues(rootVal).collect { case op: RuntimeMatrixOp => op }
+            val ledAllOp = matrixOps.find(_.cells == All)
+            ledAllOp.foreach { op =>
+              labels.updateDynamic("ledAll")(op.color)
+            }
+          }
+          node.updateDynamic("labels")(labels)
+          nodes.push(node.asInstanceOf[js.Any])
+        }
+        if (!excludeEdges) {
+          neighbours.foreach { case (from, tos) =>
+            tos.foreach { to =>
+              if (from < to) {
+                edges.push(js.Array(from.toString, to.toString))
+              }
+            }
+          }
+        }
+        val result = js.Dynamic.literal()
+        result.updateDynamic("nodes")(nodes.asInstanceOf[js.Any])
+        result.updateDynamic("edges")(edges.asInstanceOf[js.Any])
+        result
       }
-      neighbours.foreach { case (from, tos) =>
-        tos.foreach { to =>
-          if (from < to) {
-            edges.push(js.Array(from.toString, to.toString))
-          }
-        }
-      }
-      val result = js.Dynamic.literal()
-      result.updateDynamic("nodes")(nodes.asInstanceOf[js.Any])
-      result.updateDynamic("edges")(edges.asInstanceOf[js.Any])
-      result
     }
   }
 
@@ -607,6 +713,30 @@ object ScafiStandalone {
           asDouble(neighbour.selectDynamic("range")),
           seeds = simulationSeeds
         ).asInstanceOf[SpaceAwareSimulator]
+      case "random" =>
+        val min = asDouble(network.selectDynamic("min"))
+        val max = asDouble(network.selectDynamic("max"))
+        val howMany = asInt(network.selectDynamic("howMany"))
+        val rng = asDouble(neighbour.selectDynamic("range"))
+
+        val positions = it.unibo.scafi.space.SpaceHelper.randomLocations(
+          it.unibo.scafi.config.SimpleRandomSettings(min, max),
+          howMany,
+          simulationSeeds.configSeed
+        )
+        val ids = for (i <- 1 to howMany) yield i
+        val devs: Map[ID, DevInfo] = ((ids map lId.fromNum) zip positions).map {
+          case (id, pos) =>
+            (id, new DevInfo(id, pos.asInstanceOf[P], Map.empty, sns => nbr => Map.empty))
+        }.toMap
+        val space = new Basic3DSpace[ID](devs.map { case (k, v) => k -> v.pos }.toMap, rng)
+        new SpaceAwareSimulator(
+          space,
+          devs,
+          SpaceAwareSimulator.defaultRepr,
+          simulationSeeds.simulationSeed,
+          simulationSeeds.randomSensorSeed
+        )
       case unsupported =>
         js.Dynamic.global.console.warn("[ScafiWeb] Unsupported standalone network kind: " + unsupported + ". Falling back to a 10x10 grid.")
         simulatorFactory.gridLike(
@@ -692,8 +822,9 @@ object ScafiStandalone {
 
   private def flattenValues(value: Any): Seq[Any] = value match {
     case actuation: RuntimeActuationData => Seq(actuation)
-    case values: Iterable[_] => values.toSeq
-    case values: Product => values.productIterator.toSeq
+    case values: Iterable[_] => values.toSeq.flatMap(flattenValues)
+    case values: Product if values.getClass.getName.startsWith("scala.Tuple") => values.productIterator.toSeq.flatMap(flattenValues)
+    case values: Product => Seq(values)
     case other => Seq(other)
   }
 

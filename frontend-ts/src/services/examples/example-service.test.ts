@@ -45,21 +45,12 @@ describe("ExampleService", () => {
 
     const groups = await service.loadExamples();
 
-    expect(groups[0]?.examples[0]?.devices.sensors.matrix).toEqual({
-      dimension: 2,
-      pixels: {
-        "0:1": "#fff",
-        "1:0": "#000",
-      },
-    });
     expect(groups[0]?.examples[0]?.world).toContain('.grid(rows = 10, cols = 10, stepX = 60, stepY = 60, tolerance = 10)');
     expect(parseWorldDocument(groups[0]?.examples[0]?.world ?? "").deviceShape.sensors.matrix).toEqual({
       dimension: 2,
       pixels: {
-        "0:0": "#fff",
         "0:1": "#fff",
-        "1:0": "#fff",
-        "1:1": "#fff",
+        "1:0": "#000",
       },
     });
     expect(groups[0]?.examples[0]?.renderer).toBe("return { renderMatrix: true, renderText: false };");
@@ -262,7 +253,7 @@ describe("ExampleService", () => {
     expect(nodeOutput?.renderBooleans).toBe(true);
     expect(nodeOutput?.renderGradient).toBe(true);
     expect(highlightedEdge?.className).toContain("graph-edge is-neighborhood");
-    expect(mutedEdge?.className).toContain("graph-edge is-muted");
+    expect(mutedEdge).toBeUndefined();
   });
 
   it("uses movement defaults for movement groups without explicit example mappings", async () => {

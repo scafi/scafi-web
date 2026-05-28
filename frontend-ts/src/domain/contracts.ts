@@ -41,17 +41,26 @@ export interface StandaloneNodeState {
   labels?: Record<string, unknown>;
 }
 
-export interface StandaloneState {
+export interface StandardStandaloneState {
+  compact?: false;
   nodes: StandaloneNodeState[];
   edges: Array<[string, string]> | Array<{ from: string; to: string }>;
 }
+
+export interface CompactStandaloneState {
+  compact: true;
+  nodes: Array<[string, number, number, Record<string, unknown>]>;
+  edges: string[];
+}
+
+export type StandaloneState = StandardStandaloneState | CompactStandaloneState;
 
 export interface StandaloneRuntimeApi {
   loadAndInit(configJson: string): MaybePromise<void>;
   tick(): MaybePromise<void>;
   setPosition(nodeId: string, x: number, y: number): MaybePromise<void>;
   setSensorValue(sensorName: string, nodeIds: string[], value: unknown): MaybePromise<void>;
-  getState(): MaybePromise<StandaloneState>;
+  getState(options?: { excludeEdges?: boolean; compact?: boolean }): MaybePromise<StandaloneState>;
   dispose(): MaybePromise<void>;
 }
 
@@ -151,7 +160,6 @@ export interface SseProgressEvent {
 export interface ExampleDefinition {
   name: string;
   body: string;
-  devices: DeviceShapeConfiguration;
   world?: string;
   renderer?: string;
 }

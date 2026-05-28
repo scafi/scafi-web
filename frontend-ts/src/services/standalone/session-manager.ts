@@ -99,8 +99,8 @@ export class StandaloneSessionManager {
     await this.reinitializePendingState();
   }
 
-  async getState(): Promise<StandaloneState> {
-    return await Promise.resolve(this.requireSession().runtime.getState());
+  async getState(options?: { excludeEdges?: boolean; compact?: boolean }): Promise<StandaloneState> {
+    return await Promise.resolve(this.requireSession().runtime.getState(options));
   }
 
   private mergeSensors(base: SensorOverrideMap, overrides: SensorOverrideMap): SensorOverrideMap {

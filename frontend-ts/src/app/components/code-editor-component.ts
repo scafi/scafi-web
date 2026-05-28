@@ -116,6 +116,10 @@ export class CodeEditorComponent {
   private readOnly = false;
 
   private callbacks: CodeEditorCallbacks = {};
+  private savedStates: Partial<Record<PlaygroundDocument, EditorState>> = {};
+  private savedViews: Partial<Record<PlaygroundDocument, EditorView>> = {};
+  private lastTheme?: "dark" | "light";
+  private hadFocusBeforeDestroy = false;
 
   constructor(
     private readonly root: HTMLElement,
@@ -167,15 +171,26 @@ export class CodeEditorComponent {
   setWorldDocument(doc: string): void {
     this.worldDocument = doc;
     this.app.saveWorldDocument(doc);
+    this.savedViews["world"]?.destroy();
+    delete this.savedViews["world"];
+    delete this.savedStates["world"];
   }
 
   setRendererDocument(doc: string): void {
     this.rendererDocument = doc;
     this.app.saveRendererDocument(doc);
+    this.savedViews["renderer"]?.destroy();
+    delete this.savedViews["renderer"];
+    delete this.savedStates["renderer"];
   }
 
   loadExample(example: ExampleDefinition, exampleConfiguration: SupportConfiguration): void {
     this.destroyCodeEditor();
+    for (const key in this.savedViews) {
+      this.savedViews[key as PlaygroundDocument]?.destroy();
+    }
+    this.savedViews = {};
+    this.savedStates = {};
     this.easyScalaBuffer = example.body;
     this.fullScalaBuffer = convertEasyScalaToFull(example.body);
     this.activeEditorMode = "easy-scala";
@@ -196,6 +211,9 @@ export class CodeEditorComponent {
       this.fullScalaBuffer = convertEasyScalaToFull(this.easyScalaBuffer);
     }
     this.destroyCodeEditor();
+    this.savedViews["code"]?.destroy();
+    delete this.savedViews["code"];
+    delete this.savedStates["code"];
     this.activeEditorMode = newMode;
     this.editorDocument = { code: this.getActiveEditorCode(), mode: newMode };
     this.app.saveEditor(this.editorDocument);
@@ -203,6 +221,15 @@ export class CodeEditorComponent {
   }
 
   attachCodeEditor(theme: "dark" | "light"): void {
+    if (this.lastTheme !== theme) {
+      for (const key in this.savedViews) {
+        this.savedViews[key as PlaygroundDocument]?.destroy();
+      }
+      this.savedViews = {};
+      this.savedStates = {};
+      this.lastTheme = theme;
+    }
+
     const parentContainer = this.root.querySelector<HTMLElement>(".editor-surface");
     if (!parentContainer) {
       return;
@@ -210,53 +237,62 @@ export class CodeEditorComponent {
     // Clear any previous editor or legacy textarea
     parentContainer.innerHTML = "";
 
-
-
-    const extensions = [
-      basicSetup,
-      editorBaseTheme,
-      theme === "dark" ? darkThemeExtension : lightThemeExtension,
-      theme === "dark" ? syntaxHighlighting(cosmicHighlightStyle) : syntaxHighlighting(cosmicLightHighlightStyle),
-    ];
-
-
-
-    if (this.activePlaygroundDocument === "compiled" || this.readOnly) {
-      extensions.push(EditorState.readOnly.of(true));
-      extensions.push(EditorView.editable.of(false));
-    } else {
-      extensions.push(autocompletion({
-        override: [(context) => this.provideHints(context)],
-        defaultKeymap: true,
-      }));
-    }
-
-    if (this.activePlaygroundDocument === "renderer") {
-      extensions.push(javascript());
-    } else if (this.activePlaygroundDocument === "code" || this.activePlaygroundDocument === "world") {
-      extensions.push(StreamLanguage.define(scala));
-    }
-
-    extensions.push(EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
-        const currentValue = update.state.doc.toString();
-        this.handleContentChanged(currentValue);
+    let editor = this.savedViews[this.activePlaygroundDocument];
+    if (editor) {
+      parentContainer.appendChild(editor.dom);
+      this.codeEditor = editor;
+      if (this.hadFocusBeforeDestroy) {
+        editor.focus();
       }
-    }));
+    } else {
+      let state = this.savedStates[this.activePlaygroundDocument];
+      if (!state) {
+        const extensions = [
+          basicSetup,
+          editorBaseTheme,
+          theme === "dark" ? darkThemeExtension : lightThemeExtension,
+          theme === "dark" ? syntaxHighlighting(cosmicHighlightStyle) : syntaxHighlighting(cosmicLightHighlightStyle),
+        ];
 
-    const cleanExtensions = cleanExtensionsRecursive(extensions);
+        if (this.activePlaygroundDocument === "compiled" || this.readOnly) {
+          extensions.push(EditorState.readOnly.of(true));
+          extensions.push(EditorView.editable.of(false));
+        } else {
+          extensions.push(autocompletion({
+            override: [(context) => this.provideHints(context)],
+            defaultKeymap: true,
+          }));
+        }
 
-    const editor = new EditorView({
-      state: EditorState.create({
-        doc: this.getActiveEditorText(),
-        extensions: cleanExtensions,
-      }),
-      parent: parentContainer,
-    });
+        if (this.activePlaygroundDocument === "renderer") {
+          extensions.push(javascript());
+        } else if (this.activePlaygroundDocument === "code" || this.activePlaygroundDocument === "world") {
+          extensions.push(StreamLanguage.define(scala));
+        }
 
+        extensions.push(EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            const currentValue = update.state.doc.toString();
+            this.handleContentChanged(currentValue);
+          }
+        }));
 
+        const cleanExtensions = cleanExtensionsRecursive(extensions);
 
-    this.codeEditor = editor;
+        state = EditorState.create({
+          doc: this.getActiveEditorText(),
+          extensions: cleanExtensions,
+        });
+      }
+
+      editor = new EditorView({
+        state,
+        parent: parentContainer,
+      });
+
+      this.codeEditor = editor;
+    }
+
     this.mountedDocument = this.activePlaygroundDocument;
     this.mountedEditorMode = this.activeEditorMode;
   }
@@ -265,6 +301,7 @@ export class CodeEditorComponent {
     if (!this.codeEditor) {
       return;
     }
+    this.hadFocusBeforeDestroy = this.codeEditor.hasFocus;
     const currentValue = this.codeEditor.state.doc.toString();
     const mountedDocument = this.mountedDocument ?? this.activePlaygroundDocument;
 
@@ -283,7 +320,13 @@ export class CodeEditorComponent {
       };
     }
 
-    this.codeEditor.destroy();
+    if (mountedDocument !== "compiled") {
+      this.savedViews[mountedDocument] = this.codeEditor;
+      this.savedStates[mountedDocument] = this.codeEditor.state;
+    } else {
+      this.codeEditor.destroy();
+    }
+
     this.codeEditor = undefined;
     this.mountedDocument = undefined;
     this.mountedEditorMode = undefined;

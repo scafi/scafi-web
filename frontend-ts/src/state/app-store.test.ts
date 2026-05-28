@@ -59,10 +59,23 @@ class FakeRuntime implements StandaloneRuntimeApi {
   loadAndInit(configJson: string): void {
     this.lastConfigJson = configJson;
     const parsed = JSON.parse(configJson) as {
+      network?: { kind: "grid" | "random"; min?: number; max?: number; howMany?: number };
       positions?: Record<string, { x: number; y: number }>;
       initialValues?: Record<string, Record<string, unknown>>;
     };
-    if (parsed.positions) {
+    if (parsed.network?.kind === "random" && parsed.network.howMany) {
+      const min = parsed.network.min ?? 0;
+      const max = parsed.network.max ?? 100;
+      const howMany = parsed.network.howMany;
+      this.positions = {};
+      this.labels = {};
+      for (let i = 1; i <= howMany; i++) {
+        const id = String(i);
+        this.positions[id] = { x: min + (max - min) / 2, y: min + (max - min) / 2 };
+        this.labels[id] = {};
+      }
+    }
+    if (parsed.positions && Object.keys(parsed.positions).length > 0) {
       this.positions = { ...this.positions, ...parsed.positions };
     }
     if (parsed.initialValues) {
@@ -724,5 +737,50 @@ describe("AppStore", () => {
     // The original sync should have been discarded by generation check
     expect(compileCallCount).toBe(2);
     expect(store.getState().graph.nodes.find((node) => node.id === "1")?.labels.source).toBe(true);
+  });
+
+  it("updates store configuration and layout from worldDocument in loadScript", async () => {
+    const runtime = new FakeRuntime();
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => compileResult(runtime),
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    const worldDoc = `world
+      .random(min = 10, max = 50, howMany = 5)
+      .radius(30)
+      .seed(config = 1L, simulation = 0L, randomSensor = 0L)
+    `;
+
+    await store.loadScript("program", "full-scala", worldDoc);
+
+    const state = store.getState();
+    const network = state.configuration.network;
+    expect(network.kind).toBe("random");
+    if (network.kind !== "random") {
+      throw new Error("Expected random network");
+    }
+    expect(network.min).toBe(10);
+    expect(network.max).toBe(50);
+    expect(network.howMany).toBe(5);
+    expect(state.graph.nodes).toHaveLength(5);
+    // Node coordinates must be within min and max
+    for (const node of state.graph.nodes) {
+      expect(node.position.x).toBeGreaterThanOrEqual(10);
+      expect(node.position.x).toBeLessThanOrEqual(50);
+      expect(node.position.y).toBeGreaterThanOrEqual(10);
+      expect(node.position.y).toBeLessThanOrEqual(50);
+    }
   });
 });

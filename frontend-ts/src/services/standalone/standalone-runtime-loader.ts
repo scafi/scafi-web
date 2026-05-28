@@ -61,7 +61,7 @@ type WorkerCommand =
   | { type: "tick" }
   | { type: "setPosition"; nodeId: string; x: number; y: number }
   | { type: "setSensorValue"; sensorName: string; nodeIds: string[]; value: unknown }
-  | { type: "getState" }
+  | { type: "getState"; options?: { excludeEdges?: boolean; compact?: boolean } }
   | { type: "dispose" };
 
 type WorkerRequest = WorkerCommand & { id: number };
@@ -117,8 +117,8 @@ class WorkerBackedStandaloneRuntime implements StandaloneRuntimeApi {
     await this.request({ type: "setSensorValue", sensorName, nodeIds, value });
   }
 
-  async getState() {
-    return (await this.request({ type: "getState" })) as Awaited<ReturnType<StandaloneRuntimeApi["getState"]>>;
+  async getState(options?: { excludeEdges?: boolean; compact?: boolean }) {
+    return (await this.request({ type: "getState", options })) as Awaited<ReturnType<StandaloneRuntimeApi["getState"]>>;
   }
 
   async dispose(): Promise<void> {

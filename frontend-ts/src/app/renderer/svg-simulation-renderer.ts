@@ -191,23 +191,25 @@ export class SvgSimulationRenderer implements SimulationRenderer {
       nodeMap.set(node.id, node);
     }
 
-    const edgeMarkup = graph.edges
-      .map((edge, index) => {
-        const from = nodeMap.get(edge.from);
-        const to = nodeMap.get(edge.to);
-        if (!from || !to) {
-          return "";
-        }
-        const fromPoint = projectPoint(from.position, projection);
-        const toPoint = projectPoint(to.position, projection);
-        const edgeState = this.resolveEdgeRenderState(edge, from, to);
-        return `<line class="${escapeHtml(edgeState.className)}" ${edgeState.hidden ? 'display="none" ' : ""}${
-          edgeState.stroke ? `stroke="${escapeHtml(edgeState.stroke)}" ` : ""
-        }${edgeState.strokeWidth !== undefined ? `stroke-width="${edgeState.strokeWidth}" ` : ""}${
-          edgeState.strokeOpacity !== undefined ? `stroke-opacity="${edgeState.strokeOpacity}" ` : ""
-        }data-edge-key="${escapeHtml(edge.from)}->${escapeHtml(edge.to)}" data-edge-index="${index}" x1="${fromPoint.x}" y1="${fromPoint.y}" x2="${toPoint.x}" y2="${toPoint.y}" />`;
-      })
-      .join("");
+    const edgeMarkup = (this.visualization?.showLinks !== false)
+      ? graph.edges
+          .map((edge, index) => {
+            const from = nodeMap.get(edge.from);
+            const to = nodeMap.get(edge.to);
+            if (!from || !to) {
+              return "";
+            }
+            const fromPoint = projectPoint(from.position, projection);
+            const toPoint = projectPoint(to.position, projection);
+            const edgeState = this.resolveEdgeRenderState(edge, from, to);
+            return `<line class="${escapeHtml(edgeState.className)}" ${edgeState.hidden ? 'display="none" ' : ""}${
+              edgeState.stroke ? `stroke="${escapeHtml(edgeState.stroke)}" ` : ""
+            }${edgeState.strokeWidth !== undefined ? `stroke-width="${edgeState.strokeWidth}" ` : ""}${
+              edgeState.strokeOpacity !== undefined ? `stroke-opacity="${edgeState.strokeOpacity}" ` : ""
+            }data-edge-key="${escapeHtml(edge.from)}->${escapeHtml(edge.to)}" data-edge-index="${index}" x1="${fromPoint.x}" y1="${fromPoint.y}" x2="${toPoint.x}" y2="${toPoint.y}" />`;
+          })
+          .join("")
+      : "";
 
     const nodeMarkup = graph.nodes
       .map((node, index) => {
@@ -545,7 +547,7 @@ export class SvgSimulationRenderer implements SimulationRenderer {
     const graphViewport = this.container?.querySelector<SVGGElement>(".graph-viewport");
     const edgeElements = Array.from(this.container?.querySelectorAll<SVGLineElement>(".graph-edge") ?? []);
     const nodeElements = Array.from(this.container?.querySelectorAll<SVGGElement>(".graph-node") ?? []);
-    if (!graphViewport || edgeElements.length !== graph.edges.length || nodeElements.length !== graph.nodes.length) {
+    if (!graphViewport || edgeElements.length !== (this.visualization?.showLinks !== false ? graph.edges.length : 0) || nodeElements.length !== graph.nodes.length) {
       return false;
     }
     const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -664,7 +666,7 @@ export class SvgSimulationRenderer implements SimulationRenderer {
         selected: selectedNode,
         nodeIndex,
         totalNodes,
-        incidentEdges: edges.filter((edge) => edge.from === node.id || edge.to === node.id),
+        incidentEdges: (this.visualization?.showLinks !== false) ? edges.filter((edge) => edge.from === node.id || edge.to === node.id) : [],
         availableSensors: Array.from(this.visualization!.visibleSensors),
         defaults,
       });

@@ -37,22 +37,191 @@ export function serializeWorldDocument(configuration: SupportConfiguration): str
   return `${lines.join("\n")}\n`;
 }
 
+function evaluateExpr(expr: string, vars: Record<string, any>): any {
+  let cleaned = expr.trim();
+  
+  if (Object.prototype.hasOwnProperty.call(vars, cleaned)) {
+    return vars[cleaned];
+  }
+  
+  // Handle Range: "A to B"
+  if (cleaned.includes("to")) {
+    const parts = cleaned.split("to");
+    const startVal = evaluateExpr(parts[0], vars);
+    const endVal = evaluateExpr(parts[1], vars);
+    if (typeof startVal === "number" && !isNaN(startVal) && typeof endVal === "number" && !isNaN(endVal)) {
+      return { type: "range", start: Math.floor(startVal), end: Math.floor(endVal) };
+    }
+  }
+
+  // Detect casting flags at the end
+  let asString = false;
+  if (/\.toString\s*(?:\(\s*\))?$/.test(cleaned)) {
+    asString = true;
+    cleaned = cleaned.replace(/\.toString\s*(?:\(\s*\))?$/, "");
+  }
+  let asInteger = false;
+  if (/\.toInt\s*(?:\(\s*\))?$/.test(cleaned)) {
+    asInteger = true;
+    cleaned = cleaned.replace(/\.toInt\s*(?:\(\s*\))?$/, "");
+  }
+
+  // Remove other general .toInt or .toDouble or cast-like calls
+  cleaned = cleaned.replace(/\.(?:toInt|toDouble|toString)\b/g, "");
+
+  // Substitute variables in the cleaned expression
+  const sortedVarNames = Object.keys(vars).sort((a, b) => b.length - a.length);
+  for (const name of sortedVarNames) {
+    const val = vars[name];
+    if (typeof val === "number" || typeof val === "boolean") {
+      cleaned = cleaned.replace(new RegExp(`\\b${name}\\b`, "g"), String(val));
+    } else if (typeof val === "string") {
+      cleaned = cleaned.replace(new RegExp(`\\b${name}\\b`, "g"), JSON.stringify(val));
+    }
+  }
+
+  // Check if it is a pure arithmetic/numeric expression before evaluating
+  let evaluatedValue: any = cleaned;
+  if (/^[0-9.+\-*/()\s]+$/.test(cleaned)) {
+    try {
+      const result = new Function(`return (${cleaned})`)();
+      if (typeof result === "number" && !isNaN(result)) {
+        evaluatedValue = result;
+      }
+    } catch {
+      // ignore
+    }
+  } else {
+    // String literals
+    if (cleaned.startsWith("\"") && cleaned.endsWith("\"")) {
+      evaluatedValue = cleaned.slice(1, -1);
+    } else if (cleaned === "true") {
+      evaluatedValue = true;
+    } else if (cleaned === "false") {
+      evaluatedValue = false;
+    } else {
+      const num = Number(cleaned);
+      if (!isNaN(num)) {
+        evaluatedValue = num;
+      }
+    }
+  }
+
+  if (typeof evaluatedValue === "number") {
+    if (asInteger) {
+      evaluatedValue = Math.floor(evaluatedValue);
+    }
+    if (asString) {
+      evaluatedValue = String(evaluatedValue);
+    }
+  }
+
+  return evaluatedValue;
+}
+
+export function preprocessWorldDocument(document: string): string {
+  let content = document;
+  const variables: Record<string, any> = {};
+
+  // Parse lines: val <name> = <expr>
+  const valRegex = /val\s+(?<name>[a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(?<expr>[^\n;]+)/g;
+  let valMatch;
+  while ((valMatch = valRegex.exec(content)) !== null) {
+    const name = valMatch.groups?.name;
+    const expr = valMatch.groups?.expr.trim();
+    if (name && expr) {
+      variables[name] = evaluateExpr(expr, variables);
+    }
+  }
+
+  // Remove val declarations so they don't interfere with the rest of the parsing
+  content = content.replace(/val\s+[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^\n;]+;?\n?/g, "");
+
+  // Parse and unroll loops: for (i <- 31 to 38) { ... } or for (i <- range_var) { ... }
+  const forRegex = /for\s*\(\s*(?<loopVar>[a-zA-Z_][a-zA-Z0-9_]*)\s*<-\s*(?<rangeExpr>[^)]+)\)\s*\{(?<body>[\s\S]*?)\}/g;
+  let forMatch;
+  while ((forMatch = forRegex.exec(content)) !== null) {
+    const matchedText = forMatch[0];
+    const loopVar = forMatch.groups?.loopVar;
+    const rangeExpr = forMatch.groups?.rangeExpr.trim();
+    const body = forMatch.groups?.body;
+    if (loopVar && rangeExpr && body) {
+      let start = 0;
+      let end = -1;
+      const resolvedRange = evaluateExpr(rangeExpr, variables);
+      if (resolvedRange && resolvedRange.type === "range") {
+        start = resolvedRange.start;
+        end = resolvedRange.end;
+      }
+
+      if (!isNaN(start) && !isNaN(end) && end >= start) {
+        let expanded = "";
+        for (let i = start; i <= end; i++) {
+          let instance = body;
+          instance = instance.replace(new RegExp(`${loopVar}\\.toString`, "g"), `"${i}"`);
+          instance = instance.replace(new RegExp(`"\\s*\\+\\s*${loopVar}\\s*\\+\\s*"`, "g"), String(i));
+          instance = instance.replace(new RegExp(`\\b${loopVar}\\b`, "g"), String(i));
+          expanded += instance + "\n";
+        }
+        content = content.replace(matchedText, expanded);
+        forRegex.lastIndex = 0;
+      } else {
+        content = content.replace(matchedText, "");
+        forRegex.lastIndex = 0;
+      }
+    }
+  }
+
+  // Substitute variables inside parameter lists
+  for (const [name, val] of Object.entries(variables)) {
+    if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+      const escapedVal = typeof val === "string" ? `"${val}"` : String(val);
+      
+      // Substitute for .initial(name, ...)
+      const initialRegex = new RegExp(`\\.initial\\(\\s*${name}\\s*,`, "g");
+      content = content.replace(initialRegex, `.initial(${escapedVal},`);
+
+      // Substitute for rows = name
+      const rowsRegex = new RegExp(`\\brows\\s*=\\s*${name}\\b`, "g");
+      content = content.replace(rowsRegex, `rows = ${escapedVal}`);
+
+      // Substitute for cols = name
+      const colsRegex = new RegExp(`\\bcols\\s*=\\s*${name}\\b`, "g");
+      content = content.replace(colsRegex, `cols = ${escapedVal}`);
+
+      // Substitute for .radius(name)
+      const radiusRegex = new RegExp(`\\.radius\\(\\s*${name}\\s*\\)`, "g");
+      content = content.replace(radiusRegex, `.radius(${escapedVal})`);
+    }
+  }
+
+  return content;
+}
+
 export function parseWorldDocument(document: string): SupportConfiguration {
-  const trimmed = document.trim();
+  const preprocessed = preprocessWorldDocument(document);
+  const trimmed = preprocessed.trim();
   if (trimmed.startsWith("{")) {
-    const parsed = JSON.parse(document) as SupportConfiguration;
+    const parsed = JSON.parse(preprocessed) as SupportConfiguration;
     return normalizeSupportConfiguration(parsed);
   }
 
   const network = parseNetwork(trimmed);
   const radius = capture(trimmed, /\.radius\((?<value>[^)]+)\)/, "World document requires .radius(...)");
   const matrix = parseMatrix(trimmed);
-  const sensors = Object.fromEntries(
+  const parsedSensors = Object.fromEntries(
     Array.from(trimmed.matchAll(/\.sensor\(\s*"(?<name>(?:\\.|[^"\\])*)"\s*,\s*(?<value>[^)]+)\)/g), (match) => [
       unescapeScalaString(match.groups?.name ?? ""),
       parseScalarLiteral(match.groups?.value ?? ""),
     ]),
   );
+  const parsedRandomSensors = Object.fromEntries(
+    Array.from(trimmed.matchAll(/\.randomSensor\(\s*"(?<name>(?:\\.|[^"\\])*)"\s*,\s*(?<min>[^,]+)\s*,\s*(?<max>[^)]+)\)/g), (match) => [
+      unescapeScalaString(match.groups?.name ?? ""),
+      parseScalarLiteral(match.groups?.min ?? "0.0"),
+    ]),
+  );
+  const sensors = { ...parsedSensors, ...parsedRandomSensors };
   const initialValues = Array.from(
     trimmed.matchAll(
       /\.initial\(\s*"(?<nodeId>(?:\\.|[^"\\])*)"\s*,\s*"(?<sensor>(?:\\.|[^"\\])*)"\s*,\s*(?<value>[^)]+)\)/g,
@@ -195,7 +364,7 @@ function parseMatrix(document: string): SupportConfiguration["deviceShape"]["sen
   }
 
   const matrixPixels = document.match(
-    /\.matrixPixels\(\s*dimension\s*=\s*(?<dimension>[^,]+),\s*pixels\s*=\s*Seq\((?<pixels>[\s\S]*?)\)\s*\)/,
+    /\.matrixPixels\(\s*dimension\s*=\s*(?<dimension>[^,]+),\s*pixels\s*=\s*Seq\((?<pixels>[\s\S]*?)\)\s*\)(?=\s*\.|\s*$)/,
   );
   if (!matrixPixels?.groups) {
     return undefined;

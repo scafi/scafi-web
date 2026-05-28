@@ -58,6 +58,10 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   private visualization?: VisualizationState;
   private listenersAttached = false;
 
+  private cachedTheme?: string;
+  private cachedAccentColor = "#bb66ff";
+  private cachedAccentCoolColor = "#39f3ff";
+
   constructor() {
     this.onPointerMove = this.onPointerMove.bind(this);
     this.onPointerUp = this.onPointerUp.bind(this);
@@ -432,31 +436,44 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     const isLightTheme = document.documentElement.getAttribute("data-theme") === "light";
 
     // 2. Disegno degli Archi (Collegamenti di rete)
-    this.ctx.save();
-    for (const edge of graph.edges) {
-      const from = nodeMap.get(edge.from);
-      const to = nodeMap.get(edge.to);
-      if (!from || !to) continue;
+    if (this.visualization.showLinks !== false) {
+      this.ctx.save();
+      for (const edge of graph.edges) {
+        const from = nodeMap.get(edge.from);
+        const to = nodeMap.get(edge.to);
+        if (!from || !to) continue;
 
-      const fromPoint = projectPoint(from.position, projection);
-      const toPoint = projectPoint(to.position, projection);
+        const fromPoint = projectPoint(from.position, projection);
+        const toPoint = projectPoint(to.position, projection);
 
-      const isMuted = showNeighborhood && !this.selectedNodeIds.includes(edge.from) && !this.selectedNodeIds.includes(edge.to);
-      
-      this.ctx.beginPath();
-      this.ctx.moveTo(fromPoint.x + this.graphPan.x, fromPoint.y + this.graphPan.y);
-      this.ctx.lineTo(toPoint.x + this.graphPan.x, toPoint.y + this.graphPan.y);
-      
-      if (isMuted) {
-        this.ctx.strokeStyle = isLightTheme ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.02)";
-        this.ctx.lineWidth = 0.75;
-      } else {
-        this.ctx.strokeStyle = isLightTheme ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)";
-        this.ctx.lineWidth = 1.25;
+        const isMuted = showNeighborhood && !this.selectedNodeIds.includes(edge.from) && !this.selectedNodeIds.includes(edge.to);
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(fromPoint.x + this.graphPan.x, fromPoint.y + this.graphPan.y);
+        this.ctx.lineTo(toPoint.x + this.graphPan.x, toPoint.y + this.graphPan.y);
+        
+        if (isMuted) {
+          this.ctx.strokeStyle = isLightTheme ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.02)";
+          this.ctx.lineWidth = 0.75;
+        } else {
+          this.ctx.strokeStyle = isLightTheme ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)";
+          this.ctx.lineWidth = 1.25;
+        }
+        this.ctx.stroke();
       }
-      this.ctx.stroke();
+      this.ctx.restore();
     }
-    this.ctx.restore();
+
+    // Pre-resolve CSS theme variable colors once per frame to prevent layout thrashing
+    const theme = document.documentElement.getAttribute("data-theme") || "dark";
+    if (this.cachedTheme !== theme) {
+      this.cachedTheme = theme;
+      const rootStyle = getComputedStyle(this.container || document.documentElement);
+      this.cachedAccentColor = rootStyle.getPropertyValue("--accent").trim() || "#bb66ff";
+      this.cachedAccentCoolColor = rootStyle.getPropertyValue("--accent-cool").trim() || "#39f3ff";
+    }
+    const accentVar = this.cachedAccentColor;
+    const accentCoolVar = this.cachedAccentCoolColor;
 
     // 3. Disegno dei Nodi
     for (const node of graph.nodes) {
@@ -479,11 +496,17 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
         fill = String(ledColor);
       }
 
-      // Risolve variabili CSS se presenti
+      // Risolve variabili CSS se presenti (usando i valori pre-risolti)
       let resolvedFill = fill;
       if (fill.startsWith("var(")) {
         const varName = fill.substring(4, fill.length - 1).trim();
-        resolvedFill = getComputedStyle(this.container!).getPropertyValue(varName) || (selected ? "#e07030" : "#7db5ff");
+        if (varName === "--accent") {
+          resolvedFill = accentVar;
+        } else if (varName === "--accent-cool") {
+          resolvedFill = accentCoolVar;
+        } else {
+          resolvedFill = getComputedStyle(this.container || document.documentElement).getPropertyValue(varName) || (selected ? "#bb66ff" : "#39f3ff");
+        }
       }
 
       let fillOpacity = 1;
@@ -501,7 +524,7 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
       if (selected) {
         this.ctx.beginPath();
         this.ctx.arc(px, py, nodeSize + 3, 0, Math.PI * 2);
-        this.ctx.strokeStyle = getComputedStyle(this.container!).getPropertyValue("--accent") || "#e07030";
+        this.ctx.strokeStyle = accentVar;
         this.ctx.lineWidth = 1.5;
         this.ctx.stroke();
       }

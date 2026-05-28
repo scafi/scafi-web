@@ -15,7 +15,7 @@ type WorkerRequest =
   | { id: number; type: "tick" }
   | { id: number; type: "setPosition"; nodeId: string; x: number; y: number }
   | { id: number; type: "setSensorValue"; sensorName: string; nodeIds: string[]; value: unknown }
-  | { id: number; type: "getState" }
+  | { id: number; type: "getState"; options?: { excludeEdges?: boolean; compact?: boolean } }
   | { id: number; type: "dispose" };
 
 type WorkerResponse =
@@ -55,7 +55,7 @@ globalThis.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         return;
       }
       case "getState": {
-        const value = await Promise.resolve(requireRuntime().getState());
+        const value = await Promise.resolve(requireRuntime().getState(message.options));
         respond({ id: message.id, ok: true, value });
         return;
       }

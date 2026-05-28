@@ -1,4 +1,4 @@
-import type { ExampleGroup } from "../../domain/contracts";
+import type { ExampleGroup, ExampleDefinition } from "../../domain/contracts";
 import type { KeyValueStore } from "../browser/key-value-store";
 import { parseWorldDocument, serializeWorldDocument } from "../config/world-document";
 
@@ -71,21 +71,11 @@ export class ExampleService {
 function normalizeExampleGroups(groups: ExampleGroup[]): ExampleGroup[] {
   return groups.map((group) => ({
     groupName: group.groupName,
-    examples: group.examples.map((example) => ({
-      ...example,
-      renderer: example.renderer ?? resolveExampleRenderer(group.groupName, example),
-      devices: {
-        sensors: normalizeMatrixEntries(example.devices.sensors),
-        initialValues: Object.fromEntries(
-          Object.entries(example.devices.initialValues ?? {}).map(([nodeId, sensors]) => [
-            nodeId,
-            normalizeMatrixEntries(sensors),
-          ]),
-        ),
-      },
-      world:
-        example.world ??
-        serializeWorldDocument(
+    examples: group.examples.map((example) => {
+      let world = example.world;
+      if (!world) {
+        const deviceShape = (example as any).devices ?? { sensors: {}, initialValues: {} };
+        world = serializeWorldDocument(
           parseWorldDocument(
             serializeWorldDocument({
               network: {
@@ -98,19 +88,35 @@ function normalizeExampleGroups(groups: ExampleGroup[]): ExampleGroup[] {
               },
               neighbour: { range: 70 },
               deviceShape: {
-                sensors: normalizeMatrixEntries(example.devices.sensors),
+                sensors: normalizeMatrixEntries(deviceShape.sensors),
                 initialValues: Object.fromEntries(
-                  Object.entries(example.devices.initialValues ?? {}).map(([nodeId, sensors]) => [
+                  Object.entries(deviceShape.initialValues ?? {}).map(([nodeId, sensors]) => [
                     nodeId,
-                    normalizeMatrixEntries(sensors),
+                    normalizeMatrixEntries(sensors as Record<string, unknown>),
                   ]),
                 ),
               },
               seed: { configSeed: 0, simulationSeed: 0, randomSensorSeed: 0 },
             }),
           ),
-        ),
-    })),
+        );
+      }
+
+      const parsedWorld = parseWorldDocument(world);
+      const sensors = Object.keys(parsedWorld.deviceShape.sensors).filter((name) => name !== "matrix");
+
+      const normalizedExample = {
+        ...example,
+        world,
+      };
+
+      const renderer = example.renderer ?? resolveExampleRenderer(group.groupName, normalizedExample, sensors);
+
+      return {
+        ...normalizedExample,
+        renderer,
+      };
+    }),
   }));
 }
 
@@ -137,19 +143,79 @@ function normalizeValue(value: unknown): unknown {
   return value;
 }
 
-function resolveExampleRenderer(groupName: string, example: ExampleGroup["examples"][number]): string {
-  const sensors = Object.keys(example.devices.sensors ?? {}).filter((name) => name !== "matrix");
+function resolveExampleRenderer(groupName: string, example: ExampleDefinition, sensors: string[]): string {
   const lowercaseGroup = groupName.toLowerCase();
 
   switch (example.name) {
-    case "Hello scafi":
-      return createValueRenderer({
+    case "Hello scafi": {
+      const baseRenderer = createValueRenderer({
         showIdExpr: "false",
         renderNodeOptions: {
           selectedRing: true,
           exportText: true,
         },
       });
+      const comment = [
+        "/**",
+        " * ==========================================",
+        " * SUPPORTED RENDERING CONFIGURATION OPTIONS",
+        " * ==========================================",
+        " * ",
+        " * You can customize the look and feel of the simulation using the options below:",
+        " * ",
+        " * 1. BASIC STYLING PROPERTIES",
+        " *    - nodeSize: number | (context) => number",
+        " *      The size of the nodes (e.g., 12 or graph.nodes.length > 160 ? 8 : 12)",
+        " *    - fontSize: number | (context) => number",
+        " *      The font size for labels (e.g., 10 or graph.nodes.length > 160 ? 10 : 13)",
+        " *    - showId: boolean | (context) => boolean",
+        " *      Whether to show node IDs (e.g., false or graph.nodes.length <= 100)",
+        " *    - rendererType: \"standard\" | \"lightweight\"",
+        " *      \"standard\" renders full details; \"lightweight\" offers optimized performance for large networks.",
+        " * ",
+        " * 2. CUSTOM RENDERING HOOKS",
+        " *    - renderNode(context): Custom draw logic for each node.",
+        " *      Use RendererKit.composeNode(context, ...plugins) to layer visual effects.",
+        " *    - renderEdge(context): Custom draw logic for each communication link.",
+        " *      Use RendererKit.composeEdge(context, ...plugins) to style connections.",
+        " * ",
+        " * 3. RENDERER_KIT NODE PLUGINS (RendererKit.node)",
+        " *    - selectedRing(options)",
+        " *      Draws a ring around the currently selected node(s).",
+        " *      Options: { radius, stroke, strokeWidth, fill, fillOpacity, className }",
+        " *    - exportText(options)",
+        " *      Displays the current export value or a custom label above/below the node.",
+        " *      Options: { label, format, digits, x, y, fill, fontSize, className, anchor }",
+        " *    - sensorDot(sensorName, options)",
+        " *      Draws a colored indicator dot on the node if a boolean sensor is active.",
+        " *      Options: { x, y, radius, fill, fillOpacity, stroke, strokeWidth, className }",
+        " *    - matrix()",
+        " *      Enables rendering of node LED matrix grids if present.",
+        " *    - booleans()",
+        " *      Enables the generic rendering of boolean sensor values on nodes.",
+        " *    - gradient()",
+        " *      Enables node background gradient/coloration based on local fields.",
+        " *      (e.g. used in \"Collect data\" or \"Gradient\" to display temperature/colors)",
+        " *    - exportEffect()",
+        " *      Enables visualization of the export value.",
+        " *    - velocityArrow(options)",
+        " *      Draws a directional arrow on nodes based on their vx and vy velocities.",
+        " *      Options: { length, stroke, strokeWidth, className }",
+        " *    - sizeRange(minInput, maxInput, minOutput, maxOutput, label)",
+        " *      Proportionally scales the size of each node based on a specific label value.",
+        " * ",
+        " * 4. RENDERER_KIT EDGE PLUGINS (RendererKit.edge)",
+        " *    - highlightNeighborhood(widthDelta, options)",
+        " *      Highlights lines connected to the selected neighborhood nodes.",
+        " *      Options: { className, stroke, strokeWidth, strokeOpacity }",
+        " *    - muteNonNeighborhood(opacity, options)",
+        " *      Dims or hides lines that do not belong to the selected neighborhood.",
+        " *      Options: { hidden, className, stroke, strokeWidth, strokeOpacity }",
+        " */",
+        "",
+      ].join("\n");
+      return comment + baseRenderer;
+    }
     case "Sense":
       return createSensorRenderer(["sensor"], {
         renderNodeOptions: {
@@ -252,6 +318,9 @@ function resolveExampleRenderer(groupName: string, example: ExampleGroup["exampl
     case "Movement 2D lib: rotation":
     case "Movement 2D lib: go to":
     case "Movement 2D lib: explore":
+    case "Movement: repulsion":
+    case "Movement: going to leader":
+    case "Movement: flocking":
       return createMovementRenderer(sensors, {
         renderNodeOptions: {
           selectedRing: true,
@@ -496,7 +565,6 @@ function createNeighborhoodEdgeRendererSource(widthDelta: number): string {
   return RendererKit.composeEdge(
     context,
     RendererKit.edge.highlightNeighborhood(${widthDelta}),
-    RendererKit.edge.muteNonNeighborhood(0.24),
   );
 }`;
 }

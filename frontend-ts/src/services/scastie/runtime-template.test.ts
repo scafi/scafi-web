@@ -47,6 +47,7 @@ world
     expect(wrapped).toContain("trait RuntimeValueEncoder[-A]");
     expect(wrapped).toContain("trait RuntimeDeployment");
     expect(wrapped).toContain("def sensorEncoded(name: String, value: js.Any): WorldDocumentBuilder");
+    expect(wrapped).toContain("def randomSensor(name: String, min: Double, max: Double): WorldDocumentBuilder");
     expect(wrapped).toContain("def position(nodeId: String, x: Double, y: Double): WorldDocumentBuilder");
     expect(wrapped).toContain("def deploy(deployment: RuntimeDeployment): WorldDocumentBuilder");
     expect(wrapped).toContain("def configure(update: js.Dynamic => Unit): WorldDocumentBuilder");

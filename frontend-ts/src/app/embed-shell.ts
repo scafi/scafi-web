@@ -14,6 +14,7 @@ import {
 
 import type {
   EditorDocument,
+  ExampleDefinition,
   ExampleGroup,
   SupportConfiguration,
   Vec2,
@@ -214,7 +215,6 @@ export class ScafiWebEmbedShell {
     this.codeEditor.loadExample({
       name: exampleName ?? "Custom Embed",
       body: initialCode,
-      devices: initialConfig.deviceShape,
       world: serializeWorldDocument(initialConfig),
       renderer: customRendererDoc
     }, initialConfig);
@@ -679,6 +679,9 @@ export class ScafiWebEmbedShell {
     fallback.visibleSensors = new Set(availableSensors);
     const evaluator = this.getRendererEvaluator();
     if (!evaluator) {
+      Promise.resolve().then(() => {
+        this.app.store.setLinksEnabled(fallback.showLinks);
+      });
       return fallback;
     }
 
@@ -704,18 +707,25 @@ export class ScafiWebEmbedShell {
       }
       this.nodeRenderer = output?.renderNode;
       this.edgeRenderer = output?.renderEdge;
-      return resolveVisualizationState(fallback, output, availableSensors);
+      const resolved = resolveVisualizationState(fallback, output, availableSensors);
+      Promise.resolve().then(() => {
+        this.app.store.setLinksEnabled(resolved.showLinks);
+      });
+      return resolved;
     } catch (error) {
       this.rendererDocumentError = error instanceof Error ? error.message : String(error);
       this.nodeRenderer = undefined;
       this.edgeRenderer = undefined;
+      Promise.resolve().then(() => {
+        this.app.store.setLinksEnabled(fallback.showLinks);
+      });
       return fallback;
     }
   }
 }
 
 // Helpers
-function buildExampleConfiguration(example: any): SupportConfiguration {
+function buildExampleConfiguration(example: ExampleDefinition): SupportConfiguration {
   if (example.world) {
     const parsedWorld = tryParseWorldDocument(example.world);
     if (parsedWorld) {
@@ -735,7 +745,7 @@ function buildExampleConfiguration(example: any): SupportConfiguration {
       neighbour: {
         range: 70,
       },
-      deviceShape: example.devices,
+      deviceShape: { sensors: {}, initialValues: {} },
       seed: {
         configSeed: 0,
         simulationSeed: 0,

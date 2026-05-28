@@ -13,6 +13,7 @@ export type VisualizationState = {
   renderBooleans: boolean;
   renderGradient: boolean;
   renderExportEffect: boolean;
+  showLinks: boolean;
 };
 
 export type RendererDocumentDefaults = Omit<VisualizationState, "visibleSensors"> & {
@@ -362,6 +363,7 @@ return {
   nodeSize: dense ? 8 : defaults.nodeSize,
   fontSize: dense ? 10 : defaults.fontSize,
   showId: defaults.showId && !dense,
+  showLinks: defaults.showLinks && !dense, // Automatically disable links if too dense to optimize!
   rendererType: "standard",
   renderNode(context) {
     return RendererKit.composeNode(
@@ -395,6 +397,7 @@ export function createDefaultVisualizationState(): VisualizationState {
     renderBooleans: false,
     renderGradient: false,
     renderExportEffect: false,
+    showLinks: true,
   };
 }
 
@@ -411,6 +414,7 @@ export function visualizationToRendererDefaults(visualization: VisualizationStat
     renderBooleans: visualization.renderBooleans,
     renderGradient: visualization.renderGradient,
     renderExportEffect: visualization.renderExportEffect,
+    showLinks: visualization.showLinks,
   };
 }
 
@@ -444,6 +448,7 @@ export function resolveVisualizationState(
     renderBooleans: readBoolean(output?.renderBooleans, managedBooleanFallback(fallback.renderBooleans)),
     renderGradient: readBoolean(output?.renderGradient, managedBooleanFallback(fallback.renderGradient)),
     renderExportEffect: readBoolean(output?.renderExportEffect, managedBooleanFallback(fallback.renderExportEffect)),
+    showLinks: readBoolean(output?.showLinks, fallback.showLinks),
   };
 }
 

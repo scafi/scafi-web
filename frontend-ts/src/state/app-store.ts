@@ -13,6 +13,7 @@ import { RuntimeConfigSerializer } from "../services/serialization/runtime-confi
 import { StandaloneRuntimeLoader } from "../services/standalone/standalone-runtime-loader";
 import { StandaloneSessionManager } from "../services/standalone/session-manager";
 import { StandaloneStateAdapter } from "../services/standalone/standalone-state-adapter";
+import { tryParseWorldDocument } from "../services/config/world-document";
 
 type SensorMap = Record<string, Record<string, unknown>>;
 
@@ -94,6 +95,7 @@ export class AppStore {
   private daemon?: { cancel(): void };
   private pendingSensorChanges = new Map<NodeId, Map<string, unknown>>();
   private pendingPositionChanges = new Map<NodeId, Vec2>();
+  private showLinks = true;
 
   constructor(
     private readonly dependencies: AppStoreDependencies,
@@ -105,7 +107,7 @@ export class AppStore {
     this.backend = buildBackend(initialConfiguration);
     this.state = {
       configuration: initialConfiguration,
-      graph: graphFromBackend(this.backend),
+      graph: graphFromBackend(this.backend, undefined, this.showLinks),
       execution: {
         status: "idle",
         generation: 0,
@@ -122,6 +124,13 @@ export class AppStore {
     return this.state;
   }
 
+  setLinksEnabled(enabled: boolean): void {
+    if (this.showLinks !== enabled) {
+      this.showLinks = enabled;
+      this.refreshLocalGraph();
+    }
+  }
+
   subscribe(listener: (state: AppState) => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -135,7 +144,7 @@ export class AppStore {
     this.state = {
       ...this.state,
       configuration,
-      graph: graphFromBackend(this.backend),
+      graph: graphFromBackend(this.backend, undefined, this.showLinks),
       execution: {
         ...this.state.execution,
         status: this.state.standalone.active ? "ready" : "idle",
@@ -157,7 +166,19 @@ export class AppStore {
     this.pendingSensorChanges.clear();
     this.pendingPositionChanges.clear();
     const generation = this.state.execution.generation + 1;
+
+    let configuration = this.state.configuration;
+    if (worldDocument) {
+      const parsed = tryParseWorldDocument(worldDocument);
+      if (parsed) {
+        configuration = parsed;
+        this.backend = buildBackend(parsed);
+      }
+    }
+
     this.patch({
+      configuration,
+      graph: graphFromBackend(this.backend, undefined, this.showLinks),
       execution: {
         ...this.state.execution,
         status: "compiling",
@@ -233,7 +254,7 @@ export class AppStore {
     if (!this.isStandaloneGenerationCurrent(expectedGeneration)) {
       return;
     }
-    const runtimeState = await this.sessionManager.getState();
+    const runtimeState = await this.sessionManager.getState({ excludeEdges: !this.showLinks, compact: true });
     if (!this.isStandaloneGenerationCurrent(expectedGeneration)) {
       return;
     }
@@ -379,7 +400,7 @@ export class AppStore {
   private async attachStandaloneRuntime(runtime: StandaloneRuntimeApi, result: CompileResult, generation: number): Promise<void> {
     this.sessionManager.attach(runtime);
     await this.sessionManager.initialize(runtimeBootstrapConfiguration(this.state.configuration), {}, {});
-    this.syncFromRuntimeState(await this.sessionManager.getState());
+    this.syncFromRuntimeState(await this.sessionManager.getState({ excludeEdges: !this.showLinks, compact: true }));
     if (generation !== this.state.execution.generation) {
       await this.sessionManager.clear();
       return;
@@ -406,7 +427,7 @@ export class AppStore {
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
-      const runtimeState = await this.sessionManager.getState();
+      const runtimeState = await this.sessionManager.getState({ excludeEdges: !this.showLinks, compact: true });
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
@@ -429,7 +450,7 @@ export class AppStore {
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
-      const runtimeState = await this.sessionManager.getState();
+      const runtimeState = await this.sessionManager.getState({ excludeEdges: !this.showLinks, compact: true });
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
@@ -452,7 +473,7 @@ export class AppStore {
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
-      const runtimeState = await this.sessionManager.getState();
+      const runtimeState = await this.sessionManager.getState({ excludeEdges: !this.showLinks, compact: true });
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
@@ -495,7 +516,7 @@ export class AppStore {
     }
 
     this.patch({
-      graph: graphFromBackend(this.backend, parsed.graph.edges),
+      graph: graphFromBackend(this.backend, this.showLinks ? parsed.graph.edges : [], this.showLinks),
       execution: {
         ...this.state.execution,
         warnings: parsed.warnings,
@@ -536,7 +557,7 @@ export class AppStore {
 
   private refreshLocalGraph(): void {
     this.patch({
-      graph: graphFromBackend(this.backend, this.state.graph.edges),
+      graph: graphFromBackend(this.backend, this.showLinks ? this.state.graph.edges : [], this.showLinks),
       standalone: {
         ...this.state.standalone,
         authoritative: false,
@@ -754,7 +775,11 @@ function buildBackend(configuration: SupportConfiguration): BackendState {
   return { devices, neighbours, exports };
 }
 
-function graphFromBackend(backend: BackendState, existingEdges?: { from: NodeId; to: NodeId }[]): GraphSnapshot {
+function graphFromBackend(
+  backend: BackendState,
+  existingEdges?: { from: NodeId; to: NodeId }[],
+  showLinks: boolean = true,
+): GraphSnapshot {
   return {
     nodes: Array.from(backend.devices.values()).map((device) => ({
       id: device.id,
@@ -763,9 +788,11 @@ function graphFromBackend(backend: BackendState, existingEdges?: { from: NodeId;
         ? { ...device.sensors, export: backend.exports.get(device.id) }
         : { ...device.sensors },
     })),
-    edges: existingEdges ?? Array.from(backend.neighbours.entries()).flatMap(([id, ids]) =>
-      Array.from(ids).map((otherId) => ({ from: id, to: otherId })),
-    ),
+    edges: showLinks
+      ? (existingEdges ?? Array.from(backend.neighbours.entries()).flatMap(([id, ids]) =>
+          Array.from(ids).map((otherId) => ({ from: id, to: otherId })),
+        ))
+      : [],
   };
 }
 
