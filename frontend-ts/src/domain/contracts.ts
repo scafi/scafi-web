@@ -162,7 +162,17 @@ export interface ExampleDefinition {
   body: string;
   world?: string;
   renderer?: string;
+  mode?: "easy-scala" | "full-scala";
 }
+
+export interface UserSession {
+  name: string;
+  body: string;
+  mode: "easy-scala" | "full-scala";
+  world?: string;
+  renderer?: string;
+}
+
 
 export interface ExampleGroup {
   groupName: string;

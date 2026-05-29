@@ -19,5 +19,9 @@ describe("ConfigRepository", () => {
     expect(repository.loadEditorDocument()).toEqual({ code: "mid()", mode: "easy-scala" });
     expect(repository.loadWorldDocument()).toBe('{"network":{"kind":"grid"}}');
     expect(repository.loadRendererDocument()).toBe('return { nodeSize: 14 };');
+
+    const sessions = [{ name: "Test Session", body: "code", mode: "easy-scala" as const }];
+    repository.saveUserSessions(sessions);
+    expect(repository.loadUserSessions()).toEqual(sessions);
   });
 });

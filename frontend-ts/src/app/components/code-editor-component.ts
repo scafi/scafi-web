@@ -191,10 +191,16 @@ export class CodeEditorComponent {
     }
     this.savedViews = {};
     this.savedStates = {};
-    this.easyScalaBuffer = example.body;
-    this.fullScalaBuffer = convertEasyScalaToFull(example.body);
-    this.activeEditorMode = "easy-scala";
-    this.editorDocument = { code: this.easyScalaBuffer, mode: "easy-scala" };
+    const mode = example.mode ?? "easy-scala";
+    if (mode === "full-scala") {
+      this.fullScalaBuffer = example.body;
+      this.easyScalaBuffer = "";
+    } else {
+      this.easyScalaBuffer = example.body;
+      this.fullScalaBuffer = convertEasyScalaToFull(example.body);
+    }
+    this.activeEditorMode = mode;
+    this.editorDocument = { code: example.body, mode };
     this.worldDocument = example.world ?? serializeWorldDocument(exampleConfiguration);
     this.rendererDocument = example.renderer ?? defaultRendererDocument;
     

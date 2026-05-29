@@ -1,4 +1,4 @@
-import type { EditorDocument, ExampleGroup, SupportConfiguration, Vec2 } from "../domain/contracts";
+import type { EditorDocument, ExampleGroup, SupportConfiguration, Vec2, UserSession } from "../domain/contracts";
 import { AppStore, type AppState } from "../state/app-store";
 import { EventBus } from "../state/event-bus";
 import { ConfigRepository } from "../services/config/config-repository";
@@ -17,6 +17,7 @@ export class ScafiWebApp {
     private readonly exampleService: ExampleService,
     private readonly bus = new EventBus<AppEvent>(),
   ) {}
+
 
   subscribe(listener: (event: AppEvent) => void): () => void {
     const unsubscribeEvents = this.bus.subscribe(listener);
@@ -76,9 +77,75 @@ export class ScafiWebApp {
 
   async loadExamples(): Promise<ExampleGroup[]> {
     const examples = await this.exampleService.loadExamples();
-    this.bus.publish({ type: "examples-loaded", examples });
-    return examples;
+    const userSessions = this.configRepository.loadUserSessions();
+    const merged = [...examples];
+    if (userSessions.length > 0) {
+      merged.push({
+        groupName: "My Saved Files",
+        examples: userSessions.map((session) => ({
+          name: session.name,
+          body: session.body,
+          mode: session.mode,
+          world: session.world,
+          renderer: session.renderer,
+        })),
+      });
+    }
+    this.bus.publish({ type: "examples-loaded", examples: merged });
+    return merged;
   }
+
+  getUserSessions(): UserSession[] {
+    return this.configRepository.loadUserSessions();
+  }
+
+  saveUserSession(session: UserSession): void {
+    const sessions = this.configRepository.loadUserSessions();
+    const index = sessions.findIndex((s) => s.name === session.name);
+    if (index >= 0) {
+      sessions[index] = session;
+    } else {
+      sessions.push(session);
+    }
+    this.configRepository.saveUserSessions(sessions);
+    void this.refreshExamples();
+  }
+
+  deleteUserSession(name: string): void {
+    const sessions = this.configRepository.loadUserSessions();
+    const filtered = sessions.filter((s) => s.name !== name);
+    this.configRepository.saveUserSessions(filtered);
+    void this.refreshExamples();
+  }
+
+  private async refreshExamples(): Promise<void> {
+    let builtIn: ExampleGroup[] = [];
+    try {
+      builtIn = await this.exampleService.loadRemote();
+    } catch {
+      try {
+        builtIn = this.exampleService.loadCached();
+      } catch {
+        builtIn = [];
+      }
+    }
+    const userSessions = this.configRepository.loadUserSessions();
+    const merged = [...builtIn];
+    if (userSessions.length > 0) {
+      merged.push({
+        groupName: "My Saved Files",
+        examples: userSessions.map((session) => ({
+          name: session.name,
+          body: session.body,
+          mode: session.mode,
+          world: session.world,
+          renderer: session.renderer,
+        })),
+      });
+    }
+    this.bus.publish({ type: "examples-loaded", examples: merged });
+  }
+
 
   async loadScript(document: EditorDocument, worldDocument?: string): Promise<void> {
     this.saveEditor(document);

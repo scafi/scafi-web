@@ -26,6 +26,8 @@ describe("ScafiWebApp", () => {
       saveWorldDocument: vi.fn(),
       loadRendererDocument: vi.fn(() => undefined),
       saveRendererDocument: vi.fn(),
+      loadUserSessions: vi.fn(() => []),
+      saveUserSessions: vi.fn(),
     };
     const examples: ExampleGroup[] = [{ groupName: "Basic", examples: [] }];
     const exampleService = {

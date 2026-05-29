@@ -326,13 +326,21 @@ export class ScafiWebUiShell {
                     <button id="document-tab-renderer" class="editor-tab ${this.activePlaygroundDocument === "renderer" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "renderer")}">Renderer (JS)</button>
                   </div>
                   <div class="toolbar-row compact-toolbar-row">
-                    <label class="field compact-field">
-                      <span>Examples</span>
-                      <select id="example-select">
-                        <option value="">Choose an example...</option>
-                        ${this.renderExampleOptions()}
-                      </select>
-                    </label>
+                    <div class="examples-session-container">
+                      <label class="field compact-field">
+                        <span>Examples & Custom Files</span>
+                        <select id="example-select">
+                          <option value="">Choose an example or custom file...</option>
+                          ${this.renderExampleOptions()}
+                        </select>
+                      </label>
+                      <div class="session-btn-group">
+                        <button id="session-save" class="icon-btn ghost" title="Save changes to active custom file" ${disabled(!this.isUserSessionActive())}>${iconSave()} Save</button>
+                        <button id="session-save-as" class="icon-btn ghost" title="Save as new custom file">${iconCopy()} Save As...</button>
+                        <button id="session-new" class="icon-btn ghost" title="Create new blank custom file">${iconFilePlus()} New</button>
+                        <button id="session-delete" class="icon-btn ghost danger" title="Delete this custom file" ${disabled(!this.isUserSessionActive())}>${iconTrash()} Delete</button>
+                      </div>
+                    </div>
                     ${
                       this.activePlaygroundDocument === "code"
                         ? `<div class="field mode-field">
@@ -853,6 +861,89 @@ export class ScafiWebUiShell {
       this.render();
     });
 
+    this.bindButton("session-save", () => {
+      if (!this.isUserSessionActive()) return;
+      const name = this.selectedExample;
+      const body = this.codeEditor.getEditorDocument().code;
+      const mode = this.codeEditor.getEditorDocument().mode;
+      const world = this.codeEditor.getWorldDocument();
+      const renderer = this.codeEditor.getRendererDocument();
+      this.app.saveUserSession({ name, body, mode, world, renderer });
+      this.render();
+    });
+
+    this.bindButton("session-save-as", () => {
+      const name = prompt("Enter a name for the new file:");
+      if (!name) return;
+      const trimmed = name.trim();
+      if (trimmed.length === 0) return;
+
+      const userSessions = this.app.getUserSessions();
+      if (userSessions.some((s) => s.name === trimmed)) {
+        alert("A file with this name already exists.");
+        return;
+      }
+
+      const body = this.codeEditor.getEditorDocument().code;
+      const mode = this.codeEditor.getEditorDocument().mode;
+      const world = this.codeEditor.getWorldDocument();
+      const renderer = this.codeEditor.getRendererDocument();
+
+      this.app.saveUserSession({ name: trimmed, body, mode, world, renderer });
+      this.selectedExample = trimmed;
+      this.render();
+    });
+
+    this.bindButton("session-new", () => {
+      const name = prompt("Enter a name for the new file:");
+      if (!name) return;
+      const trimmed = name.trim();
+      if (trimmed.length === 0) return;
+
+      const userSessions = this.app.getUserSessions();
+      if (userSessions.some((s) => s.name === trimmed)) {
+        alert("A file with this name already exists.");
+        return;
+      }
+
+      const defaultCode = [
+        "// A brand new ScaFi custom file",
+        "// Click 'Load' to execute this simulation!",
+        "",
+        "val gradient = rep(0.0) { d => d + 1.0 }",
+        "gradient",
+      ].join("\n");
+
+      this.app.saveUserSession({
+        name: trimmed,
+        body: defaultCode,
+        mode: "easy-scala",
+        world: undefined,
+        renderer: undefined,
+      });
+
+      this.selectedExample = trimmed;
+      const example = { name: trimmed, body: defaultCode, mode: "easy-scala" as const };
+      const exampleConfiguration = buildExampleConfiguration(example);
+      this.configurationDraft = configurationToDraft(exampleConfiguration);
+      this.codeEditor.loadExample(example, exampleConfiguration);
+      this.rendererDocumentError = undefined;
+      this.invalidateRendererEvaluator();
+      this.app.evolve(exampleConfiguration);
+      this.app.resetExecution();
+      this.render();
+    });
+
+    this.bindButton("session-delete", () => {
+      if (!this.isUserSessionActive()) return;
+      if (!confirm(`Are you sure you want to delete "${this.selectedExample}"?`)) {
+        return;
+      }
+      this.app.deleteUserSession(this.selectedExample);
+      this.selectedExample = "";
+      this.render();
+    });
+
     this.bindButton("document-tab-code", () => {
       this.codeEditor.setActivePlaygroundDocument("code");
     });
@@ -1017,6 +1108,15 @@ export class ScafiWebUiShell {
   private findExample(name: string): ExampleDefinition | undefined {
     return this.examples.flatMap((group) => group.examples).find((example) => example.name === name);
   }
+
+  private isUserSessionActive(): boolean {
+    if (!this.selectedExample) {
+      return false;
+    }
+    const userSessions = this.app.getUserSessions();
+    return userSessions.some((session) => session.name === this.selectedExample);
+  }
+
 
   private bindButton(id: string, action: () => void | Promise<void>): void {
     this.root.querySelector<HTMLButtonElement>(`#${id}`)?.addEventListener("click", () => {
@@ -1335,6 +1435,23 @@ function iconEye(): string {
 function iconEyeOff(): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`;
 }
+
+function iconSave(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`;
+}
+
+function iconTrash(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
+}
+
+function iconFilePlus(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`;
+}
+
+function iconCopy(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+}
+
 
 function numberField(label: string, id: string, value: number): string {
   return `<label class="field"><span>${escapeHtml(label)}</span><input id="${id}" type="number" value="${value}" /></label>`;

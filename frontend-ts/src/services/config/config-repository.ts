@@ -1,4 +1,4 @@
-import type { EditorDocument, SupportConfiguration } from "../../domain/contracts";
+import type { EditorDocument, SupportConfiguration, UserSession } from "../../domain/contracts";
 import type { KeyValueStore } from "../browser/key-value-store";
 
 const CONFIGURATION_KEY = "configuration";
@@ -6,9 +6,19 @@ const EDITOR_DOCUMENT_KEY = "editor-document";
 const WORLD_DOCUMENT_KEY = "world-document";
 const RENDERER_DOCUMENT_KEY = "renderer-document";
 const THEME_KEY = "ui-theme";
+const USER_SESSIONS_KEY = "scafi-web-user-sessions";
 
 export class ConfigRepository {
   constructor(private readonly store: KeyValueStore) {}
+
+  saveUserSessions(sessions: UserSession[]): void {
+    this.store.set(USER_SESSIONS_KEY, JSON.stringify(sessions));
+  }
+
+  loadUserSessions(): UserSession[] {
+    return this.readJson<UserSession[]>(USER_SESSIONS_KEY) ?? [];
+  }
+
 
   saveConfiguration(configuration: SupportConfiguration): void {
     this.store.set(CONFIGURATION_KEY, JSON.stringify(configuration));

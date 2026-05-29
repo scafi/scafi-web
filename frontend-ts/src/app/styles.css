@@ -333,6 +333,31 @@ button:disabled {
   align-items: end;
 }
 
+.examples-session-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.session-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.session-btn-group button {
+  height: 42px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 14px;
+}
+
+
+
 .viz-header-actions,
 .interaction-toggle {
   justify-content: flex-end;
@@ -1962,6 +1987,174 @@ textarea {
   color: var(--muted) !important;
   margin-left: 8px !important;
   font-style: normal !important;
+}
+
+/* --- CodeMirror 6 Panels & Search Panel Premium Styling --- */
+
+/* Ensure the scroll container shrinks when a panel is shown, so the panel is fully visible within the editor surface */
+.editor-surface .cm-editor {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+.editor-surface .cm-scroller {
+  flex-grow: 1 !important;
+  flex-shrink: 1 !important;
+  min-height: 0 !important;
+}
+
+/* Ensure the panel container stays within the editor boundaries and matches theme styles */
+.editor-surface .cm-panels {
+  background: var(--bg-soft) !important;
+  color: var(--text) !important;
+  z-index: 10 !important;
+}
+
+.editor-surface .cm-panels-bottom {
+  border-top: 1px solid var(--line-strong) !important;
+}
+
+.editor-surface .cm-panels-top {
+  border-bottom: 1px solid var(--line-strong) !important;
+}
+
+/* Individual Panel & Search Panel Styling */
+.editor-surface .cm-panel.cm-search {
+  background: var(--bg-soft) !important;
+  color: var(--text) !important;
+  padding: 10px 14px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: inherit !important;
+}
+
+/* Text Input Fields */
+.editor-surface .cm-panel.cm-search .cm-textfield {
+  background: var(--bg) !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 8px !important;
+  color: var(--text) !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  outline: none !important;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace !important;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s !important;
+  min-width: 140px !important;
+  flex: 1 1 auto !important;
+}
+
+.editor-surface .cm-panel.cm-search .cm-textfield:focus {
+  border-color: var(--accent) !important;
+  background: var(--bg-soft) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft) !important;
+}
+
+.editor-surface .cm-panel.cm-search .cm-textfield::placeholder {
+  color: var(--muted) !important;
+  opacity: 0.7 !important;
+}
+
+/* Buttons (Next, Prev, Replace, etc.) */
+.editor-surface .cm-panel.cm-search button,
+.editor-surface .cm-panel.cm-search .cm-button {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 8px !important;
+  color: var(--text) !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  user-select: none !important;
+  flex: 0 0 auto !important;
+}
+
+/* Hover & Active states for buttons */
+.editor-surface .cm-panel.cm-search button:hover,
+.editor-surface .cm-panel.cm-search .cm-button:hover {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px var(--accent-soft) !important;
+}
+
+.editor-surface .cm-panel.cm-search button:active,
+.editor-surface .cm-panel.cm-search .cm-button:active {
+  transform: translateY(1px) !important;
+}
+
+/* Labels & Checkboxes (regexp, case-sensitive, match) */
+.editor-surface .cm-panel.cm-search label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  color: var(--muted) !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  padding: 4px 6px !important;
+  border-radius: 6px !important;
+  transition: background-color 0.2s, color 0.2s !important;
+}
+
+.editor-surface .cm-panel.cm-search label:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: var(--text) !important;
+}
+
+.editor-surface .cm-panel.cm-search label input[type="checkbox"] {
+  accent-color: var(--accent) !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Close button - visually distinguished and beautifully positioned */
+.editor-surface .cm-panel.cm-search button[name="close"] {
+  margin-left: auto !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--muted) !important;
+  font-size: 18px !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  flex: 0 0 auto !important;
+  transition: all 0.2s ease !important;
+}
+
+.editor-surface .cm-panel.cm-search button[name="close"]:hover {
+  background: rgba(255, 94, 126, 0.15) !important;
+  border-color: rgba(255, 94, 126, 0.2) !important;
+  color: var(--danger) !important;
+  box-shadow: none !important;
+}
+
+/* Specific overrides for light theme to ensure flawless color styling */
+[data-theme="light"] .editor-surface .cm-panel.cm-search label:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .editor-surface .cm-panel.cm-search button,
+[data-theme="light"] .editor-surface .cm-panel.cm-search .cm-button {
+  background: rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .editor-surface .cm-panel.cm-search button:hover,
+[data-theme="light"] .editor-surface .cm-panel.cm-search .cm-button:hover {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
 }
 
 /* --- Schermata di Compilazione (Loading Overlay & Animations) --- */
