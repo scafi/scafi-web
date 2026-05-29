@@ -33,6 +33,21 @@ function resolveFetch(fetchImpl?: typeof fetch): typeof fetch {
   return globalThis.fetch.bind(globalThis);
 }
 
+function cyrb53(str: string, seed = 0): string {
+  let h1 = 0xdeadbeef ^ seed,
+    h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0");
+}
+
 export class ScastieService {
   private readonly baseUrl: string;
   private readonly scafiVersion: string;
@@ -91,9 +106,39 @@ export class ScastieService {
   }
 
   async compile(code: string, mode: ScalaSourceMode, worldDocument?: string): Promise<CompileResult> {
+    const serializedInput = `${mode}:${worldDocument ?? ""}:${code}`;
+    const hash = cyrb53(serializedInput);
+    const cacheKey = `scafi_compiled_${hash}`;
+
+    try {
+      if (typeof globalThis !== "undefined" && globalThis.localStorage) {
+        const cached = globalThis.localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as CompileResult;
+          if (parsed && typeof parsed.javascript === "string") {
+            console.log(`[ScastieService] Serving cached compilation for ${hash}`);
+            return parsed;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[ScastieService] Failed to read from localStorage cache", e);
+    }
+
     const payload = this.buildPayload(code, mode, worldDocument);
     const snippetId = await this.postRun(payload);
-    return this.waitForJs(snippetId);
+    const result = await this.waitForJs(snippetId);
+
+    try {
+      if (typeof globalThis !== "undefined" && globalThis.localStorage && result && !result.runtimeError && result.errors.length === 0) {
+        globalThis.localStorage.setItem(cacheKey, JSON.stringify(result));
+        console.log(`[ScastieService] Cached successful compilation for ${hash}`);
+      }
+    } catch (e) {
+      console.warn("[ScastieService] Failed to write to localStorage cache", e);
+    }
+
+    return result;
   }
 
   async postRun(payload: CompilePayload): Promise<string> {
