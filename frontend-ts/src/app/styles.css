@@ -2881,3 +2881,9 @@ textarea {
 .is-clean-bg .graph-stage::before {
   background: transparent !important;
 }
+
+#session-share.copied {
+  background: rgba(0, 242, 155, 0.15) !important;
+  color: var(--success) !important;
+  border-color: rgba(0, 242, 155, 0.3) !important;
+}

@@ -209,6 +209,37 @@ export class CodeEditorComponent {
     this.app.saveEditor(this.editorDocument);
   }
 
+  loadSharedCode(code: string, mode: EditorDocument["mode"] = "easy-scala", world?: string, renderer?: string): void {
+    this.destroyCodeEditor();
+    for (const key in this.savedViews) {
+      this.savedViews[key as PlaygroundDocument]?.destroy();
+    }
+    this.savedViews = {};
+    this.savedStates = {};
+    
+    if (mode === "full-scala") {
+      this.fullScalaBuffer = code;
+      this.easyScalaBuffer = "";
+    } else {
+      this.easyScalaBuffer = code;
+      this.fullScalaBuffer = convertEasyScalaToFull(code);
+    }
+    this.activeEditorMode = mode;
+    this.editorDocument = { code, mode };
+    
+    if (world !== undefined) {
+      this.worldDocument = world;
+      this.app.saveWorldDocument(world);
+    }
+    if (renderer !== undefined) {
+      this.rendererDocument = renderer;
+      this.app.saveRendererDocument(renderer);
+    }
+    
+    this.app.saveEditor(this.editorDocument);
+  }
+
+
   switchEditorMode(newMode: EditorDocument["mode"]): void {
     if (newMode === this.activeEditorMode) {
       return;

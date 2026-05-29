@@ -133,6 +133,55 @@ export class ScafiWebUiShell {
 
     this.codeEditor.initialize(configuration);
     this.themeManager.load();
+
+    // Check for explicit code parameter override (raw or b64) from shared links
+    const params = new URLSearchParams(window.location.search);
+    const codeRaw = params.get("code");
+    const codeB64 = params.get("code_b64");
+    const modeParam = params.get("mode");
+    const worldRaw = params.get("world");
+    const worldB64 = params.get("world_b64");
+    const rendererRaw = params.get("renderer");
+    const rendererB64 = params.get("renderer_b64");
+    
+    let sharedCode: string | null = null;
+    if (codeRaw) {
+      sharedCode = codeRaw;
+    } else if (codeB64) {
+      sharedCode = decodeBase64(codeB64);
+    }
+
+    let sharedWorld: string | null = null;
+    if (worldRaw) {
+      sharedWorld = worldRaw;
+    } else if (worldB64) {
+      sharedWorld = decodeBase64(worldB64);
+    }
+
+    let sharedRenderer: string | null = null;
+    if (rendererRaw) {
+      sharedRenderer = rendererRaw;
+    } else if (rendererB64) {
+      sharedRenderer = decodeBase64(rendererB64);
+    }
+    
+    if (sharedCode) {
+      const mode = (modeParam === "full-scala" || modeParam === "advanced") ? "full-scala" : "easy-scala";
+      this.codeEditor.loadSharedCode(sharedCode, mode, sharedWorld ?? undefined, sharedRenderer ?? undefined);
+      
+      if (sharedWorld) {
+        const parsedConfig = tryParseWorldDocument(sharedWorld);
+        if (parsedConfig) {
+          this.app.evolve(parsedConfig);
+          this.configurationDraft = configurationToDraft(parsedConfig);
+        }
+      }
+      
+      // Clear URL parameters so they don't persist on subsequent reloads
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+
     this.selectedRendererType = (localStorage.getItem("scafi-web-renderer-type") as any) || "standard";
 
     this.app.subscribe((event) => {
@@ -339,6 +388,7 @@ export class ScafiWebUiShell {
                         <button id="session-save-as" class="icon-btn ghost" title="Save as new custom file">${iconCopy()} Save As...</button>
                         <button id="session-new" class="icon-btn ghost" title="Create new blank custom file">${iconFilePlus()} New</button>
                         <button id="session-delete" class="icon-btn ghost danger" title="Delete this custom file" ${disabled(!this.isUserSessionActive())}>${iconTrash()} Delete</button>
+                        <button id="session-share" class="icon-btn ghost" title="Share current code as a link">${iconShare()} Share</button>
                       </div>
                     </div>
                     ${
@@ -944,6 +994,41 @@ export class ScafiWebUiShell {
       this.render();
     });
 
+    this.bindButton("session-share", () => {
+      const code = this.codeEditor.getEditorDocument().code;
+      const mode = this.codeEditor.getEditorDocument().mode;
+      const world = this.codeEditor.getWorldDocument();
+      const renderer = this.codeEditor.getRendererDocument();
+      
+      const origin = window.location.origin + window.location.pathname;
+      const params = new URLSearchParams();
+      params.set("code_b64", encodeBase64(code));
+      if (mode !== "easy-scala") {
+        params.set("mode", mode);
+      }
+      
+      if (world && world.trim().length > 0) {
+        params.set("world_b64", encodeBase64(world));
+      }
+      if (renderer && renderer.trim().length > 0) {
+        params.set("renderer_b64", encodeBase64(renderer));
+      }
+      
+      const shareUrl = `${origin}?${params.toString()}`;
+      void navigator.clipboard.writeText(shareUrl);
+      
+      const shareBtn = this.root.querySelector<HTMLButtonElement>("#session-share");
+      if (shareBtn) {
+        const originalHtml = shareBtn.innerHTML;
+        shareBtn.innerHTML = `${iconCheck()} Copied!`;
+        shareBtn.classList.add("copied");
+        setTimeout(() => {
+          shareBtn.innerHTML = originalHtml;
+          shareBtn.classList.remove("copied");
+        }, 1500);
+      }
+    });
+
     this.bindButton("document-tab-code", () => {
       this.codeEditor.setActivePlaygroundDocument("code");
     });
@@ -1487,4 +1572,31 @@ function stringifyError(error: unknown): string {
 
 function nowMs(): number {
   return globalThis.performance?.now() ?? Date.now();
+}
+
+function iconShare(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
+}
+
+function iconCheck(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+}
+
+function encodeBase64(str: string): string {
+  try {
+    return btoa(unescape(encodeURIComponent(str)));
+  } catch (e) {
+    console.error("Base64 encoding failed:", e);
+    return "";
+  }
+}
+
+function decodeBase64(str: string): string {
+  try {
+    const normalized = str.replace(/-/g, "+").replace(/_/g, "/");
+    return decodeURIComponent(escape(atob(normalized)));
+  } catch (e) {
+    console.error("Base64 decoding failed:", e);
+    return "";
+  }
 }
