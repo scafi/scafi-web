@@ -35,9 +35,9 @@ export const defaultConfiguration: SupportConfiguration = {
     initialValues: {},
   },
   seed: {
-    configSeed: Date.now(),
-    simulationSeed: Date.now(),
-    randomSensorSeed: Date.now(),
+    configSeed: 0,
+    simulationSeed: 0,
+    randomSensorSeed: 0,
   },
 };
 

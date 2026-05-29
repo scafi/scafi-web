@@ -114,10 +114,38 @@ export class ScastieService {
       if (typeof globalThis !== "undefined" && globalThis.localStorage) {
         const cached = globalThis.localStorage.getItem(cacheKey);
         if (cached) {
-          const parsed = JSON.parse(cached) as CompileResult;
+          const parsed = JSON.parse(cached);
+          let result: CompileResult | undefined;
           if (parsed && typeof parsed.javascript === "string") {
+            result = parsed as CompileResult;
+          } else if (parsed && parsed.result && typeof parsed.result.javascript === "string") {
+            if (parsed.compressed) {
+              if (isCompressionSupported) {
+                try {
+                  const decompressedJs = await decompressString(parsed.result.javascript);
+                  result = { ...parsed.result, javascript: decompressedJs };
+                } catch (decErr) {
+                  console.warn("[ScastieService] Failed to decompress cached item", decErr);
+                }
+              } else {
+                console.warn("[ScastieService] Compression is not supported in this environment, cannot decompress cached item.");
+              }
+            } else {
+              result = parsed.result as CompileResult;
+            }
+
+            if (result && typeof result.javascript === "string") {
+              // Update timestamp on cache hit to maintain LRU without recompressing
+              try {
+                const updatedPayload = { ...parsed, timestamp: Date.now() };
+                globalThis.localStorage.setItem(cacheKey, JSON.stringify(updatedPayload));
+              } catch { /* ignore */ }
+            }
+          }
+
+          if (result && typeof result.javascript === "string") {
             console.log(`[ScastieService] Serving cached compilation for ${hash}`);
-            return parsed;
+            return result;
           }
         }
       }
@@ -125,13 +153,15 @@ export class ScastieService {
       console.warn("[ScastieService] Failed to read from localStorage cache", e);
     }
 
+    console.log(`[ScastieService] Cache miss for hash ${hash}. Compiling via Scastie...`);
+
     const payload = this.buildPayload(code, mode, worldDocument);
     const snippetId = await this.postRun(payload);
     const result = await this.waitForJs(snippetId);
 
     try {
       if (typeof globalThis !== "undefined" && globalThis.localStorage && result && !result.runtimeError && result.errors.length === 0) {
-        globalThis.localStorage.setItem(cacheKey, JSON.stringify(result));
+        await saveToLocalStorageWithEviction(cacheKey, result);
         console.log(`[ScastieService] Cached successful compilation for ${hash}`);
       }
     } catch (e) {
@@ -213,4 +243,142 @@ export class ScastieService {
       };
     });
   }
+}
+
+async function saveToLocalStorageWithEviction(key: string, result: CompileResult): Promise<void> {
+  if (typeof globalThis === "undefined" || !globalThis.localStorage) return;
+  const storage = globalThis.localStorage;
+
+  let finalResult = result;
+  let compressed = false;
+
+  if (isCompressionSupported) {
+    try {
+      const compressedJs = await compressString(result.javascript);
+      finalResult = { ...result, javascript: compressedJs };
+      compressed = true;
+    } catch (compErr) {
+      console.warn("[ScastieService] Failed to compress compilation result, saving uncompressed", compErr);
+    }
+  }
+
+  const cacheWrapper = {
+    result: finalResult,
+    compressed,
+    timestamp: Date.now()
+  };
+  const serialized = JSON.stringify(cacheWrapper);
+
+  try {
+    storage.setItem(key, serialized);
+    return;
+  } catch (e: any) {
+    const isQuotaError = e.name === "QuotaExceededError" || 
+                         e.name === "NS_ERROR_DOM_QUOTA_REACHED" || 
+                         e.code === 22 || 
+                         e.code === 1014;
+    if (!isQuotaError) {
+      throw e;
+    }
+  }
+
+  console.warn("[ScastieService] LocalStorage quota exceeded. Evicting old compiled scripts...");
+  
+  const scafiKeys: { key: string; timestamp: number }[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const k = storage.key(i);
+    if (k && k.startsWith("scafi_compiled_")) {
+      let timestamp = 0;
+      try {
+        const val = storage.getItem(k);
+        if (val) {
+          const parsed = JSON.parse(val);
+          if (parsed && typeof parsed.timestamp === "number") {
+            timestamp = parsed.timestamp;
+          }
+        }
+      } catch {
+        // ignore parsing errors
+      }
+      scafiKeys.push({ key: k, timestamp });
+    }
+  }
+
+  scafiKeys.sort((a, b) => a.timestamp - b.timestamp);
+
+  for (const entry of scafiKeys) {
+    if (entry.key === key) continue;
+    storage.removeItem(entry.key);
+    console.log(`[ScastieService] Evicted cached compilation: ${entry.key}`);
+    try {
+      storage.setItem(key, serialized);
+      console.log("[ScastieService] Successfully cached compilation after eviction");
+      return;
+    } catch (e: any) {
+      const isQuotaError = e.name === "QuotaExceededError" || 
+                           e.name === "NS_ERROR_DOM_QUOTA_REACHED" || 
+                           e.code === 22 || 
+                           e.code === 1014;
+      if (!isQuotaError) {
+        throw e;
+      }
+    }
+  }
+
+  throw new Error("Failed to write to localStorage cache even after evicting all other ScaFi cache items.");
+}
+
+const isCompressionSupported = typeof globalThis !== "undefined" && 
+                               "CompressionStream" in globalThis && 
+                               "DecompressionStream" in globalThis &&
+                               typeof Blob !== "undefined" &&
+                               typeof Response !== "undefined";
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  if (typeof FileReader !== "undefined") {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } else {
+    const arrayBuffer = await blob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    return buffer.toString("base64");
+  }
+}
+
+async function base64ToBlob(base64: string): Promise<Blob> {
+  try {
+    const response = await fetch(`data:application/octet-stream;base64,${base64}`);
+    return await response.blob();
+  } catch {
+    const binaryString = typeof atob !== "undefined" 
+      ? atob(base64) 
+      : Buffer.from(base64, "base64").toString("binary");
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: "application/octet-stream" });
+  }
+}
+
+async function compressString(str: string): Promise<string> {
+  const stream = new Blob([str]).stream();
+  const compressedStream = stream.pipeThrough(new (globalThis as any).CompressionStream("gzip"));
+  const response = new Response(compressedStream);
+  return blobToBase64(await response.blob());
+}
+
+async function decompressString(base64: string): Promise<string> {
+  const blob = await base64ToBlob(base64);
+  const decompressedStream = blob.stream().pipeThrough(new (globalThis as any).DecompressionStream("gzip"));
+  const response = new Response(decompressedStream);
+  return (await response.blob()).text();
 }

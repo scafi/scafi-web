@@ -94,4 +94,179 @@ describe("ScastieService", () => {
       }
     }
   });
+
+  it("evicts oldest items from localStorage when quota is exceeded", async () => {
+    const store: Record<string, string> = {};
+    const mockLocalStorage = {
+      length: 0,
+      getItem: (key: string) => store[key] || null,
+      setItem: (key: string, value: string) => {
+        if (Object.keys(store).length >= 2 && !store[key]) {
+          const err = new Error("Quota exceeded");
+          err.name = "QuotaExceededError";
+          throw err;
+        }
+        store[key] = value;
+        mockLocalStorage.length = Object.keys(store).length;
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+        mockLocalStorage.length = Object.keys(store).length;
+      },
+      key: (index: number) => Object.keys(store)[index] || null,
+      clear: () => {
+        for (const k in store) delete store[k];
+        mockLocalStorage.length = 0;
+      },
+    };
+
+    const originalLocalStorage = (globalThis as any).localStorage;
+    Object.defineProperty(globalThis, "localStorage", {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    });
+
+    try {
+      const fakeEventSource = new FakeEventSource();
+      const service = new ScastieService({
+        eventSourceFactory: () => fakeEventSource,
+      });
+
+      mockLocalStorage.setItem("scafi_compiled_old", JSON.stringify({
+        result: { javascript: "console.log('old');", warnings: [], errors: [] },
+        timestamp: 1000,
+      }));
+      mockLocalStorage.setItem("scafi_compiled_newer", JSON.stringify({
+        result: { javascript: "console.log('newer');", warnings: [], errors: [] },
+        timestamp: 2000,
+      }));
+
+      service.postRun = async () => {
+        setTimeout(() => {
+          fakeEventSource.emitMessage({
+            isDone: true,
+            scalaJsContent: "console.log('brand-new');",
+          });
+        }, 0);
+        return "snippet-brand-new";
+      };
+
+      const result = await service.compile("val x = 3", "full-scala");
+      expect(result.javascript).toBe("console.log('brand-new');");
+
+      expect(store["scafi_compiled_old"]).toBeUndefined();
+      expect(store["scafi_compiled_newer"]).toBeDefined();
+    } finally {
+      if (originalLocalStorage) {
+        Object.defineProperty(globalThis, "localStorage", {
+          value: originalLocalStorage,
+          writable: true,
+          configurable: true,
+        });
+      } else {
+        delete (globalThis as any).localStorage;
+      }
+    }
+  });
+
+  it("handles backward compatibility for uncompressed cached items", async () => {
+    const mockLocalStorage = {
+      getItem: () => JSON.stringify({
+        result: { javascript: "console.log('old-uncompressed');", warnings: [], errors: [] },
+        timestamp: Date.now()
+      }),
+      setItem: () => {},
+    };
+    
+    const originalLocalStorage = (globalThis as any).localStorage;
+    Object.defineProperty(globalThis, "localStorage", {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    });
+
+    try {
+      const service = new ScastieService();
+      const result = await service.compile("val x = 4", "full-scala");
+      expect(result.javascript).toBe("console.log('old-uncompressed');");
+    } finally {
+      if (originalLocalStorage) {
+        Object.defineProperty(globalThis, "localStorage", {
+          value: originalLocalStorage,
+          writable: true,
+          configurable: true,
+        });
+      } else {
+        delete (globalThis as any).localStorage;
+      }
+    }
+  });
+
+  it("compresses cache payloads if CompressionStream is supported", async () => {
+    const store: Record<string, string> = {};
+    const mockLocalStorage = {
+      getItem: (key: string) => store[key] || null,
+      setItem: (key: string, value: string) => { store[key] = value; },
+    };
+    
+    const originalLocalStorage = (globalThis as any).localStorage;
+    Object.defineProperty(globalThis, "localStorage", {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    });
+
+    try {
+      const fakeEventSource = new FakeEventSource();
+      const service = new ScastieService({
+        eventSourceFactory: () => fakeEventSource,
+      });
+
+      service.postRun = async () => {
+        setTimeout(() => {
+          fakeEventSource.emitMessage({
+            isDone: true,
+            scalaJsContent: "console.log('to-be-compressed');",
+          });
+        }, 0);
+        return "snippet-compress";
+      };
+
+      const result = await service.compile("val x = 99", "full-scala");
+      expect(result.javascript).toBe("console.log('to-be-compressed');");
+
+      const cacheKeys = Object.keys(store);
+      expect(cacheKeys.length).toBe(1);
+      const cachedVal = JSON.parse(store[cacheKeys[0]]);
+      
+      const isCompressionAvailable = typeof globalThis !== "undefined" && 
+                                     "CompressionStream" in globalThis && 
+                                     "DecompressionStream" in globalThis &&
+                                     typeof Blob !== "undefined" &&
+                                     typeof Response !== "undefined";
+                                     
+      if (isCompressionAvailable) {
+        expect(cachedVal.compressed).toBe(true);
+        expect(cachedVal.result.javascript).not.toBe("console.log('to-be-compressed');");
+        
+        // Verify decompression path
+        const retrieveResult = await service.compile("val x = 99", "full-scala");
+        expect(retrieveResult.javascript).toBe("console.log('to-be-compressed');");
+      } else {
+        expect(cachedVal.compressed).toBe(false);
+        expect(cachedVal.result.javascript).toBe("console.log('to-be-compressed');");
+      }
+    } finally {
+      if (originalLocalStorage) {
+        Object.defineProperty(globalThis, "localStorage", {
+          value: originalLocalStorage,
+          writable: true,
+          configurable: true,
+        });
+      } else {
+        delete (globalThis as any).localStorage;
+      }
+    }
+  });
 });
