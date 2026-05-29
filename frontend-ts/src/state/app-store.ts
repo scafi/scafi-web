@@ -454,6 +454,14 @@ export class AppStore {
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
+
+      for (const [nodeId, syncedPos] of Object.entries(positionMap)) {
+        const pending = this.pendingPositionChanges.get(nodeId);
+        if (pending && pending.x === syncedPos.x && pending.y === syncedPos.y) {
+          this.pendingPositionChanges.delete(nodeId);
+        }
+      }
+
       this.syncFromRuntimeState(runtimeState);
     } catch (error) {
       if (!this.isStandaloneGenerationCurrent(generation)) {
@@ -477,6 +485,19 @@ export class AppStore {
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
+
+      for (const nodeId of nodeIds) {
+        const nodePending = this.pendingSensorChanges.get(nodeId);
+        if (nodePending) {
+          if (nodePending.get(sensorName) === value) {
+            nodePending.delete(sensorName);
+            if (nodePending.size === 0) {
+              this.pendingSensorChanges.delete(nodeId);
+            }
+          }
+        }
+      }
+
       this.syncFromRuntimeState(runtimeState);
     } catch (error) {
       if (!this.isStandaloneGenerationCurrent(generation)) {

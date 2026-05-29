@@ -783,4 +783,68 @@ describe("AppStore", () => {
       expect(node.position.y).toBeLessThanOrEqual(50);
     }
   });
+
+  it("clears pending position changes once syncStandalonePositions successfully completes", async () => {
+    const runtime = new FakeRuntime();
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => compileResult(runtime),
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    await store.loadScript("program", "full-scala");
+
+    store.moveNodes({ "1": { x: 42, y: 7 } });
+    expect(store.getState().graph.nodes.find((n) => n.id === "1")?.position).toEqual({ x: 42, y: 7 });
+
+    // Wait for the async syncStandalonePositions to complete
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    runtime.positions["1"] = { x: 100, y: 100 };
+    await store.tick();
+
+    expect(store.getState().graph.nodes.find((n) => n.id === "1")?.position).toEqual({ x: 100, y: 100 });
+  });
+
+  it("clears pending sensor changes once syncStandaloneSensors successfully completes", async () => {
+    const runtime = new FakeRuntime();
+    const store = new AppStore(
+      {
+        scastie: {
+          buildPayload: payloadResult,
+          compile: async () => compileResult(runtime),
+        },
+        runtimeLoader: {
+          loadFromJavascript() {
+            return runtime;
+          },
+        },
+        stateAdapter: new StandaloneStateAdapter(),
+      },
+      baseConfiguration,
+    );
+
+    await store.loadScript("program", "full-scala");
+
+    store.changeSensor("source", ["1"], true);
+    expect(store.getState().graph.nodes.find((n) => n.id === "1")?.labels.source).toBe(true);
+
+    // Wait for the async syncStandaloneSensors to complete
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    runtime.labels["1"] = { ...runtime.labels["1"], source: false };
+    await store.tick();
+
+    expect(store.getState().graph.nodes.find((n) => n.id === "1")?.labels.source).toBe(false);
+  });
 });
