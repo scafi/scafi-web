@@ -31,7 +31,6 @@ import { SimulationControlsComponent } from "./components/simulation-controls-co
 // Renderers
 import { SvgSimulationRenderer } from "./renderer/svg-simulation-renderer";
 import { LightweightSimulationRenderer } from "./renderer/lightweight-simulation-renderer";
-import { PixiSimulationRenderer } from "./renderer/pixi-simulation-renderer";
 import type { SimulationRenderer } from "./renderer/simulation-renderer";
 
 export class ScafiWebEmbedShell {
@@ -54,7 +53,7 @@ export class ScafiWebEmbedShell {
   private readonly simulationControls: SimulationControlsComponent;
 
   private renderer!: SimulationRenderer;
-  private selectedRendererType: "standard" | "lightweight" | "pixi" = "standard";
+  private selectedRendererType: "standard" | "lightweight" = "standard";
   private selectedNodeId: string | null = null;
 
   // Embed Customizations
@@ -286,9 +285,7 @@ export class ScafiWebEmbedShell {
     }
     mountPoint.innerHTML = "";
 
-    if (this.selectedRendererType === "pixi") {
-      this.renderer = new PixiSimulationRenderer();
-    } else if (this.selectedRendererType === "lightweight") {
+    if (this.selectedRendererType === "lightweight") {
       this.renderer = new LightweightSimulationRenderer();
     } else {
       this.renderer = new SvgSimulationRenderer();
@@ -697,11 +694,9 @@ export class ScafiWebEmbedShell {
       this.rendererDocumentError = undefined;
       const output = evaluator(context);
       const resolvedRendererType =
-        output?.rendererType === "pixi"
-          ? "pixi"
-          : output?.rendererType === "lightweight"
-            ? "lightweight"
-            : "standard";
+        output?.rendererType === "lightweight"
+          ? "lightweight"
+          : "standard";
       if (this.selectedRendererType !== resolvedRendererType) {
         this.selectedRendererType = resolvedRendererType;
       }

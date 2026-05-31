@@ -1,7 +1,19 @@
-import type { Vec2, GraphNode } from "../../domain/contracts";
+import type { Vec2, GraphNode, GraphEdge } from "../../domain/contracts";
 import type { AppState } from "../../state/app-store";
 import type { SimulationRenderer, SimulationRendererCallbacks } from "./simulation-renderer";
-import type { VisualizationState } from "../renderer-document";
+import type {
+  VisualizationState,
+  NodeRendererEvaluator,
+  EdgeRendererEvaluator,
+  NodeRenderDefaults,
+  NodeRenderOutput,
+  NodeRenderOverlay,
+  EdgeRenderDefaults,
+} from "../renderer-document";
+import {
+  normalizeNodeRenderLabels,
+  normalizeNodeRenderOverlays,
+} from "../renderer-document";
 import {
   resolveGraphViewport,
   projectPoint,
@@ -11,6 +23,13 @@ import {
   type GraphViewportState,
   type GraphViewportSize,
 } from "../graph-viewport";
+
+type ResolvedNodeRenderState = NodeRenderDefaults & {
+  hidden: boolean;
+  className?: string;
+};
+
+type ResolvedEdgeRenderState = EdgeRenderDefaults;
 
 type DragState = {
   nodeIds: string[];
@@ -56,6 +75,8 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
 
   private activeState?: AppState;
   private visualization?: VisualizationState;
+  private nodeRenderer?: NodeRendererEvaluator;
+  private edgeRenderer?: EdgeRendererEvaluator;
   private listenersAttached = false;
 
   private cachedTheme?: string;
@@ -152,12 +173,16 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     interactionMode: "pan" | "selection",
     graphPan: Vec2,
     visualization: VisualizationState,
+    nodeRenderer?: NodeRendererEvaluator,
+    edgeRenderer?: EdgeRendererEvaluator,
   ): void {
     this.activeState = state;
     this.selectedNodeIds = selectedNodeIds;
     this.graphInteractionMode = interactionMode;
     this.graphPan = graphPan;
     this.visualization = visualization;
+    this.nodeRenderer = nodeRenderer;
+    this.edgeRenderer = edgeRenderer;
 
     this.render();
   }
@@ -431,8 +456,6 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
       nodeMap.set(node.id, node);
     }
 
-    const showNeighborhood = this.visualization.showNeighborhood && this.selectedNodeIds.length > 0;
-    const nodeSize = this.visualization.nodeSize;
     const isLightTheme = document.documentElement.getAttribute("data-theme") === "light";
 
     // 2. Disegno degli Archi (Collegamenti di rete)
@@ -443,21 +466,34 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
         const to = nodeMap.get(edge.to);
         if (!from || !to) continue;
 
+        const edgeState = this.resolveEdgeRenderState(edge, from, to);
+        if (edgeState.hidden) continue;
+
         const fromPoint = projectPoint(from.position, projection);
         const toPoint = projectPoint(to.position, projection);
 
-        const isMuted = showNeighborhood && !this.selectedNodeIds.includes(edge.from) && !this.selectedNodeIds.includes(edge.to);
+        const isMuted = edgeState.className?.includes("is-muted") ?? false;
         
         this.ctx.beginPath();
         this.ctx.moveTo(fromPoint.x + this.graphPan.x, fromPoint.y + this.graphPan.y);
         this.ctx.lineTo(toPoint.x + this.graphPan.x, toPoint.y + this.graphPan.y);
         
-        if (isMuted) {
-          this.ctx.strokeStyle = isLightTheme ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.02)";
-          this.ctx.lineWidth = 0.75;
+        // Resolve stroke color
+        let resolvedStroke = edgeState.stroke;
+        if (!resolvedStroke) {
+          if (isMuted) {
+            resolvedStroke = isLightTheme ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.02)";
+          } else {
+            resolvedStroke = isLightTheme ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)";
+          }
+        }
+
+        this.ctx.strokeStyle = resolvedStroke;
+        this.ctx.lineWidth = edgeState.strokeWidth ?? (isMuted ? 0.75 : 1.25);
+        if (edgeState.strokeOpacity !== undefined) {
+          this.ctx.globalAlpha = edgeState.strokeOpacity;
         } else {
-          this.ctx.strokeStyle = isLightTheme ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)";
-          this.ctx.lineWidth = 1.25;
+          this.ctx.globalAlpha = 1.0;
         }
         this.ctx.stroke();
       }
@@ -476,26 +512,21 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     const accentCoolVar = this.cachedAccentCoolColor;
 
     // 3. Disegno dei Nodi
-    for (const node of graph.nodes) {
+    const totalNodes = graph.nodes.length;
+    for (let nodeIndex = 0; nodeIndex < totalNodes; nodeIndex++) {
+      const node = graph.nodes[nodeIndex];
       const point = projectPoint(node.position, projection);
       const px = point.x + this.graphPan.x;
       const py = point.y + this.graphPan.y;
       const selected = this.selectedNodeIds.includes(node.id);
 
+      const nodeState = this.resolveNodeRenderState(node, graph.edges, totalNodes, nodeIndex, exportRange);
+      if (nodeState.hidden) continue;
+
+      const nodeSize = nodeState.nodeSize;
+
       // Risolve il colore primario del nodo
-      let fill = selected ? "var(--accent)" : "var(--accent-cool)";
-      if (this.visualization.renderGradient) {
-        const num = resolveExportNumber(node.labels.export);
-        if (num !== undefined) {
-          fill = gradientColor(num, exportRange?.min, exportRange?.max);
-        }
-      }
-
-      const ledColor = node.labels.ledAll;
-      if (ledColor !== undefined && ledColor !== null && ledColor !== "") {
-        fill = String(ledColor);
-      }
-
+      let fill = nodeState.fill;
       // Risolve variabili CSS se presenti (usando i valori pre-risolti)
       let resolvedFill = fill;
       if (fill.startsWith("var(")) {
@@ -507,15 +538,6 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
         } else {
           resolvedFill = getComputedStyle(this.container || document.documentElement).getPropertyValue(varName) || (selected ? "#bb66ff" : "#39f3ff");
         }
-      }
-
-      let fillOpacity = 1;
-      let stroke = "";
-      let strokeWidth = 0;
-      if (this.visualization.renderExportEffect && typeof node.labels.export === "boolean") {
-        fillOpacity = node.labels.export ? 0.92 : 0.3;
-        stroke = node.labels.export ? "#00ffff" : "";
-        strokeWidth = node.labels.export ? 2 : 0;
       }
 
       this.ctx.save();
@@ -533,34 +555,150 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
       this.ctx.beginPath();
       this.ctx.arc(px, py, nodeSize, 0, Math.PI * 2);
       this.ctx.fillStyle = resolvedFill;
-      this.ctx.globalAlpha = fillOpacity;
+      this.ctx.globalAlpha = nodeState.fillOpacity;
       this.ctx.fill();
 
-      // Disegna il contorno dell'effetto export attivo
-      if (stroke) {
+      // Disegna il contorno dell'effetto export attivo (o qualsiasi stroke specificato)
+      if (nodeState.stroke) {
         this.ctx.beginPath();
         this.ctx.arc(px, py, nodeSize, 0, Math.PI * 2);
-        this.ctx.strokeStyle = stroke;
-        this.ctx.lineWidth = strokeWidth;
+        this.ctx.strokeStyle = nodeState.stroke;
+        this.ctx.lineWidth = nodeState.strokeWidth;
         this.ctx.globalAlpha = 1;
         this.ctx.stroke();
       }
 
       this.ctx.restore();
 
-      // 4. Disegno dei Testi (Label del nodo)
-      const showLabel = this.visualization.showId || (this.visualization.showExport && node.labels.export !== undefined);
-      if (showLabel) {
-        const parts: string[] = [];
-        if (this.visualization.showId) parts.push(node.id);
-        if (this.visualization.showExport && node.labels.export !== undefined) {
-          const val = node.labels.export;
-          parts.push(typeof val === "number" ? val.toFixed(1) : String(val));
+      // 3.5 Disegna gli overlay a matrice e booleani, e custom overlays (come le frecce della direzione!)
+      
+      // Matrice (se abilitata)
+      const matrix = node.labels.matrix;
+      if (nodeState.renderMatrix && isMatrixValue(matrix)) {
+        const matrixSize = nodeSize * (totalNodes > 64 && !selected ? 1.25 : 1.8);
+        const cellSize = matrixSize / matrix.dimension;
+        const startX = px - matrixSize / 2;
+        const startY = py - matrixSize / 2;
+        
+        this.ctx.save();
+        for (let row = 0; row < matrix.dimension; row += 1) {
+          for (let column = 0; column < matrix.dimension; column += 1) {
+            const color = matrix.pixels[`${row}:${column}`] ?? "#000000";
+            this.ctx.fillStyle = color;
+            this.ctx.fillRect(startX + column * cellSize, startY + row * cellSize, cellSize, cellSize);
+          }
         }
-        const labelText = parts.join("·");
+        this.ctx.restore();
+      }
+
+      // Booleani (se abilitati)
+      const booleanBadgesEnabled = nodeState.renderBooleans && shouldRenderBooleanBadges(totalNodes, selected);
+      if (booleanBadgesEnabled) {
+        const booleans = Object.entries(node.labels)
+          .filter(([label, value]) => label !== "export" && label !== "matrix" && typeof value === "boolean")
+          .slice(0, selected || totalNodes <= 24 ? undefined : 2);
+        const badgeRadius = Math.max(3.5, nodeSize * (totalNodes > 64 && !selected ? 0.32 : 0.42));
+        const offsetX = -(nodeSize * (totalNodes > 64 && !selected ? 1.45 : 2.2));
+        
+        this.ctx.save();
+        booleans.forEach(([label, value], index) => {
+          const offsetY = index * (nodeSize * 1.55) - ((booleans.length - 1) * nodeSize * 0.78);
+          const color = value ? booleanColor(index) : "#ffffff";
+          const opacity = value ? 1 : 0.2;
+          
+          this.ctx.beginPath();
+          this.ctx.arc(px + offsetX, py + offsetY, badgeRadius, 0, Math.PI * 2);
+          this.ctx.fillStyle = color;
+          this.ctx.globalAlpha = opacity;
+          this.ctx.fill();
+          this.ctx.strokeStyle = color;
+          this.ctx.lineWidth = 1;
+          this.ctx.globalAlpha = 1;
+          this.ctx.stroke();
+        });
+        this.ctx.restore();
+      }
+
+      // Overlays custom (Rings, Dots, Arrows, Text)
+      if (nodeState.overlays && nodeState.overlays.length > 0) {
+        for (const overlay of nodeState.overlays) {
+          this.ctx.save();
+          if (overlay.kind === "ring") {
+            this.ctx.beginPath();
+            this.ctx.arc(px, py, overlay.radius ?? nodeSize + 4, 0, Math.PI * 2);
+            if (overlay.fill && overlay.fill !== "none") {
+              this.ctx.fillStyle = overlay.fill;
+              if (overlay.fillOpacity !== undefined) this.ctx.globalAlpha = overlay.fillOpacity;
+              this.ctx.fill();
+            }
+            this.ctx.strokeStyle = overlay.stroke ?? resolvedFill;
+            this.ctx.lineWidth = overlay.strokeWidth ?? 2;
+            this.ctx.globalAlpha = 1;
+            this.ctx.stroke();
+          } else if (overlay.kind === "dot") {
+            this.ctx.beginPath();
+            this.ctx.arc(px + overlay.x, py + overlay.y, overlay.radius ?? 3, 0, Math.PI * 2);
+            this.ctx.fillStyle = overlay.fill ?? "#ffffff";
+            if (overlay.fillOpacity !== undefined) this.ctx.globalAlpha = overlay.fillOpacity;
+            this.ctx.fill();
+            if (overlay.stroke) {
+              this.ctx.strokeStyle = overlay.stroke;
+              this.ctx.lineWidth = overlay.strokeWidth ?? 1;
+              this.ctx.globalAlpha = 1;
+              this.ctx.stroke();
+            }
+          } else if (overlay.kind === "arrow") {
+            const module = Math.hypot(overlay.dx, overlay.dy);
+            if (module > 0) {
+              const nx = overlay.dx / module;
+              const ny = overlay.dy / module;
+              const arrowLen = overlay.length ?? nodeSize * 3;
+              const tipX = px + nx * arrowLen;
+              const tipY = py + ny * arrowLen;
+              const headLen = Math.min(7, arrowLen * 0.4);
+              const headW = headLen * 0.45;
+              const baseX = tipX - nx * headLen;
+              const baseY = tipY - ny * headLen;
+              const pw = -ny * headW;
+              const ph = nx * headW;
+              const color = overlay.stroke ?? "#a5d6ff";
+              const strokeWidth = overlay.strokeWidth ?? 2.5;
+
+              // Linea
+              this.ctx.beginPath();
+              this.ctx.moveTo(px, py);
+              this.ctx.lineTo(tipX, tipY);
+              this.ctx.strokeStyle = color;
+              this.ctx.lineWidth = strokeWidth;
+              this.ctx.stroke();
+
+              // Punta freccia
+              this.ctx.beginPath();
+              this.ctx.moveTo(tipX, tipY);
+              this.ctx.lineTo(baseX + pw, baseY + ph);
+              this.ctx.lineTo(baseX - pw, baseY - ph);
+              this.ctx.closePath();
+              this.ctx.fillStyle = color;
+              this.ctx.fill();
+            }
+          } else if (overlay.kind === "text") {
+            this.ctx.font = `500 ${overlay.fontSize ?? Math.max(10, nodeSize - 1)}px sans-serif`;
+            this.ctx.fillStyle = overlay.fill ?? "#ffffff";
+            this.ctx.textAlign = overlay.anchor === "middle" ? "center" : overlay.anchor === "start" ? "left" : "right";
+            this.ctx.textBaseline = "middle";
+            this.ctx.fillText(overlay.text, px + (overlay.x ?? 0), py + overlay.y);
+          }
+          this.ctx.restore();
+        }
+      }
+
+      // 4. Disegno dei Testi (Label del nodo)
+      const showLabel = nodeState.labels.length > 0;
+      if (showLabel) {
+        const labelText = nodeState.labels.join("·");
 
         this.ctx.save();
-        this.ctx.font = `500 ${this.visualization.fontSize}px sans-serif`;
+        this.ctx.font = `500 ${nodeState.fontSize}px sans-serif`;
         this.ctx.fillStyle = isLightTheme ? "#333333" : "#b0b6bd";
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "top";
@@ -586,6 +724,119 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     }
 
     this.ctx.restore();
+  }
+
+  private resolveGraphEdgeClass(edge: GraphEdge): string {
+    if (!this.visualization?.showNeighborhood || this.selectedNodeIds.length === 0) {
+      return "graph-edge";
+    }
+    return this.selectedNodeIds.includes(edge.from) || this.selectedNodeIds.includes(edge.to)
+      ? "graph-edge is-neighborhood"
+      : "graph-edge is-muted";
+  }
+
+  private resolveEdgeRenderState(edge: GraphEdge, fromNode: GraphNode, toNode: GraphNode): ResolvedEdgeRenderState {
+    const defaults: EdgeRenderDefaults = {
+      hidden: false,
+      className: this.resolveGraphEdgeClass(edge),
+    };
+    if (!this.edgeRenderer) {
+      return defaults;
+    }
+    try {
+      const output = this.edgeRenderer({
+        edge,
+        fromNode,
+        toNode,
+        graph: this.activeState!.graph,
+        execution: this.activeState!.execution,
+        selectedNodeIds: [...this.selectedNodeIds],
+        isNeighborhood: this.selectedNodeIds.includes(edge.from) || this.selectedNodeIds.includes(edge.to),
+        defaults,
+      });
+      return {
+        hidden: typeof output?.hidden === "boolean" ? output.hidden : defaults.hidden,
+        className: typeof output?.className === "string" && output.className.length > 0 ? output.className : defaults.className,
+        stroke: typeof output?.stroke === "string" ? output.stroke : defaults.stroke,
+        strokeWidth: typeof output?.strokeWidth === "number" ? output.strokeWidth : defaults.strokeWidth,
+        strokeOpacity: typeof output?.strokeOpacity === "number" ? output.strokeOpacity : defaults.strokeOpacity,
+      };
+    } catch (error) {
+      return defaults;
+    }
+  }
+
+  private resolveNodeRenderState(
+    node: GraphNode,
+    edges: GraphEdge[],
+    totalNodes: number,
+    nodeIndex: number,
+    exportRange?: { min: number; max: number },
+  ): ResolvedNodeRenderState {
+    const selectedNode = this.selectedNodeIds.includes(node.id);
+    const labels = buildNodeLabels(node, edges, this.visualization!, selectedNode, totalNodes, nodeIndex);
+    const nodeVisual = computeNodeVisual(node, this.visualization!, selectedNode, exportRange);
+    const defaults: NodeRenderDefaults = {
+      fill: nodeVisual.fill,
+      fillOpacity: nodeVisual.fillOpacity,
+      stroke: nodeVisual.stroke,
+      strokeWidth: nodeVisual.strokeWidth,
+      nodeSize: this.visualization!.nodeSize,
+      fontSize: this.visualization!.fontSize,
+      labels,
+      renderMatrix: this.visualization!.renderMatrix,
+      renderBooleans: this.visualization!.renderBooleans,
+      renderGradient: this.visualization!.renderGradient,
+      renderExportEffect: this.visualization!.renderExportEffect,
+      overlays: [],
+    };
+    if (!this.nodeRenderer) {
+      return { ...defaults, hidden: false };
+    }
+    try {
+      const output: NodeRenderOutput | void = this.nodeRenderer({
+        node,
+        graph: this.activeState!.graph,
+        execution: this.activeState!.execution,
+        selected: selectedNode,
+        nodeIndex,
+        totalNodes,
+        incidentEdges: (this.visualization?.showLinks !== false) ? edges.filter((edge) => edge.from === node.id || edge.to === node.id) : [],
+        availableSensors: Array.from(this.visualization!.visibleSensors),
+        defaults,
+      });
+      const renderGradient = typeof output?.renderGradient === "boolean" ? output.renderGradient : defaults.renderGradient;
+      const renderExportEffect =
+        typeof output?.renderExportEffect === "boolean" ? output.renderExportEffect : defaults.renderExportEffect;
+      const resolvedVisual = computeNodeVisual(
+        node,
+        {
+          ...this.visualization!,
+          renderGradient,
+          renderExportEffect,
+        },
+        selectedNode,
+        exportRange,
+      );
+      return {
+        hidden: typeof output?.hidden === "boolean" ? output.hidden : false,
+        className: typeof output?.className === "string" ? output.className : undefined,
+        fill: typeof output?.fill === "string" ? output.fill : resolvedVisual.fill,
+        fillOpacity: typeof output?.fillOpacity === "number" ? output.fillOpacity : resolvedVisual.fillOpacity,
+        stroke: typeof output?.stroke === "string" ? output.stroke : resolvedVisual.stroke,
+        strokeWidth: typeof output?.strokeWidth === "number" ? output.strokeWidth : resolvedVisual.strokeWidth,
+        nodeSize: typeof output?.nodeSize === "number" ? output.nodeSize : defaults.nodeSize,
+        fontSize: typeof output?.fontSize === "number" ? output.fontSize : defaults.fontSize,
+        labels: normalizeNodeRenderLabels(output?.labels, defaults.labels),
+        renderMatrix: typeof output?.renderMatrix === "boolean" ? output.renderMatrix : defaults.renderMatrix,
+        renderBooleans: typeof output?.renderBooleans === "boolean" ? output.renderBooleans : defaults.renderBooleans,
+        renderGradient,
+        renderExportEffect,
+        overlays: normalizeNodeRenderOverlays(output?.overlays, defaults.overlays),
+      };
+    } catch (error) {
+      return { ...defaults, hidden: false };
+    }
   }
 
   private resolveGraphViewportState(nodes: GraphNode[]): GraphViewportState {
@@ -707,4 +958,79 @@ function gradientColor(value: number, min?: number, max?: number): string {
   const t = range <= 0 ? 0.5 : Math.max(0, Math.min(1, (value - min) / range));
   const hue = (1 - t) * 240;
   return `hsl(${Math.round(hue)} 70% 58%)`;
+}
+
+function buildNodeLabels(
+  node: GraphNode,
+  edges: GraphEdge[],
+  visualization: VisualizationState,
+  selectedNode: boolean,
+  totalNodes: number,
+  nodeIndex: number,
+): string[] {
+  const result: string[] = [];
+  if (visualization.showId) {
+    if (selectedNode || totalNodes <= 12 || (totalNodes <= 48 && nodeIndex % 2 === 0)) {
+      result.push(node.id);
+    }
+  }
+  if (visualization.showExport && node.labels.export !== undefined) {
+    const val = node.labels.export;
+    if (selectedNode || totalNodes <= 24) {
+      result.push(typeof val === "number" ? val.toFixed(2) : String(val));
+    }
+  }
+  return result;
+}
+
+function computeNodeVisual(
+  node: GraphNode,
+  visualization: VisualizationState,
+  selectedNode: boolean,
+  exportRange?: { min: number; max: number },
+): { fill: string; fillOpacity: number; stroke: string; strokeWidth: number } {
+  let fill = selectedNode ? "var(--accent)" : "var(--accent-cool)";
+  let fillOpacity = 1;
+  let stroke = "";
+  let strokeWidth = 0;
+
+  if (visualization.renderGradient) {
+    const num = resolveExportNumber(node.labels.export);
+    if (num !== undefined) {
+      fill = gradientColor(num, exportRange?.min, exportRange?.max);
+    }
+  }
+
+  if (visualization.renderExportEffect && typeof node.labels.export === "boolean") {
+    fillOpacity = node.labels.export ? 0.92 : 0.3;
+    stroke = node.labels.export ? "#00ffff" : "";
+    strokeWidth = node.labels.export ? 2 : 0;
+  }
+
+  const ledColor = node.labels.ledAll;
+  if (ledColor !== undefined && ledColor !== null && ledColor !== "") {
+    fill = String(ledColor);
+  }
+
+  return { fill, fillOpacity, stroke, strokeWidth };
+}
+
+function booleanColor(index: number): string {
+  const base = 255 - index * 48;
+  const channel = Math.max(96, base);
+  return `rgb(${channel}, ${channel}, 255)`;
+}
+
+function isMatrixValue(value: unknown): value is { dimension: number; pixels: Record<string, string> } {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "dimension" in value &&
+      "pixels" in value &&
+      typeof (value as any).dimension === "number",
+  );
+}
+
+function shouldRenderBooleanBadges(totalNodes: number, selectedNode: boolean): boolean {
+  return selectedNode || totalNodes <= 48;
 }

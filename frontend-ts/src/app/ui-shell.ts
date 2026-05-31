@@ -40,7 +40,6 @@ import { NodeInspectorComponent, summarizeInspectorValue, formatInspectorJson } 
 // Renderers
 import { SvgSimulationRenderer } from "./renderer/svg-simulation-renderer";
 import { LightweightSimulationRenderer } from "./renderer/lightweight-simulation-renderer";
-import { PixiSimulationRenderer } from "./renderer/pixi-simulation-renderer";
 import type { SimulationRenderer } from "./renderer/simulation-renderer";
 
 type SensorDraft = {
@@ -114,7 +113,7 @@ export class ScafiWebUiShell {
 
   // Swappable Simulation Renderer
   private renderer!: SimulationRenderer;
-  private selectedRendererType: "standard" | "lightweight" | "pixi" = "standard";
+  private selectedRendererType: "standard" | "lightweight" = "standard";
 
   constructor(
     private readonly root: HTMLElement,
@@ -259,13 +258,11 @@ export class ScafiWebUiShell {
     if (!mountPoint) return;
 
     const currentRendererType =
-      this.renderer instanceof PixiSimulationRenderer
-        ? "pixi"
-        : this.renderer instanceof LightweightSimulationRenderer
-          ? "lightweight"
-          : this.renderer instanceof SvgSimulationRenderer
-            ? "standard"
-            : undefined;
+      this.renderer instanceof LightweightSimulationRenderer
+        ? "lightweight"
+        : this.renderer instanceof SvgSimulationRenderer
+          ? "standard"
+          : undefined;
 
     if (this.renderer && this.selectedRendererType === currentRendererType) {
       // Clear mount point and remount the existing renderer to avoid recreate overhead
@@ -281,9 +278,7 @@ export class ScafiWebUiShell {
     // Clear the mount point to prevent duplicate containers or stacked startup overlays
     mountPoint.innerHTML = "";
 
-    if (this.selectedRendererType === "pixi") {
-      this.renderer = new PixiSimulationRenderer();
-    } else if (this.selectedRendererType === "lightweight") {
+    if (this.selectedRendererType === "lightweight") {
       this.renderer = new LightweightSimulationRenderer();
     } else {
       this.renderer = new SvgSimulationRenderer();
@@ -611,11 +606,9 @@ export class ScafiWebUiShell {
     this.visualization = this.resolveVisualization(state);
 
     const currentRendererType =
-      this.renderer instanceof PixiSimulationRenderer
-        ? "pixi"
-        : this.renderer instanceof LightweightSimulationRenderer
-          ? "lightweight"
-          : "standard";
+      this.renderer instanceof LightweightSimulationRenderer
+        ? "lightweight"
+        : "standard";
     if (!this.renderer || this.selectedRendererType !== currentRendererType) {
       this.initRenderer();
     }
@@ -1254,11 +1247,9 @@ export class ScafiWebUiShell {
       this.rendererDocumentError = undefined;
       const output = evaluator(context);
       const resolvedRendererType =
-        output?.rendererType === "pixi"
-          ? "pixi"
-          : output?.rendererType === "lightweight"
-            ? "lightweight"
-            : "standard";
+        output?.rendererType === "lightweight"
+          ? "lightweight"
+          : "standard";
       if (this.selectedRendererType !== resolvedRendererType) {
         this.selectedRendererType = resolvedRendererType;
         localStorage.setItem("scafi-web-renderer-type", this.selectedRendererType);

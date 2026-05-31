@@ -137,12 +137,22 @@ describe("ExampleService", () => {
                 ],
               },
               {
-                groupName: "Matrix led",
-                examples: [
+                "groupName": "Matrix led",
+                "examples": [
                   {
-                    name: "Sensor based colors",
-                    body: 'sense("source")',
-                    devices: { sensors: { source: false, obstacle: false, target: false, matrix: { $type: "it.unibo.scafi.js.model.MatrixLed.MatrixMap", dimension: 2, pixels: [[[0, 0], "#fff"]] } }, initialValues: {} },
+                    "name": "Sensor based colors",
+                    "body": 'sense("source")',
+                    "devices": { sensors: { source: false, obstacle: false, target: false, matrix: { $type: "it.unibo.scafi.js.model.MatrixLed.MatrixMap", dimension: 2, pixels: [[[0, 0], "#fff"]] } }, initialValues: {} },
+                  },
+                ],
+              },
+              {
+                "groupName": "Custom rendering",
+                "examples": [
+                  {
+                    "name": "Custom temperature renderer",
+                    "body": '"custom temp"',
+                    "devices": { sensors: { temperature: 25.0 }, initialValues: {} },
                   },
                 ],
               },
@@ -158,6 +168,8 @@ describe("ExampleService", () => {
     expect(examples.find((example) => example.name === "Channel with obstacles")?.renderer).toContain("RendererKit.edge.highlightNeighborhood(0.9)");
     expect(examples.find((example) => example.name === "Sensor based colors")?.renderer).toContain('RendererKit.node.sensorDot("obstacle")');
     expect(examples.find((example) => example.name === "Sensor based colors")?.renderer).toContain("RendererKit.node.matrix()");
+    expect(examples.find((example) => example.name === "Custom temperature renderer")?.renderer).toContain("CUSTOM TEMPERATURE MONITORING RENDERER");
+    expect(examples.find((example) => example.name === "Custom temperature renderer")?.renderer).toContain("minTemp = 10.0;");
   });
 
   it("compiles generated renderers that define both renderNode and renderEdge", async () => {
