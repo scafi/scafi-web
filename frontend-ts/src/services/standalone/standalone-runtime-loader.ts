@@ -57,7 +57,7 @@ export class StandaloneRuntimeLoader {
 
 type WorkerCommand =
   | { type: "load-source"; javascript: string }
-  | { type: "loadAndInit"; configJson: string }
+  | { type: "loadAndInit" }
   | { type: "tick" }
   | { type: "setPosition"; nodeId: string; x: number; y: number }
   | { type: "setSensorValue"; sensorName: string; nodeIds: string[]; value: unknown }
@@ -101,8 +101,8 @@ class WorkerBackedStandaloneRuntime implements StandaloneRuntimeApi {
     await this.request({ type: "load-source", javascript });
   }
 
-  async loadAndInit(configJson: string): Promise<void> {
-    await this.request({ type: "loadAndInit", configJson });
+  async loadAndInit(): Promise<void> {
+    await this.request({ type: "loadAndInit" });
   }
 
   async tick(): Promise<void> {

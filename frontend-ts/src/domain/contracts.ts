@@ -56,7 +56,7 @@ export interface CompactStandaloneState {
 export type StandaloneState = StandardStandaloneState | CompactStandaloneState;
 
 export interface StandaloneRuntimeApi {
-  loadAndInit(configJson: string): MaybePromise<void>;
+  loadAndInit(): MaybePromise<void>;
   tick(): MaybePromise<void>;
   setPosition(nodeId: string, x: number, y: number): MaybePromise<void>;
   setSensorValue(sensorName: string, nodeIds: string[], value: unknown): MaybePromise<void>;

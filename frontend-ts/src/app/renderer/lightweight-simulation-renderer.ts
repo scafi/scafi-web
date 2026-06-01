@@ -594,29 +594,32 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
       // Booleani (se abilitati)
       const booleanBadgesEnabled = nodeState.renderBooleans && shouldRenderBooleanBadges(totalNodes, selected);
       if (booleanBadgesEnabled) {
-        const booleans = Object.entries(node.labels)
-          .filter(([label, value]) => label !== "export" && label !== "matrix" && typeof value === "boolean")
-          .slice(0, selected || totalNodes <= 24 ? undefined : 2);
-        const badgeRadius = Math.max(3.5, nodeSize * (totalNodes > 64 && !selected ? 0.32 : 0.42));
-        const offsetX = -(nodeSize * (totalNodes > 64 && !selected ? 1.45 : 2.2));
-        
-        this.ctx.save();
-        booleans.forEach(([label, value], index) => {
-          const offsetY = index * (nodeSize * 1.55) - ((booleans.length - 1) * nodeSize * 0.78);
-          const color = value ? booleanColor(index) : "#ffffff";
-          const opacity = value ? 1 : 0.2;
+        const ctx = this.ctx;
+        if (ctx) {
+          const booleans = Object.entries(node.labels)
+            .filter(([label, value]) => label !== "export" && label !== "matrix" && typeof value === "boolean")
+            .slice(0, selected || totalNodes <= 24 ? undefined : 2);
+          const badgeRadius = Math.max(3.5, nodeSize * (totalNodes > 64 && !selected ? 0.32 : 0.42));
+          const offsetX = -(nodeSize * (totalNodes > 64 && !selected ? 1.45 : 2.2));
           
-          this.ctx.beginPath();
-          this.ctx.arc(px + offsetX, py + offsetY, badgeRadius, 0, Math.PI * 2);
-          this.ctx.fillStyle = color;
-          this.ctx.globalAlpha = opacity;
-          this.ctx.fill();
-          this.ctx.strokeStyle = color;
-          this.ctx.lineWidth = 1;
-          this.ctx.globalAlpha = 1;
-          this.ctx.stroke();
-        });
-        this.ctx.restore();
+          ctx.save();
+          booleans.forEach(([label, value], index) => {
+            const offsetY = index * (nodeSize * 1.55) - ((booleans.length - 1) * nodeSize * 0.78);
+            const color = value ? booleanColor(index) : "#ffffff";
+            const opacity = value ? 1 : 0.2;
+            
+            ctx.beginPath();
+            ctx.arc(px + offsetX, py + offsetY, badgeRadius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = opacity;
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 1;
+            ctx.stroke();
+          });
+          ctx.restore();
+        }
       }
 
       // Overlays custom (Rings, Dots, Arrows, Text)

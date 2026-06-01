@@ -12,24 +12,19 @@ describe("runtime-template", () => {
     expect(wrapped).toContain("final case class WorldDocumentBuilder(");
     expect(wrapped).toContain("def runtimeWorldDocument: WorldDocumentBuilder = {");
     expect(wrapped).toContain("val world = WorldDocumentBuilder()");
-    expect(wrapped).toContain("def mergeRuntimeConfig(configJson: String): js.Dynamic");
-    expect(wrapped).toContain("val config = mergeRuntimeConfig(configJson)");
-    expect(wrapped).toContain("applySensors(config)\n    lastTickTime = System.currentTimeMillis().toDouble\n    simulator.getAllNeighbours()\n    simulator.devs.foreach { case (id, _) =>");
+    expect(wrapped).toContain("val builder = runtimeWorldDocument.configTransforms.foldLeft(runtimeWorldDocument)");
+    expect(wrapped).toContain("applySensors(builder)\n    lastTickTime = System.currentTimeMillis().toDouble\n    simulator.getAllNeighbours()");
     expect(wrapped).toContain("val x = 30");
     expect(wrapped).toContain("world\n      .grid(rows = x, cols = x, stepX = 60, stepY = 60, tolerance = 10)\n      .radius(70)");
     expect(wrapped).toContain("val program = new MyProgram");
     expect(wrapped).not.toContain("$$WORLD_DOCUMENT$$");
   });
 
-  it("lets the compiled world override incoming sensors and initial values", () => {
+  it("applies sensors directly from the WorldDocumentBuilder", () => {
     const wrapped = wrapStandaloneRuntimeCode("val program = new MyProgram", "world.sensor(\"source\", true)");
 
-    expect(wrapped).toContain(
-      'encoded.updateDynamic("sensors")(mergeEncoded(mergeEncoded(js.Dictionary.empty[js.Any], incoming.selectDynamic("sensors")), sensors).asInstanceOf[js.Any])',
-    );
-    expect(wrapped).toContain(
-      'encoded.updateDynamic("initialValues")(mergeNestedEncoded(mergeNestedEncoded(js.Dictionary.empty[js.Dictionary[js.Any]], incoming.selectDynamic("initialValues")), initialValues).asInstanceOf[js.Any])',
-    );
+    expect(wrapped).toContain("private def applySensors(builder: WorldDocumentBuilder): Unit = {");
+    expect(wrapped).toContain("builder.sensors.foreach { case (sensorName, value) =>");
   });
 
   it("exposes generic deployment, sensor encoding and config hooks in the world DSL", () => {
@@ -41,7 +36,7 @@ describe("runtime-template", () => {
 world
   .deploy(RuntimeDeployment((network, incoming) => js.Dictionary("1" -> point(10, 20))))
   .sensor("pair", (1, 2))
-  .configure(config => config.updateDynamic("deployment")(js.Dynamic.literal(kind = "manual")))`,
+  .configure(builder => builder.sensor("custom", (3, 4)))`,
     );
 
     expect(wrapped).toContain("trait RuntimeValueEncoder[-A]");
@@ -50,9 +45,9 @@ world
     expect(wrapped).toContain("def randomSensor(name: String, min: Double, max: Double): WorldDocumentBuilder");
     expect(wrapped).toContain("def position(nodeId: String, x: Double, y: Double): WorldDocumentBuilder");
     expect(wrapped).toContain("def deploy(deployment: RuntimeDeployment): WorldDocumentBuilder");
-    expect(wrapped).toContain("def configure(update: js.Dynamic => Unit): WorldDocumentBuilder");
+    expect(wrapped).toContain("def configure(update: WorldDocumentBuilder => WorldDocumentBuilder): WorldDocumentBuilder");
     expect(wrapped).toContain('.deploy(RuntimeDeployment((network, incoming) => js.Dictionary("1" -> point(10, 20))))');
-    expect(wrapped).toContain('.configure(config => config.updateDynamic("deployment")(js.Dynamic.literal(kind = "manual")))');
+    expect(wrapped).toContain('.configure(builder => builder.sensor("custom", (3, 4)))');
   });
 
   it("still injects an empty world builder when no world document is provided", () => {

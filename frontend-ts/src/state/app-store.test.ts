@@ -45,7 +45,6 @@ const randomConfiguration: SupportConfiguration = {
 };
 
 class FakeRuntime implements StandaloneRuntimeApi {
-  public lastConfigJson = "";
   public ticks = 0;
   public positions: Record<string, { x: number; y: number }> = {
     "1": { x: 0, y: 0 },
@@ -56,44 +55,21 @@ class FakeRuntime implements StandaloneRuntimeApi {
     "2": { source: false, obstacle: false },
   };
 
-  loadAndInit(configJson: string): void {
-    this.lastConfigJson = configJson;
-    const parsed = JSON.parse(configJson) as {
-      network?: { kind: "grid" | "random"; min?: number; max?: number; howMany?: number };
-      positions?: Record<string, { x: number; y: number }>;
-      initialValues?: Record<string, Record<string, unknown>>;
-    };
-    if (parsed.network?.kind === "random" && parsed.network.howMany) {
-      const min = parsed.network.min ?? 0;
-      const max = parsed.network.max ?? 100;
-      const howMany = parsed.network.howMany;
-      this.positions = {};
-      this.labels = {};
-      for (let i = 1; i <= howMany; i++) {
-        const id = String(i);
-        this.positions[id] = { x: min + (max - min) / 2, y: min + (max - min) / 2 };
-        this.labels[id] = {};
-      }
-    }
-    if (parsed.positions && Object.keys(parsed.positions).length > 0) {
-      this.positions = { ...this.positions, ...parsed.positions };
-    }
-    if (parsed.initialValues) {
-      for (const [nodeId, sensors] of Object.entries(parsed.initialValues)) {
-        const decodedSensors = Object.fromEntries(
-          Object.entries(sensors).map(([sensorName, value]) => {
-            if (value && typeof value === "object" && "kind" in value) {
-              if ((value as { kind: string }).kind === "matrix") {
-                return [sensorName, value];
-              }
-              return [sensorName, (value as { value?: unknown }).value];
-            }
-            return [sensorName, value];
-          }),
-        );
-        this.labels[nodeId] = { ...(this.labels[nodeId] ?? {}), ...decodedSensors };
-      }
-    }
+  private initialPositions?: Record<string, { x: number; y: number }>;
+  private initialLabels?: Record<string, Record<string, unknown>>;
+
+  public setInitialState(
+    positions: Record<string, { x: number; y: number }>,
+    labels: Record<string, Record<string, unknown>>
+  ): void {
+    this.initialPositions = { ...positions };
+    this.initialLabels = JSON.parse(JSON.stringify(labels));
+    this.positions = { ...positions };
+    this.labels = JSON.parse(JSON.stringify(labels));
+  }
+
+  loadAndInit(): void {
+    this.dispose();
   }
 
   tick(): void {
@@ -124,16 +100,20 @@ class FakeRuntime implements StandaloneRuntimeApi {
   }
 
   dispose(): void {
-    this.labels = {
-      "1": { source: true, obstacle: false },
-      "2": { source: false, obstacle: false },
-    };
-    this.positions = {
-      "1": { x: 0, y: 0 },
-      "2": { x: 10, y: 0 },
-    };
+    if (this.initialPositions && this.initialLabels) {
+      this.positions = { ...this.initialPositions };
+      this.labels = JSON.parse(JSON.stringify(this.initialLabels));
+    } else {
+      this.labels = {
+        "1": { source: true, obstacle: false },
+        "2": { source: false, obstacle: false },
+      };
+      this.positions = {
+        "1": { x: 0, y: 0 },
+        "2": { x: 10, y: 0 },
+      };
+    }
     this.ticks = 0;
-    this.lastConfigJson = "";
   }
 }
 
@@ -157,32 +137,20 @@ class BlockingTickRuntime extends FakeRuntime {
 class WorldDrivenRuntime extends FakeRuntime {
   constructor() {
     super();
-    this.positions = {
-      "101": { x: 0, y: 0 },
-      "102": { x: 25, y: 0 },
-    };
-    this.labels = {
-      "101": { source: true, obstacle: false },
-      "102": { source: false, obstacle: false },
-    };
+    this.setInitialState(
+      {
+        "101": { x: 0, y: 0 },
+        "102": { x: 25, y: 0 },
+      },
+      {
+        "101": { source: true, obstacle: false },
+        "102": { source: false, obstacle: false },
+      }
+    );
   }
 
-  override loadAndInit(configJson: string): void {
-    const parsed = JSON.parse(configJson) as {
-      positions?: Record<string, { x: number; y: number }>;
-      initialValues?: Record<string, Record<string, unknown>>;
-    };
-    for (const key of Object.keys(parsed.positions ?? {})) {
-      if (!(key in this.positions)) {
-        throw new Error(`key not found: ${key}`);
-      }
-    }
-    for (const key of Object.keys(parsed.initialValues ?? {})) {
-      if (!(key in this.positions)) {
-        throw new Error(`key not found: ${key}`);
-      }
-    }
-    super.loadAndInit(configJson);
+  override loadAndInit(): void {
+    super.loadAndInit();
   }
 
   override getState() {
@@ -266,8 +234,6 @@ describe("AppStore", () => {
     expect(store.getState().execution.status).toBe("ready");
     expect(store.getState().standalone.authoritative).toBe(true);
     expect(store.getState().graph.nodes[0]?.labels.source).toBe(true);
-    expect(runtime.lastConfigJson).not.toContain('"source":{"kind":"boolean","value":true}');
-    expect(runtime.lastConfigJson).not.toContain('"0":');
   });
 
   it("reinitializes pre-start overrides and forwards commands after start", async () => {
@@ -291,7 +257,9 @@ describe("AppStore", () => {
     await store.loadScript("program", "full-scala");
     store.moveNodes({ "2": { x: 25, y: 30 } });
 
-    expect(runtime.lastConfigJson).toContain('"2":{"x":25,"y":30}');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(runtime.positions["2"]).toEqual({ x: 25, y: 30 });
 
     await store.tick();
     store.changeSensor("obstacle", ["2"], true);
@@ -323,8 +291,6 @@ describe("AppStore", () => {
 
     expect(store.getState().execution.status).toBe("ready");
     expect(store.getState().graph.nodes.map((node) => node.id)).toEqual(["101", "102"]);
-    expect(runtime.lastConfigJson).not.toContain('"positions":{"1"');
-    expect(runtime.lastConfigJson).not.toContain('"initialValues":{"1"');
   });
 
   it("invalidates stale load results by generation", async () => {
@@ -702,7 +668,14 @@ describe("AppStore", () => {
 
     store.moveNodes({ "1": { x: 42, y: 7 } });
 
+    // State is emitted immediately
     expect(store.getState().graph.nodes.find((node) => node.id === "1")?.position).toEqual({ x: 42, y: 7 });
+    // Runtime has not synchronized yet (still in flight)
+    expect(runtime.positions["1"]).toEqual({ x: 0, y: 0 });
+
+    // Yield to let standalone sync complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     expect(runtime.positions["1"]).toEqual({ x: 42, y: 7 });
   });
 
@@ -749,6 +722,20 @@ describe("AppStore", () => {
         },
         runtimeLoader: {
           loadFromJavascript() {
+            const config = store.getState().configuration;
+            if (config.network.kind === "random" && config.network.howMany) {
+              const min = config.network.min ?? 0;
+              const max = config.network.max ?? 100;
+              const howMany = config.network.howMany;
+              const positions: Record<string, { x: number; y: number }> = {};
+              const labels: Record<string, Record<string, unknown>> = {};
+              for (let i = 1; i <= howMany; i++) {
+                const id = String(i);
+                positions[id] = { x: min + (max - min) / 2, y: min + (max - min) / 2 };
+                labels[id] = {};
+              }
+              runtime.setInitialState(positions, labels);
+            }
             return runtime;
           },
         },

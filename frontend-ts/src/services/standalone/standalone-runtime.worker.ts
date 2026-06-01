@@ -11,7 +11,7 @@ const REQUIRED_METHODS: Array<keyof StandaloneRuntimeApi> = [
 
 type WorkerRequest =
   | { id: number; type: "load-source"; javascript: string }
-  | { id: number; type: "loadAndInit"; configJson: string }
+  | { id: number; type: "loadAndInit" }
   | { id: number; type: "tick" }
   | { id: number; type: "setPosition"; nodeId: string; x: number; y: number }
   | { id: number; type: "setSensorValue"; sensorName: string; nodeIds: string[]; value: unknown }
@@ -35,7 +35,7 @@ globalThis.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         return;
       }
       case "loadAndInit": {
-        await Promise.resolve(requireRuntime().loadAndInit(message.configJson));
+        await Promise.resolve(requireRuntime().loadAndInit());
         respond({ id: message.id, ok: true });
         return;
       }

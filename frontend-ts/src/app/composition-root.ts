@@ -21,7 +21,7 @@ export interface CompositionRootOptions {
 export function createScafiWebApp(options: CompositionRootOptions = {}): ScafiWebApp {
   const store = options.store ?? safeBrowserStore();
   const serializer = new RuntimeConfigSerializer();
-  const sessionManager = new StandaloneSessionManager(serializer);
+  const sessionManager = new StandaloneSessionManager();
   const scastieService = new ScastieService({
     fetchImpl: options.fetchImpl,
     wrapCode: options.wrapCode ?? wrapStandaloneRuntimeCode,

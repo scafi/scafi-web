@@ -152,7 +152,7 @@ export class AppStore {
       },
     };
     if (this.state.standalone.active) {
-      void this.reinitializeStandaloneSession(configuration);
+      void this.reinitializeStandaloneSession();
     }
     this.emit();
   }
@@ -399,7 +399,7 @@ export class AppStore {
 
   private async attachStandaloneRuntime(runtime: StandaloneRuntimeApi, result: CompileResult, generation: number): Promise<void> {
     this.sessionManager.attach(runtime);
-    await this.sessionManager.initialize(runtimeBootstrapConfiguration(this.state.configuration), {}, {});
+    await this.sessionManager.initialize();
     this.syncFromRuntimeState(await this.sessionManager.getState({ excludeEdges: !this.showLinks, compact: true }));
     if (generation !== this.state.execution.generation) {
       await this.sessionManager.clear();
@@ -420,10 +420,10 @@ export class AppStore {
     });
   }
 
-  private async reinitializeStandaloneSession(configuration: SupportConfiguration): Promise<void> {
+  private async reinitializeStandaloneSession(): Promise<void> {
     const generation = this.state.execution.generation;
     try {
-      await this.sessionManager.initialize(configuration, this.currentPositions(), this.currentSensorValues());
+      await this.sessionManager.initialize();
       if (!this.isStandaloneGenerationCurrent(generation)) {
         return;
       }
@@ -649,17 +649,7 @@ function backendFromGraph(graph: GraphSnapshot): BackendState {
   return { devices, neighbours, exports };
 }
 
-function runtimeBootstrapConfiguration(configuration: SupportConfiguration): SupportConfiguration {
-  return {
-    network: { ...configuration.network },
-    neighbour: { ...configuration.neighbour },
-    deviceShape: {
-      sensors: {},
-      initialValues: {},
-    },
-    seed: { ...configuration.seed },
-  };
-}
+
 
 function stringifyError(error: unknown): string {
   if (error instanceof Error) {

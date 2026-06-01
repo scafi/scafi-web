@@ -272,18 +272,7 @@ object ScafiStandalone {
     cloned
   }
 
-  private def copyDynamicFields(target: js.Dynamic, source: js.Dynamic): Unit = {
-    keys(source).foreach { key =>
-      target.updateDynamic(key)(source.selectDynamic(key))
-    }
-  }
-
   def point(x: Double, y: Double): js.Dynamic = js.Dynamic.literal(x = x, y = y)
-
-  private def withFallbackDynamic(value: js.Any, default: => js.Dynamic): js.Dynamic = {
-    if (value != null && !js.isUndefined(value)) value.asInstanceOf[js.Dynamic]
-    else default
-  }
 
   private def cloneNestedDictionary(
     source: js.Dictionary[js.Dictionary[js.Any]]
@@ -291,37 +280,6 @@ object ScafiStandalone {
     val cloned = js.Dictionary.empty[js.Dictionary[js.Any]]
     source.foreach { case (key, value) => cloned.update(key, cloneDictionary(value)) }
     cloned
-  }
-
-  private def mergeEncoded(base: js.Dictionary[js.Any], incoming: js.UndefOr[js.Any]): js.Dictionary[js.Any] = {
-    val merged = cloneDictionary(base)
-    val dynamic = incoming.asInstanceOf[js.Any]
-    if (dynamic != null && !js.isUndefined(dynamic)) {
-      js.Object.keys(dynamic.asInstanceOf[js.Object]).foreach { key =>
-        merged.update(key.toString, dynamic.asInstanceOf[js.Dynamic].selectDynamic(key.toString))
-      }
-    }
-    merged
-  }
-
-  private def mergeNestedEncoded(
-    base: js.Dictionary[js.Dictionary[js.Any]],
-    incoming: js.UndefOr[js.Any],
-  ): js.Dictionary[js.Dictionary[js.Any]] = {
-    val merged = cloneNestedDictionary(base)
-    val dynamic = incoming.asInstanceOf[js.Any]
-    if (dynamic != null && !js.isUndefined(dynamic)) {
-      js.Object.keys(dynamic.asInstanceOf[js.Object]).foreach { nodeId =>
-        val nodeValues = dynamic.asInstanceOf[js.Dynamic].selectDynamic(nodeId.toString).asInstanceOf[js.Dynamic]
-        val current = merged.getOrElse(nodeId.toString, js.Dictionary.empty[js.Any])
-        val next = cloneDictionary(current)
-        js.Object.keys(nodeValues.asInstanceOf[js.Object]).foreach { sensorName =>
-          next.update(sensorName.toString, nodeValues.selectDynamic(sensorName.toString))
-        }
-        merged.update(nodeId.toString, next)
-      }
-    }
-    merged
   }
 
   private def encodeValue(value: Any): js.Any = value match {
@@ -352,7 +310,7 @@ object ScafiStandalone {
     positionOverrides: js.Dictionary[js.Any] = js.Dictionary.empty[js.Any],
     positionDeployment: js.UndefOr[RuntimeDeployment] = js.undefined,
     seedConfig: js.UndefOr[js.Dynamic] = js.undefined,
-    configTransforms: Seq[js.Dynamic => Unit] = Seq.empty,
+    configTransforms: Seq[WorldDocumentBuilder => WorldDocumentBuilder] = Seq.empty,
   ) {
     def grid(rows: Int, cols: Int, stepX: Double, stepY: Double, tolerance: Double): WorldDocumentBuilder =
       copy(network = js.Dynamic.literal(kind = "grid", rows = rows, cols = cols, stepX = stepX, stepY = stepY, tolerance = tolerance))
@@ -385,8 +343,10 @@ object ScafiStandalone {
       entries.foldLeft(this) { case (current, (name, value)) => current.sensorEncoded(name, value) }
 
     def randomSensor(name: String, min: Double, max: Double): WorldDocumentBuilder = {
-      configure { encoded =>
-        val network = encoded.selectDynamic("network").asInstanceOf[js.Dynamic]
+      configure { builder =>
+        val network = builder.network.getOrElse(
+          js.Dynamic.literal(kind = "grid", rows = 10, cols = 10, stepX = 60.0, stepY = 60.0, tolerance = 10.0)
+        )
         val kind = network.selectDynamic("kind").toString
         val howMany = if (kind == "grid") {
           asInt(network.selectDynamic("rows")) * asInt(network.selectDynamic("cols"))
@@ -396,29 +356,25 @@ object ScafiStandalone {
           100
         }
 
-        val seeds = encoded.selectDynamic("seeds").asInstanceOf[js.Dynamic]
+        val seeds = builder.seedConfig.getOrElse(
+          js.Dynamic.literal(configSeed = 0L, simulationSeed = 0L, randomSensorSeed = 0L)
+        )
         val seed = asLong(seeds.selectDynamic("randomSensorSeed"))
         val rng = new scala.util.Random(seed ^ name.hashCode)
 
-        val initialValues = encoded.selectDynamic("initialValues")
-        val dict = if (initialValues != null && !js.isUndefined(initialValues)) {
-          initialValues.asInstanceOf[js.Dictionary[js.Dictionary[js.Any]]]
-        } else {
-          js.Dictionary.empty[js.Dictionary[js.Any]]
-        }
-
+        val nextInitialValues = cloneNestedDictionary(builder.initialValues)
         for (i <- 1 to howMany) {
           val nodeId = i.toString
-          val nodeDict = dict.getOrElse(nodeId, js.Dictionary.empty[js.Any])
+          val nodeDict = cloneDictionary(nextInitialValues.getOrElse(nodeId, js.Dictionary.empty[js.Any]))
           
           val randValue = min + (rng.nextDouble() * (max - min))
           
           if (!nodeDict.contains(name)) {
-            nodeDict.update(name, js.Dynamic.literal(kind = "double", value = randValue))
-            dict.update(nodeId, nodeDict)
+            nodeDict.update(name, encodeValue(randValue))
+            nextInitialValues.update(nodeId, nodeDict)
           }
         }
-        encoded.updateDynamic("initialValues")(dict.asInstanceOf[js.Any])
+        builder.copy(initialValues = nextInitialValues)
       }
     }
 
@@ -451,50 +407,8 @@ object ScafiStandalone {
 
     def seeds(config: js.Dynamic): WorldDocumentBuilder = copy(seedConfig = config)
 
-    def configure(update: js.Dynamic => Unit): WorldDocumentBuilder =
+    def configure(update: WorldDocumentBuilder => WorldDocumentBuilder): WorldDocumentBuilder =
       copy(configTransforms = configTransforms :+ update)
-
-    def toJsConfig(incoming: js.Dynamic): js.Dynamic = {
-      val encoded = js.Dynamic.literal()
-      copyDynamicFields(encoded, incoming)
-
-      val resolvedNetwork = network.getOrElse(
-        withFallbackDynamic(
-          incoming.selectDynamic("network"),
-          js.Dynamic.literal(kind = "grid", rows = 10, cols = 10, stepX = 60.0, stepY = 60.0, tolerance = 10.0),
-        ),
-      )
-      val resolvedNeighbour = neighbourConfig.getOrElse(
-        withFallbackDynamic(incoming.selectDynamic("neighbour"), js.Dynamic.literal(range = 70.0)),
-      )
-      val resolvedSeeds = seedConfig.getOrElse(
-        withFallbackDynamic(
-          incoming.selectDynamic("seeds"),
-          js.Dynamic.literal(configSeed = 0L, simulationSeed = 0L, randomSensorSeed = 0L),
-        ),
-      )
-      val deployedPositions = positionDeployment
-        .getOrElse(RuntimeDeployment((_, _) => js.Dictionary.empty[js.Any]))
-        .positionsFor(resolvedNetwork, incoming.selectDynamic("positions"))
-      val resolvedPositions = mergeEncoded(
-        mergeEncoded(
-          mergeEncoded(js.Dictionary.empty[js.Any], incoming.selectDynamic("positions")),
-          deployedPositions.asInstanceOf[js.UndefOr[js.Any]],
-        ),
-        positionOverrides.asInstanceOf[js.UndefOr[js.Any]],
-      )
-
-      encoded.updateDynamic("network")(resolvedNetwork)
-      encoded.updateDynamic("neighbour")(resolvedNeighbour)
-      encoded.updateDynamic("sensors")(mergeEncoded(mergeEncoded(js.Dictionary.empty[js.Any], incoming.selectDynamic("sensors")), sensors).asInstanceOf[js.Any])
-      encoded.updateDynamic("initialValues")(mergeNestedEncoded(mergeNestedEncoded(js.Dictionary.empty[js.Dictionary[js.Any]], incoming.selectDynamic("initialValues")), initialValues).asInstanceOf[js.Any])
-      encoded.updateDynamic("seeds")(resolvedSeeds)
-      if (keys(resolvedPositions.asInstanceOf[js.Dynamic]).nonEmpty) {
-        encoded.updateDynamic("positions")(resolvedPositions.asInstanceOf[js.Any])
-      }
-      configTransforms.foreach(transform => transform(encoded))
-      encoded
-    }
   }
 
   private def runtimeWorldDocument: WorldDocumentBuilder = {
@@ -502,19 +416,16 @@ object ScafiStandalone {
 // $$WORLD_DOCUMENT$$
   }
 
-  private def mergeRuntimeConfig(configJson: String): js.Dynamic = {
-    val incoming = js.JSON.parse(configJson).asInstanceOf[js.Dynamic]
-    runtimeWorldDocument.toJsConfig(incoming)
-  }
-
-  def loadAndInit(configJson: String): Unit = {
+  def loadAndInit(): Unit = {
     dispose()
 // $$USER_CODE$$
     userProgram = program
-    val config = mergeRuntimeConfig(configJson)
-    simulator = createSimulator(config)
-    applyPositions(simulator, config)
-    applySensors(config)
+    val builder = runtimeWorldDocument.configTransforms.foldLeft(runtimeWorldDocument) {
+      case (current, transform) => transform(current)
+    }
+    simulator = createSimulator(builder)
+    applyPositions(simulator, builder)
+    applySensors(builder)
     lastTickTime = System.currentTimeMillis().toDouble
     simulator.getAllNeighbours()
     simulator.devs.foreach { case (id, _) =>
@@ -691,10 +602,16 @@ object ScafiStandalone {
     }
   }
 
-  private def createSimulator(config: js.Dynamic): SpaceAwareSimulator = {
-    val network = config.selectDynamic("network").asInstanceOf[js.Dynamic]
-    val neighbour = config.selectDynamic("neighbour").asInstanceOf[js.Dynamic]
-    val seeds = config.selectDynamic("seeds").asInstanceOf[js.Dynamic]
+  private def createSimulator(builder: WorldDocumentBuilder): SpaceAwareSimulator = {
+    val network = builder.network.getOrElse(
+      js.Dynamic.literal(kind = "grid", rows = 10, cols = 10, stepX = 60.0, stepY = 60.0, tolerance = 10.0)
+    )
+    val neighbour = builder.neighbourConfig.getOrElse(
+      js.Dynamic.literal(range = 70.0)
+    )
+    val seeds = builder.seedConfig.getOrElse(
+      js.Dynamic.literal(configSeed = 0L, simulationSeed = 0L, randomSensorSeed = 0L)
+    )
     val simulationSeeds = Seeds(
       asLong(seeds.selectDynamic("configSeed")),
       asLong(seeds.selectDynamic("simulationSeed")),
@@ -748,35 +665,40 @@ object ScafiStandalone {
     simulator
   }
 
-  private def applySensors(config: js.Dynamic): Unit = {
-    val sensors = config.selectDynamic("sensors").asInstanceOf[js.Dynamic]
-    keys(sensors).foreach { sensorName =>
-      simulator.addSensor(sensorName, decodeValue(sensors.selectDynamic(sensorName)))
+  private def applySensors(builder: WorldDocumentBuilder): Unit = {
+    builder.sensors.foreach { case (sensorName, value) =>
+      simulator.addSensor(sensorName, decodeValue(value))
     }
 
-    val initialValues = config.selectDynamic("initialValues")
-    if (initialValues != null && !js.isUndefined(initialValues)) {
-      val overrides = initialValues.asInstanceOf[js.Dynamic]
-      keys(overrides).foreach { nodeId =>
-        val nodeValues = overrides.selectDynamic(nodeId).asInstanceOf[js.Dynamic]
-        keys(nodeValues).foreach { sensorName =>
-          simulator.chgSensorValue(sensorName, Set(nodeId.toInt), decodeValue(nodeValues.selectDynamic(sensorName)))
-        }
+    builder.initialValues.foreach { case (nodeId, nodeValues) =>
+      nodeValues.foreach { case (sensorName, value) =>
+        simulator.chgSensorValue(sensorName, Set(nodeId.toInt), decodeValue(value))
       }
     }
   }
 
-  private def applyPositions(simulator: SpaceAwareSimulator, config: js.Dynamic): Unit = {
-    val positions = config.selectDynamic("positions")
-    if (positions != null && !js.isUndefined(positions)) {
-      val overrides = positions.asInstanceOf[js.Dynamic]
-      keys(overrides).foreach { nodeId =>
-        val point = overrides.selectDynamic(nodeId).asInstanceOf[js.Dynamic]
-        updatePosition(
-          asInt(nodeId.asInstanceOf[js.Any]),
-          Point2D(asDouble(point.selectDynamic("x")), asDouble(point.selectDynamic("y")))
-        )
-      }
+  private def applyPositions(simulator: SpaceAwareSimulator, builder: WorldDocumentBuilder): Unit = {
+    val network = builder.network.getOrElse(
+      js.Dynamic.literal(kind = "grid", rows = 10, cols = 10, stepX = 60.0, stepY = 60.0, tolerance = 10.0)
+    )
+    val deployedPositions = builder.positionDeployment
+      .getOrElse(RuntimeDeployment((_, _) => js.Dictionary.empty[js.Any]))
+      .positionsFor(network, js.undefined)
+
+    deployedPositions.foreach { case (nodeId, pointObj) =>
+      val point = pointObj.asInstanceOf[js.Dynamic]
+      updatePosition(
+        asInt(nodeId.asInstanceOf[js.Any]),
+        Point2D(asDouble(point.selectDynamic("x")), asDouble(point.selectDynamic("y")))
+      )
+    }
+
+    builder.positionOverrides.foreach { case (nodeId, pointObj) =>
+      val point = pointObj.asInstanceOf[js.Dynamic]
+      updatePosition(
+        asInt(nodeId.asInstanceOf[js.Any]),
+        Point2D(asDouble(point.selectDynamic("x")), asDouble(point.selectDynamic("y")))
+      )
     }
   }
 
@@ -829,13 +751,27 @@ object ScafiStandalone {
   }
 
   private def decodeValue(value: js.Any): Any = {
-    val encoded = value.asInstanceOf[js.Dynamic]
-    encoded.selectDynamic("kind").toString match {
-      case "boolean" => encoded.selectDynamic("value").asInstanceOf[Boolean]
-      case "double" => asDouble(encoded.selectDynamic("value"))
-      case "string" => encoded.selectDynamic("value").toString
-      case "matrix" => decodeMatrix(encoded)
-      case _ => null
+    if (value == null || js.isUndefined(value)) {
+      null
+    } else {
+      val encoded = value.asInstanceOf[js.Dynamic]
+      val kindVal = encoded.selectDynamic("kind")
+      if (kindVal == null || js.isUndefined(kindVal)) {
+        value.asInstanceOf[Any] match {
+          case number: Int => number.toDouble
+          case other => other
+        }
+      } else {
+        kindVal.toString match {
+          case "boolean" => encoded.selectDynamic("value").asInstanceOf[Boolean]
+          case "double" => asDouble(encoded.selectDynamic("value"))
+          case "string" =>
+            val strVal = encoded.selectDynamic("value")
+            if (strVal == null || js.isUndefined(strVal)) "" else strVal.toString
+          case "matrix" => decodeMatrix(encoded)
+          case _ => null
+        }
+      }
     }
   }
 
@@ -860,7 +796,9 @@ object ScafiStandalone {
     val dimension = asInt(value.selectDynamic("dimension"))
     val pixels = value.selectDynamic("pixels").asInstanceOf[js.Array[js.Array[js.Any]]].map { pixel =>
       val coordinates = pixel(0).asInstanceOf[js.Array[js.Any]]
-      (asInt(coordinates(0)), asInt(coordinates(1))) -> pixel(1).toString
+      val color = pixel(1)
+      val colorStr = if (color == null || js.isUndefined(color)) "#000000" else color.toString
+      (asInt(coordinates(0)), asInt(coordinates(1))) -> colorStr
     }.toMap
     RuntimeMatrix(dimension, pixels)
   }
@@ -902,24 +840,45 @@ object ScafiStandalone {
     case many => many.map(_.toString).mkString("(", ",", ")").asInstanceOf[js.Any]
   }
 
-  private def keys(value: js.Dynamic): Seq[String] =
-    js.Object.keys(value.asInstanceOf[js.Object]).map(_.toString).toSeq
-
-  private def asInt(value: js.Any): Int = value.asInstanceOf[Any] match {
-    case value: Int => value
-    case value: Double => value.toInt
-    case other => other.toString.toDouble.toInt
+  private def asInt(value: js.Any): Int = {
+    if (value == null || js.isUndefined(value)) {
+      0
+    } else {
+      value.asInstanceOf[Any] match {
+        case value: Int => value
+        case value: Double => value.toInt
+        case other =>
+          val s = other.toString
+          if (s == "undefined" || s == "null" || s.trim.isEmpty) 0 else s.toDouble.toInt
+      }
+    }
   }
 
-  private def asLong(value: js.Any): Long = value.asInstanceOf[Any] match {
-    case value: Double => value.toLong
-    case value: Int => value.toLong
-    case other => other.toString.toDouble.toLong
+  private def asLong(value: js.Any): Long = {
+    if (value == null || js.isUndefined(value)) {
+      0L
+    } else {
+      value.asInstanceOf[Any] match {
+        case value: Double => value.toLong
+        case value: Int => value.toLong
+        case other =>
+          val s = other.toString
+          if (s == "undefined" || s == "null" || s.trim.isEmpty) 0L else s.toDouble.toLong
+      }
+    }
   }
 
-  private def asDouble(value: js.Any): Double = value.asInstanceOf[Any] match {
-    case value: Double => value
-    case value: Int => value.toDouble
-    case other => other.toString.toDouble
+  private def asDouble(value: js.Any): Double = {
+    if (value == null || js.isUndefined(value)) {
+      0.0
+    } else {
+      value.asInstanceOf[Any] match {
+        case value: Double => value
+        case value: Int => value.toDouble
+        case other =>
+          val s = other.toString
+          if (s == "undefined" || s == "null" || s.trim.isEmpty) 0.0 else s.toDouble
+      }
+    }
   }
 }

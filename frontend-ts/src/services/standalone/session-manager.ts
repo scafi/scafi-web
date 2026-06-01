@@ -1,5 +1,4 @@
-import type { StandaloneRuntimeApi, StandaloneState, SupportConfiguration, Vec2 } from "../../domain/contracts";
-import { RuntimeConfigSerializer } from "../serialization/runtime-config-serializer";
+import type { StandaloneRuntimeApi, StandaloneState, Vec2 } from "../../domain/contracts";
 
 type SensorOverrideMap = Record<string, Record<string, unknown>>;
 
@@ -14,11 +13,6 @@ export class StandaloneSessionManager {
   private pendingPositions: Record<string, Vec2> = {};
   private pendingSensors: SensorOverrideMap = {};
   private started = false;
-  private lastConfiguration?: SupportConfiguration;
-  private lastBasePositions: Record<string, Vec2> = {};
-  private lastBaseSensors: SensorOverrideMap = {};
-
-  constructor(private readonly serializer = new RuntimeConfigSerializer()) {}
 
   nextGeneration(): number {
     this.generation += 1;
@@ -32,9 +26,6 @@ export class StandaloneSessionManager {
     this.pendingPositions = {};
     this.pendingSensors = {};
     this.started = false;
-    this.lastConfiguration = undefined;
-    this.lastBasePositions = {};
-    this.lastBaseSensors = {};
   }
 
   attach(runtime: StandaloneRuntimeApi): StandaloneSession {
@@ -45,23 +36,21 @@ export class StandaloneSessionManager {
     return session;
   }
 
-  async initialize(config: SupportConfiguration, positions: Record<string, Vec2>, sensors?: SensorOverrideMap): Promise<void> {
+  async initialize(): Promise<void> {
     const active = this.requireSession();
     this.started = false;
-    this.lastConfiguration = config;
-    this.lastBasePositions = { ...positions };
-    this.lastBaseSensors = this.mergeSensors({}, sensors ?? {});
-    const effectiveSensors = sensors
-      ? this.mergeSensors(sensors, this.pendingSensors)
-      : Object.keys(this.pendingSensors).length > 0
-        ? this.mergeSensors({}, this.pendingSensors)
-        : undefined;
-    const configJson = this.serializer.toJson(
-      config,
-      { ...positions, ...this.pendingPositions },
-      effectiveSensors,
-    );
-    await Promise.resolve(active.runtime.loadAndInit(configJson));
+    await Promise.resolve(active.runtime.loadAndInit());
+
+    // Apply any overridden/dragged positions accumulated
+    for (const [nodeId, position] of Object.entries(this.pendingPositions)) {
+      await Promise.resolve(active.runtime.setPosition(nodeId, position.x, position.y));
+    }
+    // Apply any overridden sensor values accumulated
+    for (const [nodeId, values] of Object.entries(this.pendingSensors)) {
+      for (const [sensorName, value] of Object.entries(values)) {
+        await Promise.resolve(active.runtime.setSensorValue(sensorName, [nodeId], value));
+      }
+    }
   }
 
   async tick(): Promise<void> {
@@ -103,20 +92,8 @@ export class StandaloneSessionManager {
     return await Promise.resolve(this.requireSession().runtime.getState(options));
   }
 
-  private mergeSensors(base: SensorOverrideMap, overrides: SensorOverrideMap): SensorOverrideMap {
-    const merged: SensorOverrideMap = { ...base };
-    for (const [nodeId, values] of Object.entries(overrides)) {
-      merged[nodeId] = { ...(merged[nodeId] ?? {}), ...values };
-    }
-    return merged;
-  }
-
   private async reinitializePendingState(): Promise<void> {
-    if (!this.lastConfiguration) {
-      return;
-    }
-
-    await this.initialize(this.lastConfiguration, this.lastBasePositions, this.lastBaseSensors);
+    await this.initialize();
   }
 
   private requireSession(): StandaloneSession {
