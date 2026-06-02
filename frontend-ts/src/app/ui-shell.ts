@@ -84,6 +84,8 @@ export class ScafiWebUiShell {
   private graphInteractionMode: "pan" | "selection" = "pan";
   private selectionPanelOpen = false;
   private visualizationSettingsOpen = false;
+  private isEditorCollapsed = false;
+  private isVisualizationCollapsed = false;
   private lastRenderedExecutionStatus: AppState["execution"]["status"] = "idle";
   private lastRenderedSelectedNodeIds: string[] = [];
   private lastRenderedSelectionPanelOpen = false;
@@ -357,127 +359,155 @@ export class ScafiWebUiShell {
         </header>
 
         <main class="workspace-grid">
-          <div class="playground">
-            <section class="panel panel-editor">
-              <section class="panel-section panel-section-fill editor-pane">
-                <div class="editor-pane-meta">
-                  <div class="section-heading compact-section-heading">
-                    <p class="section-kicker">Playground</p>
-                  </div>
-                  <div class="editor-tabbar" role="tablist" aria-label="Playground documents">
-                    <button id="document-tab-code" class="editor-tab ${this.activePlaygroundDocument === "code" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "code")}">Code</button>
-                    <button id="document-tab-world" class="editor-tab ${this.activePlaygroundDocument === "world" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "world")}">World</button>
-                    <button id="document-tab-renderer" class="editor-tab ${this.activePlaygroundDocument === "renderer" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "renderer")}">Renderer (JS)</button>
-                  </div>
-                  <div class="toolbar-row compact-toolbar-row">
-                    <div class="examples-session-container">
-                      <label class="field compact-field">
-                        <span>Examples & Custom Files</span>
-                        <select id="example-select">
-                          <option value="">Choose an example or custom file...</option>
-                          ${this.renderExampleOptions()}
-                        </select>
-                      </label>
-                      <div class="session-btn-group">
-                        <button id="session-save" class="icon-btn ghost" title="Save changes to active custom file" ${disabled(!this.isUserSessionActive())}>${iconSave()} Save</button>
-                        <button id="session-save-as" class="icon-btn ghost" title="Save as new custom file">${iconCopy()} Save As...</button>
-                        <button id="session-new" class="icon-btn ghost" title="Create new blank custom file">${iconFilePlus()} New</button>
-                        <button id="session-delete" class="icon-btn ghost danger" title="Delete this custom file" ${disabled(!this.isUserSessionActive())}>${iconTrash()} Delete</button>
-                        <button id="session-share" class="icon-btn ghost" title="Share current code as a link">${iconShare()} Share</button>
-                      </div>
+          <div class="playground ${this.isEditorCollapsed ? "is-editor-collapsed" : ""} ${this.isVisualizationCollapsed ? "is-visualization-collapsed" : ""}">
+            <section class="panel panel-editor ${this.isEditorCollapsed ? "is-collapsed" : ""}">
+              <!-- Collapsed Trigger -->
+              <button class="collapsed-panel-trigger collapsed-editor" id="expand-editor" type="button" title="Expand Editor" aria-hidden="${String(!this.isEditorCollapsed)}">
+                <span class="ghost-link icon-btn expand-btn">
+                  ${iconChevronRight()}
+                </span>
+                <div class="collapsed-title">Playground</div>
+              </button>
+
+              <!-- Panel Content -->
+              <div class="panel-content editor-panel-content">
+                <section class="panel-section panel-section-fill editor-pane">
+                  <div class="editor-pane-meta">
+                    <div class="section-heading compact-section-heading">
+                      <p class="section-kicker">Playground</p>
+                      <button id="collapse-editor" class="ghost-link icon-btn collapse-panel-btn" type="button" title="Collapse Editor">
+                        ${iconChevronLeft()}
+                      </button>
                     </div>
+                    <div class="editor-tabbar" role="tablist" aria-label="Playground documents">
+                      <button id="document-tab-code" class="editor-tab ${this.activePlaygroundDocument === "code" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "code")}">Code</button>
+                      <button id="document-tab-world" class="editor-tab ${this.activePlaygroundDocument === "world" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "world")}">World</button>
+                      <button id="document-tab-renderer" class="editor-tab ${this.activePlaygroundDocument === "renderer" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "renderer")}">Renderer (JS)</button>
+                    </div>
+                    <div class="toolbar-row compact-toolbar-row">
+                      <div class="examples-session-container">
+                        <label class="field compact-field">
+                          <span>Examples & Custom Files</span>
+                          <select id="example-select">
+                            <option value="">Choose an example or custom file...</option>
+                            ${this.renderExampleOptions()}
+                          </select>
+                        </label>
+                        <div class="session-btn-group">
+                          <button id="session-save" class="icon-btn ghost" title="Save changes to active custom file" ${disabled(!this.isUserSessionActive())}>${iconSave()} Save</button>
+                          <button id="session-save-as" class="icon-btn ghost" title="Save as new custom file">${iconCopy()} Save As...</button>
+                          <button id="session-new" class="icon-btn ghost" title="Create new blank custom file">${iconFilePlus()} New</button>
+                          <button id="session-delete" class="icon-btn ghost danger" title="Delete this custom file" ${disabled(!this.isUserSessionActive())}>${iconTrash()} Delete</button>
+                          <button id="session-share" class="icon-btn ghost" title="Share current code as a link">${iconShare()} Share</button>
+                        </div>
+                      </div>
+                      ${
+                        this.activePlaygroundDocument === "code"
+                          ? `<div class="field mode-field">
+                              <span>Mode</span>
+                              <fieldset class="mode-toggle">
+                                <label>
+                                  <input type="radio" name="editor-mode" value="easy-scala" ${checked(this.codeEditor.getActiveEditorMode() === "easy-scala")} />
+                                  <span>Basic</span>
+                                </label>
+                                <label>
+                                  <input type="radio" name="editor-mode" value="full-scala" ${checked(this.codeEditor.getActiveEditorMode() === "full-scala")} />
+                                  <span>Advanced</span>
+                                </label>
+                              </fieldset>
+                            </div>`
+                          : ""
+                      }
+                    </div>
+                    ${this.examplesError ? `<p class="inline-error">Examples fallback failed: ${escapeHtml(this.examplesError)}</p>` : ""}
                     ${
-                      this.activePlaygroundDocument === "code"
-                        ? `<div class="field mode-field">
-                            <span>Mode</span>
-                            <fieldset class="mode-toggle">
-                              <label>
-                                <input type="radio" name="editor-mode" value="easy-scala" ${checked(this.codeEditor.getActiveEditorMode() === "easy-scala")} />
-                                <span>Basic</span>
-                              </label>
-                              <label>
-                                <input type="radio" name="editor-mode" value="full-scala" ${checked(this.codeEditor.getActiveEditorMode() === "full-scala")} />
-                                <span>Advanced</span>
-                              </label>
-                            </fieldset>
-                          </div>`
+                      this.activePlaygroundDocument === "renderer"
+                        ? `<div id="renderer-error-container">${this.rendererDocumentError ? `<p class="inline-error">Renderer JS error: ${escapeHtml(this.rendererDocumentError)}</p>` : ""}</div>`
                         : ""
                     }
                   </div>
-                  ${this.examplesError ? `<p class="inline-error">Examples fallback failed: ${escapeHtml(this.examplesError)}</p>` : ""}
-                  ${
-                    this.activePlaygroundDocument === "renderer"
-                      ? `<div id="renderer-error-container">${this.rendererDocumentError ? `<p class="inline-error">Renderer JS error: ${escapeHtml(this.rendererDocumentError)}</p>` : ""}</div>`
-                      : ""
-                  }
-                </div>
-                <div class="editor-pane-body">
-                  <div class="editor-surface">
-                    <textarea id="code-editor" spellcheck="false">${escapeHtml(this.codeEditor.getActiveEditorText())}</textarea>
+                  <div class="editor-pane-body">
+                    <div class="editor-surface">
+                      <textarea id="code-editor" spellcheck="false">${escapeHtml(this.codeEditor.getActiveEditorText())}</textarea>
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              </div>
             </section>
+ 
+            <section class="panel panel-visualization ${this.isVisualizationCollapsed ? "is-collapsed" : ""} ${!isLoaded ? "viz-unloaded" : ""}">
+              <!-- Collapsed Trigger -->
+              <button class="collapsed-panel-trigger collapsed-visualization" id="expand-visualization" type="button" title="Expand Simulation" aria-hidden="${String(!this.isVisualizationCollapsed)}">
+                <span class="ghost-link icon-btn expand-btn">
+                  ${iconChevronLeft()}
+                </span>
+                <div class="collapsed-title">Simulation</div>
+              </button>
 
-            <section class="panel panel-visualization ${!isLoaded ? "viz-unloaded" : ""}">
-              <section class="panel-section viz-top-section">
-                <div class="viz-heading-row compact-viz-heading-row">
-                  <div class="section-heading compact-section-heading">
-                    <p class="section-kicker">Execution</p>
-                  </div>
-                  <div class="status-strip status-strip-inline">${this.simulationControls.renderStatusStrip(state)}</div>
-                </div>
-                <div class="viz-toolbar-strip">
-                  <div class="viz-control-group viz-control-group-run">
-                    <p class="control-card-title">Execution</p>
-                    <div class="viz-inline-actions viz-inline-actions-run" role="group" aria-label="Execution commands">
-                      <button id="load-script" class="primary icon-btn" ${disabled(status === "compiling")}>${iconPlay()} Load</button>
-                      <button id="tick-once" class="icon-btn" ${disabled(!(status === "ready" || status === "daemon"))}>${iconSkipForward()} Tick</button>
-                      <button id="start-daemon" class="icon-btn" ${disabled(status !== "ready")}>${iconPlay()} Start</button>
-                      <button id="stop-daemon" class="icon-btn" ${disabled(status !== "daemon")}>${iconSquare()} Stop</button>
+              <!-- Panel Content -->
+              <div class="panel-content viz-panel-content">
+                <section class="panel-section viz-top-section">
+                  <div class="viz-heading-row compact-viz-heading-row">
+                    <div class="section-heading compact-section-heading">
+                      <p class="section-kicker">Execution</p>
                     </div>
+                    <div class="status-strip status-strip-inline">${this.simulationControls.renderStatusStrip(state)}</div>
+                    <button id="collapse-visualization" class="ghost-link icon-btn collapse-panel-btn" type="button" title="Collapse Simulation">
+                      ${iconChevronRight()}
+                    </button>
                   </div>
-                  <div class="viz-control-group viz-control-group-speed">
-                    <p class="control-card-title">Speed</p>
-                    <div class="speed-cluster compact-speed-cluster" role="group" aria-label="Simulation speed">
-                      ${this.simulationControls.renderSpeedOption("slow", 60, state.execution.daemonIntervalMs === 60)}
-                      ${this.simulationControls.renderSpeedOption("normal", 30, state.execution.daemonIntervalMs === 30 || !state.execution.daemonIntervalMs)}
-                      ${this.simulationControls.renderSpeedOption("fast", 10, state.execution.daemonIntervalMs === 10)}
-                    </div>
-                  </div>
-                  <div class="viz-control-group viz-control-group-graph">
-                    <div class="viz-inline-actions graph-inline-actions">
-                      <div class="interaction-toggle graph-mode-toggle" role="group" aria-label="Graph interaction mode">
-                        <button id="interaction-pan" class="mode-chip icon-btn ${this.graphInteractionMode === "pan" ? "is-active" : ""}" type="button">${iconMove()} Pan</button>
-                        <button id="interaction-selection" class="mode-chip icon-btn ${this.graphInteractionMode === "selection" ? "is-active" : ""}" type="button">${iconMousePointer()} Select</button>
+                  <div class="viz-toolbar-strip">
+                    <div class="viz-control-group viz-control-group-run">
+                      <p class="control-card-title">Execution</p>
+                      <div class="viz-inline-actions viz-inline-actions-run" role="group" aria-label="Execution commands">
+                        <button id="load-script" class="primary icon-btn" ${disabled(status === "compiling")}>${iconPlay()} Load</button>
+                        <button id="tick-once" class="icon-btn" ${disabled(!(status === "ready" || status === "daemon"))}>${iconSkipForward()} Tick</button>
+                        <button id="start-daemon" class="icon-btn" ${disabled(status !== "ready")}>${iconPlay()} Start</button>
+                        <button id="stop-daemon" class="icon-btn" ${disabled(status !== "daemon")}>${iconSquare()} Stop</button>
                       </div>
-                      <button id="toggle-selection-panel" class="ghost selection-panel-toggle icon-btn ${selectionPanelVisible ? "is-active" : ""}" type="button" ${disabled(!hasSelection)} aria-pressed="${String(selectionPanelVisible)}">${selectionPanelVisible ? `${iconEyeOff()} Hide` : `${iconEye()} Show`} inspector</button>
-                      <button id="reset-view" class="ghost icon-btn" type="button">${iconRotateCcw()} Reset view</button>
+                    </div>
+                    <div class="viz-control-group viz-control-group-speed">
+                      <p class="control-card-title">Speed</p>
+                      <div class="speed-cluster compact-speed-cluster" role="group" aria-label="Simulation speed">
+                        ${this.simulationControls.renderSpeedOption("slow", 60, state.execution.daemonIntervalMs === 60)}
+                        ${this.simulationControls.renderSpeedOption("normal", 30, state.execution.daemonIntervalMs === 30 || !state.execution.daemonIntervalMs)}
+                        ${this.simulationControls.renderSpeedOption("fast", 10, state.execution.daemonIntervalMs === 10)}
+                      </div>
+                    </div>
+                    <div class="viz-control-group viz-control-group-graph">
+                      <div class="viz-inline-actions graph-inline-actions">
+                        <div class="interaction-toggle graph-mode-toggle" role="group" aria-label="Graph interaction mode">
+                          <button id="interaction-pan" class="mode-chip icon-btn ${this.graphInteractionMode === "pan" ? "is-active" : ""}" type="button">${iconMove()} Pan</button>
+                          <button id="interaction-selection" class="mode-chip icon-btn ${this.graphInteractionMode === "selection" ? "is-active" : ""}" type="button">${iconMousePointer()} Select</button>
+                        </div>
+                        <button id="toggle-selection-panel" class="ghost selection-panel-toggle icon-btn ${selectionPanelVisible ? "is-active" : ""}" type="button" ${disabled(!hasSelection)} aria-pressed="${String(selectionPanelVisible)}">${selectionPanelVisible ? `${iconEyeOff()} Hide` : `${iconEye()} Show`} inspector</button>
+                        <button id="reset-view" class="ghost icon-btn" type="button">${iconRotateCcw()} Reset view</button>
+                      </div>
                     </div>
                   </div>
-                </div>
-                ${this.visualizationSettingsOpen ? this.renderVisualizationSettings() : ""}
-                <div class="viz-runtime-feedback">${state.execution.error ? `<p class="inline-error">${escapeHtml(state.execution.error)}</p>` : ""}</div>
-              </section>
-              <section class="panel-section panel-section-tight panel-section-fill graph-pane">
-                <div class="graph-workspace">
-                  <div class="graph-main">
-                    <div id="renderer-mount-point" class="graph-stage-wrapper" style="width:100%; height:100%;"></div>
-                    <aside class="selection-slot ${selectionPanelVisible ? "is-open" : ""}" data-selection-panel>${this.renderSelectionPanel(state)}</aside>
-                    ${status === "compiling" ? `
-                      <div class="compiling-overlay">
-                        <div class="compiling-loader-container">
-                          <div class="compiling-spinner"></div>
-                          <div class="compiling-text-wrapper">
-                            <h3 class="compiling-title">Compiling</h3>
-                            <p class="compiling-subtitle">Contacting compilation server...</p>
+                  ${this.visualizationSettingsOpen ? this.renderVisualizationSettings() : ""}
+                  <div class="viz-runtime-feedback">${state.execution.error ? `<p class="inline-error">${escapeHtml(state.execution.error)}</p>` : ""}</div>
+                </section>
+                <section class="panel-section panel-section-tight panel-section-fill graph-pane">
+                  <div class="graph-workspace">
+                    <div class="graph-main">
+                      <div id="renderer-mount-point" class="graph-stage-wrapper" style="width:100%; height:100%;"></div>
+                      <aside class="selection-slot ${selectionPanelVisible ? "is-open" : ""}" data-selection-panel>${this.renderSelectionPanel(state)}</aside>
+                      ${status === "compiling" ? `
+                        <div class="compiling-overlay">
+                          <div class="compiling-loader-container">
+                            <div class="compiling-spinner"></div>
+                            <div class="compiling-text-wrapper">
+                              <h3 class="compiling-title">Compiling</h3>
+                              <p class="compiling-subtitle">Contacting compilation server...</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ` : ""}
+                      ` : ""}
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              </div>
             </section>
           </div>
         </main>
@@ -1168,6 +1198,67 @@ export class ScafiWebUiShell {
       this.syncWorldDocumentFromConfiguration(configuration);
       this.app.evolve(configuration);
     });
+
+    this.bindButton("collapse-editor", () => {
+      this.isEditorCollapsed = true;
+      this.isVisualizationCollapsed = false;
+      this.updateCollapseClasses();
+    });
+    this.bindButton("expand-editor", () => {
+      this.isEditorCollapsed = false;
+      this.updateCollapseClasses();
+    });
+    this.bindButton("collapse-visualization", () => {
+      this.isVisualizationCollapsed = true;
+      this.isEditorCollapsed = false;
+      this.updateCollapseClasses();
+    });
+    this.bindButton("expand-visualization", () => {
+      this.isVisualizationCollapsed = false;
+      this.updateCollapseClasses();
+    });
+  }
+
+  private updateCollapseClasses(): void {
+    const playground = this.root.querySelector(".playground");
+    const panelEditor = this.root.querySelector(".panel-editor");
+    const panelVisualization = this.root.querySelector(".panel-visualization");
+    const expandEditorBtn = this.root.querySelector("#expand-editor");
+    const expandVisualizationBtn = this.root.querySelector("#expand-visualization");
+
+    if (playground) {
+      playground.classList.toggle("is-editor-collapsed", this.isEditorCollapsed);
+      playground.classList.toggle("is-visualization-collapsed", this.isVisualizationCollapsed);
+    }
+    if (panelEditor) {
+      panelEditor.classList.toggle("is-collapsed", this.isEditorCollapsed);
+    }
+    if (panelVisualization) {
+      panelVisualization.classList.toggle("is-collapsed", this.isVisualizationCollapsed);
+    }
+    if (expandEditorBtn) {
+      expandEditorBtn.setAttribute("aria-hidden", String(!this.isEditorCollapsed));
+    }
+    if (expandVisualizationBtn) {
+      expandVisualizationBtn.setAttribute("aria-hidden", String(!this.isVisualizationCollapsed));
+    }
+
+    this.animateCollapseResize();
+  }
+
+  private animateCollapseResize(): void {
+    const startTime = performance.now();
+    const duration = 450; // matching CSS transition time
+    const tick = () => {
+      const elapsed = performance.now() - startTime;
+      if (this.renderer && this.renderer.updateSize()) {
+        this.patchLiveState(this.app.store.getState());
+      }
+      if (elapsed < duration) {
+        requestAnimationFrame(tick);
+      }
+    };
+    requestAnimationFrame(tick);
   }
 
   private selectedNodes(nodes: GraphNode[]): GraphNode[] {
@@ -1571,6 +1662,14 @@ function iconShare(): string {
 
 function iconCheck(): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+}
+
+function iconChevronLeft(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`;
+}
+
+function iconChevronRight(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
 }
 
 function encodeBase64(str: string): string {
