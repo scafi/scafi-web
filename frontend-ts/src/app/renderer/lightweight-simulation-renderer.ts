@@ -685,29 +685,13 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
               this.ctx.fill();
             }
           } else if (overlay.kind === "text") {
-            this.ctx.font = `500 ${overlay.fontSize ?? Math.max(10, nodeSize - 1)}px sans-serif`;
-            this.ctx.fillStyle = overlay.fill ?? "#ffffff";
-            this.ctx.textAlign = overlay.anchor === "middle" ? "center" : overlay.anchor === "start" ? "left" : "right";
-            this.ctx.textBaseline = "middle";
-            this.ctx.fillText(overlay.text, px + (overlay.x ?? 0), py + overlay.y);
+            // Text rendering is disabled in the lightweight renderer for performance
           }
           this.ctx.restore();
         }
       }
 
-      // 4. Disegno dei Testi (Label del nodo)
-      const showLabel = nodeState.labels.length > 0;
-      if (showLabel) {
-        const labelText = nodeState.labels.join("·");
-
-        this.ctx.save();
-        this.ctx.font = `500 ${nodeState.fontSize}px sans-serif`;
-        this.ctx.fillStyle = isLightTheme ? "#333333" : "#b0b6bd";
-        this.ctx.textAlign = "center";
-        this.ctx.textBaseline = "top";
-        this.ctx.fillText(labelText, px, py + nodeSize + 4);
-        this.ctx.restore();
-      }
+      // 4. Disegno dei Testi (Label del nodo) - disabilitato in lightweight renderer per performance
     }
 
     // 5. Disegno della Scatola di Selezione (Selection Box)
