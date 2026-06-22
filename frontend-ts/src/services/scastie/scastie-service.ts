@@ -21,7 +21,7 @@ export interface EventSourceLike {
 
 const DEFAULTS = {
   baseUrl: "https://scastie.scala-lang.org",
-  scafiVersion: "1.7.0",
+  scafiVersion: "1.8.0",
   scalaVersion: "2.13.18",
   scalaJsVersion: "1.21.0",
 };
@@ -51,7 +51,7 @@ function cyrb53(str: string, seed = 0): string {
 export class ScastieService {
   private readonly baseUrl: string;
   private readonly scafiVersion: string;
-  private readonly scalaVersion: string;
+  private scalaVersion: string;
   private readonly scalaJsVersion: string;
   private readonly wrapCode: (code: string, worldDocument?: string) => string;
   private readonly fetchImpl: typeof fetch;
@@ -69,19 +69,31 @@ export class ScastieService {
       ((url) => new EventSource(url) as unknown as EventSourceLike);
   }
 
+  getScalaVersion(): string {
+    return this.scalaVersion;
+  }
+
+  setScalaVersion(scalaVersion: string): void {
+    this.scalaVersion = scalaVersion;
+  }
+
   normalizeSource(code: string, mode: ScalaSourceMode): string {
-    return mode === "easy-scala" ? convertEasyScalaToFull(code) : code;
+    const cleanCode = code.replace(/\t/g, "  ");
+    return mode === "easy-scala" ? convertEasyScalaToFull(cleanCode) : cleanCode;
   }
 
   buildPayload(code: string, mode: ScalaSourceMode, worldDocument?: string): CompilePayload {
     const normalized = this.normalizeSource(code, mode);
     const wrapped = this.wrapCode(normalized, worldDocument);
-    const scala2Target = { scalaVersion: this.scalaVersion };
+    const isScala3 = this.scalaVersion.startsWith("3.");
+    const targetDependency = isScala3
+      ? { Scala3: { scalaVersion: this.scalaVersion } }
+      : { Scala2: { scalaVersion: this.scalaVersion } };
 
     const dependency = (artifact: string) => ({
       groupId: "it.unibo.scafi",
       artifact,
-      target: { Scala2: scala2Target },
+      target: targetDependency,
       version: this.scafiVersion,
       isAutoResolve: true as const,
     });

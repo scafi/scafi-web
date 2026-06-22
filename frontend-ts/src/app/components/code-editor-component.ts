@@ -1,13 +1,14 @@
-import { EditorView } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 
 import { EditorState } from "@codemirror/state";
-import { StreamLanguage, HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { StreamLanguage, HighlightStyle, syntaxHighlighting, indentUnit } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
 import { scala } from "@codemirror/legacy-modes/mode/clike";
 import { javascript } from "@codemirror/lang-javascript";
 import { autocompletion } from "@codemirror/autocomplete";
 import type { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { indentWithTab } from "@codemirror/commands";
 
 import { convertEasyScalaToFull } from "../../services/scastie/easy-scala";
 import { defaultRendererDocument } from "../renderer-document";
@@ -286,6 +287,8 @@ export class CodeEditorComponent {
       if (!state) {
         const extensions = [
           basicSetup,
+          keymap.of([indentWithTab]),
+          indentUnit.of("  "),
           editorBaseTheme,
           theme === "dark" ? darkThemeExtension : lightThemeExtension,
           theme === "dark" ? syntaxHighlighting(cosmicHighlightStyle) : syntaxHighlighting(cosmicLightHighlightStyle),
@@ -370,16 +373,17 @@ export class CodeEditorComponent {
   }
 
   getActiveEditorText(): string {
+    let rawText = "";
     if (this.activePlaygroundDocument === "world") {
-      return this.worldDocument;
+      rawText = this.worldDocument;
+    } else if (this.activePlaygroundDocument === "renderer") {
+      rawText = this.rendererDocument;
+    } else if (this.activePlaygroundDocument === "compiled") {
+      rawText = this.app.previewCompiledSource(this.editorDocument, this.worldDocument);
+    } else {
+      rawText = this.getActiveEditorCode();
     }
-    if (this.activePlaygroundDocument === "renderer") {
-      return this.rendererDocument;
-    }
-    if (this.activePlaygroundDocument === "compiled") {
-      return this.app.previewCompiledSource(this.editorDocument, this.worldDocument);
-    }
-    return this.getActiveEditorCode();
+    return rawText.replace(/\t/g, "  ");
   }
 
   private initializeEditorBuffers(): void {

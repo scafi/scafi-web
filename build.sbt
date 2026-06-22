@@ -2,7 +2,7 @@ import sbt.Keys.target
 // Constants
 val scalaProjectVersion = "2.13.16"
 val scalaTestVersion = "3.2.19"
-val scafiVersion = "1.7.0"
+val scafiVersion = "1.8.0"
 
 inThisBuild(
   List(
@@ -72,6 +72,7 @@ lazy val `standalone-runtime` = project
   .settings(
     name := "scafi-standalone-runtime",
     organization := "it.unibo.scafi",
+    crossScalaVersions := Seq("2.13.16", "3.7.4"),
     libraryDependencies ++= Seq(
       "it.unibo.scafi" %%% "scafi-core" % scafiVersion,
       "it.unibo.scafi" %%% "scafi-commons" % scafiVersion,

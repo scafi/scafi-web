@@ -4,8 +4,10 @@ import { ScafiWebEmbedShell } from "./embed-shell";
 import { ScafiWebEmbedGenerator } from "./embed-generator";
 
 export function renderBootstrap(root: HTMLElement): void {
-  const app = createScafiWebApp();
   const params = new URLSearchParams(window.location.search);
+  const isScala3 = params.get("scala") === "3" || params.get("scalaVersion")?.startsWith("3");
+  const scalaVersion = isScala3 ? "3.7.4" : "2.13.18";
+  const app = createScafiWebApp({ scalaVersion });
 
   if (params.has("embed")) {
     const shell = new ScafiWebEmbedShell(root, app);

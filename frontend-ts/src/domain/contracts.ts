@@ -126,7 +126,7 @@ export interface CompilePayload {
     libraries: Array<{
       groupId: string;
       artifact: string;
-      target: { Scala2: { scalaVersion: string } };
+      target: { Scala2: { scalaVersion: string } } | { Scala3: { scalaVersion: string } };
       version: string;
       isAutoResolve: true;
     }>;

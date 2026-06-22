@@ -32,6 +32,9 @@ vi.mock("@codemirror/view", () => {
 
   return {
     EditorView: MockEditorView,
+    keymap: {
+      of: vi.fn((keys) => ({ _keymap: keys })),
+    },
   };
 });
 
@@ -67,6 +70,9 @@ vi.mock("@codemirror/language", () => {
       define: vi.fn((specs) => ({ _highlightStyle: specs })),
     },
     syntaxHighlighting: vi.fn((style) => ({ _syntaxHighlighting: style })),
+    indentUnit: {
+      of: vi.fn((val) => ({ _indentUnit: val })),
+    },
   };
 });
 

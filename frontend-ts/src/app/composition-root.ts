@@ -16,6 +16,8 @@ export interface CompositionRootOptions {
   fetchImpl?: typeof fetch;
   wrapCode?: (code: string, worldDocument?: string) => string;
   examplesUrl?: string;
+  scalaVersion?: string;
+  scafiVersion?: string;
 }
 
 export function createScafiWebApp(options: CompositionRootOptions = {}): ScafiWebApp {
@@ -25,6 +27,8 @@ export function createScafiWebApp(options: CompositionRootOptions = {}): ScafiWe
   const scastieService = new ScastieService({
     fetchImpl: options.fetchImpl,
     wrapCode: options.wrapCode ?? wrapStandaloneRuntimeCode,
+    scalaVersion: options.scalaVersion,
+    scafiVersion: options.scafiVersion,
   });
   const runtimeLoader = new StandaloneRuntimeLoader();
   const stateAdapter = new StandaloneStateAdapter();

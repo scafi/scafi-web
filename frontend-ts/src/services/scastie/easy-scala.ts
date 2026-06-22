@@ -9,12 +9,12 @@ export function convertEasyScalaToFull(code: string): string {
   const shiftedBody = body
     .split("\n")
     .filter((currentLine) => currentLine.length > 0)
-    .map((currentLine) => `\t\t${currentLine}`)
+    .map((currentLine) => `    ${currentLine}`)
     .join("\n");
 
   return `class MyProgram extends AggregateProgram ${libsCode} {
   override def main() : Any = {
-  ${shiftedBody}
+${shiftedBody}
   }
 }
 val program = new MyProgram
