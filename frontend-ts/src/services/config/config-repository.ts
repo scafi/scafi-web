@@ -7,9 +7,18 @@ const WORLD_DOCUMENT_KEY = "world-document";
 const RENDERER_DOCUMENT_KEY = "renderer-document";
 const THEME_KEY = "ui-theme";
 const USER_SESSIONS_KEY = "scafi-web-user-sessions";
+const SCALA_VERSION_KEY = "scala-version";
 
 export class ConfigRepository {
   constructor(private readonly store: KeyValueStore) {}
+
+  saveScalaVersion(version: string): void {
+    this.store.set(SCALA_VERSION_KEY, version);
+  }
+
+  loadScalaVersion(): string | undefined {
+    return this.store.get(SCALA_VERSION_KEY) ?? undefined;
+  }
 
   saveUserSessions(sessions: UserSession[]): void {
     this.store.set(USER_SESSIONS_KEY, JSON.stringify(sessions));

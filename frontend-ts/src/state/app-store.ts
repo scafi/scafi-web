@@ -47,7 +47,10 @@ export interface AppState {
 }
 
 export interface AppStoreDependencies {
-  scastie: Pick<ScastieService, "compile" | "buildPayload">;
+  scastie: Pick<ScastieService, "compile" | "buildPayload"> & {
+    getScalaVersion?: () => string;
+    setScalaVersion?: (scalaVersion: string) => void;
+  };
   runtimeLoader: {
     loadFromJavascript(javascript: string): MaybePromise<StandaloneRuntimeApi>;
   };
@@ -122,6 +125,16 @@ export class AppStore {
 
   getState(): AppState {
     return this.state;
+  }
+
+  getScalaVersion(): string {
+    return this.dependencies.scastie.getScalaVersion ? this.dependencies.scastie.getScalaVersion() : "2.13.18";
+  }
+
+  setScalaVersion(scalaVersion: string): void {
+    if (this.dependencies.scastie.setScalaVersion) {
+      this.dependencies.scastie.setScalaVersion(scalaVersion);
+    }
   }
 
   setLinksEnabled(enabled: boolean): void {

@@ -380,9 +380,24 @@ export class ScafiWebUiShell {
                       </button>
                     </div>
                     <div class="editor-tabbar" role="tablist" aria-label="Playground documents">
-                      <button id="document-tab-code" class="editor-tab ${this.activePlaygroundDocument === "code" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "code")}">Code</button>
-                      <button id="document-tab-world" class="editor-tab ${this.activePlaygroundDocument === "world" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "world")}">World</button>
-                      <button id="document-tab-renderer" class="editor-tab ${this.activePlaygroundDocument === "renderer" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "renderer")}">Renderer (JS)</button>
+                      <div class="tab-buttons" style="display: flex; gap: 8px;">
+                        <button id="document-tab-code" class="editor-tab ${this.activePlaygroundDocument === "code" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "code")}">Code</button>
+                        <button id="document-tab-world" class="editor-tab ${this.activePlaygroundDocument === "world" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "world")}">World</button>
+                        <button id="document-tab-renderer" class="editor-tab ${this.activePlaygroundDocument === "renderer" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "renderer")}">Renderer (JS)</button>
+                      </div>
+                      <div class="field mode-field" style="margin-top: 0; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 11px;">Scala</span>
+                        <fieldset class="mode-toggle" style="min-height: 32px; height: 32px; border-radius: 8px; padding: 0 8px; gap: 4px;">
+                          <label style="font-size: 11px; gap: 4px; cursor: pointer;">
+                            <input type="radio" name="scala-version" value="2" ${checked(!this.app.getScalaVersion().startsWith("3."))} style="width: 12px; height: 12px; cursor: pointer;" />
+                            <span>2</span>
+                          </label>
+                          <label style="font-size: 11px; gap: 4px; cursor: pointer;">
+                            <input type="radio" name="scala-version" value="3" ${checked(this.app.getScalaVersion().startsWith("3."))} style="width: 12px; height: 12px; cursor: pointer;" />
+                            <span>3</span>
+                          </label>
+                        </fieldset>
+                      </div>
                     </div>
                     <div class="toolbar-row compact-toolbar-row">
                       <div class="examples-session-container">
@@ -1036,6 +1051,11 @@ export class ScafiWebUiShell {
       if (renderer && renderer.trim().length > 0) {
         params.set("renderer_b64", encodeBase64(renderer));
       }
+
+      const isScala3 = this.app.getScalaVersion().startsWith("3.");
+      if (isScala3) {
+        params.set("scala", "3");
+      }
       
       const shareUrl = `${origin}?${params.toString()}`;
       void navigator.clipboard.writeText(shareUrl);
@@ -1083,6 +1103,14 @@ export class ScafiWebUiShell {
     for (const input of this.root.querySelectorAll<HTMLInputElement>('input[name="editor-mode"]')) {
       input.addEventListener("change", () => {
         this.codeEditor.switchEditorMode(input.value as EditorDocument["mode"]);
+      });
+    }
+
+    for (const input of this.root.querySelectorAll<HTMLInputElement>('input[name="scala-version"]')) {
+      input.addEventListener("change", () => {
+        const selectedVer = input.value === "3" ? "3.7.4" : "2.13.18";
+        this.app.saveScalaVersion(selectedVer);
+        this.render();
       });
     }
 

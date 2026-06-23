@@ -629,8 +629,9 @@ button:disabled {
 }
 
 .editor-tabbar {
-  justify-content: flex-start;
+  justify-content: space-between;
   margin-top: 0;
+  width: 100%;
 }
 
 .editor-tab {

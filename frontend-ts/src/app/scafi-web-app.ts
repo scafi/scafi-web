@@ -75,6 +75,25 @@ export class ScafiWebApp {
     this.configRepository.saveTheme(theme);
   }
 
+  getScalaVersion(): string {
+    return this.store.getScalaVersion();
+  }
+
+  setScalaVersion(scalaVersion: string): void {
+    this.store.setScalaVersion(scalaVersion);
+  }
+
+  loadPersistedScalaVersion(fallback: string): string {
+    const version = this.configRepository.loadScalaVersion() ?? fallback;
+    this.setScalaVersion(version);
+    return version;
+  }
+
+  saveScalaVersion(version: string): void {
+    this.configRepository.saveScalaVersion(version);
+    this.setScalaVersion(version);
+  }
+
   async loadExamples(): Promise<ExampleGroup[]> {
     const examples = await this.exampleService.loadExamples();
     const userSessions = this.configRepository.loadUserSessions();
