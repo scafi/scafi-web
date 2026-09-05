@@ -23,7 +23,7 @@ const DEFAULTS = {
   baseUrl: "https://scastie.scala-lang.org",
   scafiVersion: "1.8.0",
   scalaVersion: "2.13.18",
-  scalaJsVersion: "1.21.0",
+  scalaJsVersion: "1.22.0",
 };
 
 function resolveFetch(fetchImpl?: typeof fetch): typeof fetch {

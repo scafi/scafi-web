@@ -17,7 +17,7 @@ describe("ScastieService", () => {
     const payload = service.buildPayload("// using Foo, Bar\nmid()", "easy-scala", "world.dsl");
     expect(payload.SbtInputs.code).toContain("wrapped(world.dsl)");
     expect(payload.SbtInputs.code).toContain("class MyProgram extends AggregateProgram with Foo with Bar");
-    expect(payload.SbtInputs.target.Js.scalaJsVersion).toBe("1.21.0");
+    expect(payload.SbtInputs.target.Js.scalaJsVersion).toBe("1.22.0");
   });
 
   it("parses a successful SSE completion", async () => {

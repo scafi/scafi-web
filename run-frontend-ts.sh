@@ -54,6 +54,6 @@ fi
 
 echo "=== Starting frontend-ts dev server ==="
 echo "Frontend dir: $FRONTEND_DIR"
-echo "URL: http://$HOST:$SELECTED_PORT/"
+echo "URL: http://$HOST:$SELECTED_PORT/web/"
 
 npm --prefix "$FRONTEND_DIR" run dev -- --host "$HOST" --port "$SELECTED_PORT" "$@"
