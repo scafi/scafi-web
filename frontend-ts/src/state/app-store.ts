@@ -548,32 +548,39 @@ export class AppStore {
     if (!parsed) {
       throw new Error("Standalone state is malformed");
     }
-    this.backend = backendFromGraph(parsed.graph);
+    // The runtime snapshot is authoritative except for edits the user made since the last
+    // tick that the runtime has not echoed back yet. Those are applied onto the snapshot
+    // itself, so the graph the adapter just built can be handed to the store as-is instead
+    // of being copied through the backend and out again on every tick.
+    const graph = parsed.graph;
+    if (this.pendingSensorChanges.size > 0 || this.pendingPositionChanges.size > 0) {
+      const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
 
-    for (const [nodeId, sensors] of this.pendingSensorChanges) {
-      const device = this.backend.devices.get(nodeId);
-      if (!device) {
-        continue;
+      for (const [nodeId, sensors] of this.pendingSensorChanges) {
+        const node = nodesById.get(nodeId);
+        if (!node) {
+          continue;
+        }
+        for (const [sensorName, pendingValue] of sensors) {
+          node.labels[sensorName] = pendingValue;
+        }
       }
-      for (const [sensorName, pendingValue] of sensors) {
-        if (device.sensors[sensorName] !== pendingValue) {
-          device.sensors[sensorName] = pendingValue;
+
+      for (const [nodeId, pendingPos] of this.pendingPositionChanges) {
+        const node = nodesById.get(nodeId);
+        if (!node) {
+          continue;
+        }
+        if (node.position.x !== pendingPos.x || node.position.y !== pendingPos.y) {
+          node.position = { x: pendingPos.x, y: pendingPos.y };
         }
       }
     }
 
-    for (const [nodeId, pendingPos] of this.pendingPositionChanges) {
-      const device = this.backend.devices.get(nodeId);
-      if (!device) {
-        continue;
-      }
-      if (device.position.x !== pendingPos.x || device.position.y !== pendingPos.y) {
-        device.position = { ...pendingPos };
-      }
-    }
+    this.backend = backendFromGraph(graph);
 
     this.patch({
-      graph: graphFromBackend(this.backend, this.showLinks ? parsed.graph.edges : [], this.showLinks),
+      graph: { nodes: graph.nodes, edges: this.showLinks ? graph.edges : [] },
       execution: {
         ...this.state.execution,
         warnings: parsed.warnings,
@@ -657,32 +664,34 @@ export class AppStore {
   }
 }
 
+/**
+ * Wraps a runtime snapshot as backend state, sharing its `position` and `labels` objects
+ * rather than deep-copying them: the snapshot is rebuilt from scratch by the adapter on every
+ * tick and is not retained anywhere else. `sensors` therefore also carries the `export` label;
+ * the only reader that enumerates sensors (`currentSensorValues`) filters by tracked names, so
+ * it never sees it. Mutating a device must go through `devices.set(id, { ...device, ... })`,
+ * which `moveNodes` and `changeSensor` already do.
+ *
+ * The `neighbours` map is left empty on purpose. It is only read by `graphFromBackend`'s
+ * `existingEdges ?? ...` fallback, and every caller reached from here passes edges explicitly;
+ * building it cost a Set per device and an add per edge endpoint on every single tick.
+ */
 function backendFromGraph(graph: GraphSnapshot): BackendState {
   const devices = new Map<NodeId, BackendDevice>();
-  const neighbours = new Map<NodeId, Set<NodeId>>();
   const exports = new Map<NodeId, unknown>();
 
   for (const node of graph.nodes) {
-    const sensors = { ...node.labels };
-    delete sensors.export;
-
     devices.set(node.id, {
       id: node.id,
-      position: { ...node.position },
-      sensors,
+      position: node.position,
+      sensors: node.labels,
     });
     if ("export" in node.labels) {
       exports.set(node.id, node.labels.export);
     }
-    neighbours.set(node.id, new Set<NodeId>());
   }
 
-  for (const edge of graph.edges) {
-    neighbours.get(edge.from)?.add(edge.to);
-    neighbours.get(edge.to)?.add(edge.from);
-  }
-
-  return { devices, neighbours, exports };
+  return { devices, neighbours: new Map<NodeId, Set<NodeId>>(), exports };
 }
 
 

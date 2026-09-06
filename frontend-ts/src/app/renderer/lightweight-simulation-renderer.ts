@@ -52,6 +52,29 @@ type SelectionBoxState = {
   additive: boolean;
 };
 
+/** Slack around the canvas so a node straddling the edge is still drawn. */
+const NODE_CULL_MARGIN = 64;
+
+/**
+ * Conservative off-screen test for a link: only rejects when both endpoints lie beyond the
+ * same edge of the viewport, so a link that crosses the visible area is never dropped.
+ */
+function isSegmentOffscreen(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  width: number,
+  height: number,
+): boolean {
+  return (
+    (x1 < 0 && x2 < 0) ||
+    (y1 < 0 && y2 < 0) ||
+    (x1 > width && x2 > width) ||
+    (y1 > height && y2 > height)
+  );
+}
+
 export class LightweightSimulationRenderer implements SimulationRenderer {
   private parent?: HTMLElement;
   private container?: HTMLDivElement;
@@ -64,6 +87,8 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   private graphProjection?: GraphProjection;
   private graphInteractionMode: "pan" | "selection" = "pan";
   private selectedNodeIds: string[] = [];
+  /** Membership view of `selectedNodeIds`: the array is scanned once per node and per edge. */
+  private selectedNodeIdSet: Set<string> = new Set();
 
   private dragState?: DragState;
   private viewportDragState?: ViewportDragState;
@@ -78,6 +103,8 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   private nodeRenderer?: NodeRendererEvaluator;
   private edgeRenderer?: EdgeRendererEvaluator;
   private listenersAttached = false;
+
+  private pendingDrawFrame?: number;
 
   private cachedTheme?: string;
   private cachedAccentColor = "#bb66ff";
@@ -154,6 +181,10 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
 
   destroy(): void {
     this.cancelGraphViewportAnimation();
+    if (this.pendingDrawFrame !== undefined) {
+      window.cancelAnimationFrame(this.pendingDrawFrame);
+      this.pendingDrawFrame = undefined;
+    }
     window.removeEventListener("pointermove", this.onPointerMove);
     window.removeEventListener("pointerup", this.onPointerUp);
     if (this.container && this.parent) {
@@ -173,6 +204,7 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
   ): void {
     this.activeState = state;
     this.selectedNodeIds = selectedNodeIds;
+    this.selectedNodeIdSet = new Set(selectedNodeIds);
     this.graphInteractionMode = interactionMode;
     this.graphPan = graphPan;
     this.visualization = visualization;
@@ -293,6 +325,20 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     });
   }
 
+  /**
+   * Coalesces redraws to one per animation frame. Pointer moves fire far faster than the
+   * display refreshes, and each one used to trigger a full canvas repaint.
+   */
+  private scheduleDraw(): void {
+    if (this.pendingDrawFrame !== undefined) {
+      return;
+    }
+    this.pendingDrawFrame = window.requestAnimationFrame(() => {
+      this.pendingDrawFrame = undefined;
+      this.draw();
+    });
+  }
+
   private onPointerMove(event: PointerEvent): void {
     if (this.viewportDragState) {
       this.cancelGraphViewportAnimation();
@@ -307,14 +353,14 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
         this.targetGraphViewport.pan = { ...this.graphPan };
       }
       this.callbacks.onViewportPanned?.(this.graphPan);
-      this.draw();
+      this.scheduleDraw();
       return;
     }
 
     if (this.selectionBoxState) {
       this.selectionBoxState.currentClientX = event.clientX;
       this.selectionBoxState.currentClientY = event.clientY;
-      this.draw();
+      this.scheduleDraw();
       return;
     }
 
@@ -454,8 +500,13 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     const isLightTheme = document.documentElement.getAttribute("data-theme") === "light";
 
     // 2. Disegno degli Archi (Collegamenti di rete)
+    // Edges sharing a stroke style are accumulated into one path and stroked together. With
+    // default styling that is a single stroke() for the whole network rather than one per
+    // edge, which is what made a few thousand links unaffordable.
     if (this.visualization.showLinks !== false) {
       this.ctx.save();
+      const edgeBatches = new Map<string, { stroke: string; lineWidth: number; alpha: number; path: Path2D }>();
+
       for (const edge of graph.edges) {
         const from = nodeMap.get(edge.from);
         const to = nodeMap.get(edge.to);
@@ -466,14 +517,14 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
 
         const fromPoint = projectPoint(from.position, projection);
         const toPoint = projectPoint(to.position, projection);
+        const x1 = fromPoint.x + this.graphPan.x;
+        const y1 = fromPoint.y + this.graphPan.y;
+        const x2 = toPoint.x + this.graphPan.x;
+        const y2 = toPoint.y + this.graphPan.y;
+        if (isSegmentOffscreen(x1, y1, x2, y2, width, height)) continue;
 
         const isMuted = edgeState.className?.includes("is-muted") ?? false;
-        
-        this.ctx.beginPath();
-        this.ctx.moveTo(fromPoint.x + this.graphPan.x, fromPoint.y + this.graphPan.y);
-        this.ctx.lineTo(toPoint.x + this.graphPan.x, toPoint.y + this.graphPan.y);
-        
-        // Resolve stroke color
+
         let resolvedStroke = edgeState.stroke;
         if (!resolvedStroke) {
           if (isMuted) {
@@ -482,15 +533,24 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
             resolvedStroke = isLightTheme ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)";
           }
         }
+        const lineWidth = edgeState.strokeWidth ?? (isMuted ? 0.75 : 1.25);
+        const alpha = edgeState.strokeOpacity ?? 1.0;
 
-        this.ctx.strokeStyle = resolvedStroke;
-        this.ctx.lineWidth = edgeState.strokeWidth ?? (isMuted ? 0.75 : 1.25);
-        if (edgeState.strokeOpacity !== undefined) {
-          this.ctx.globalAlpha = edgeState.strokeOpacity;
-        } else {
-          this.ctx.globalAlpha = 1.0;
+        const key = `${resolvedStroke}|${lineWidth}|${alpha}`;
+        let batch = edgeBatches.get(key);
+        if (!batch) {
+          batch = { stroke: resolvedStroke, lineWidth, alpha, path: new Path2D() };
+          edgeBatches.set(key, batch);
         }
-        this.ctx.stroke();
+        batch.path.moveTo(x1, y1);
+        batch.path.lineTo(x2, y2);
+      }
+
+      for (const batch of edgeBatches.values()) {
+        this.ctx.strokeStyle = batch.stroke;
+        this.ctx.lineWidth = batch.lineWidth;
+        this.ctx.globalAlpha = batch.alpha;
+        this.ctx.stroke(batch.path);
       }
       this.ctx.restore();
     }
@@ -513,7 +573,12 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
       const point = projectPoint(node.position, projection);
       const px = point.x + this.graphPan.x;
       const py = point.y + this.graphPan.y;
-      const selected = this.selectedNodeIds.includes(node.id);
+      // Nothing off the canvas is worth resolving, let alone drawing.
+      if (px < -NODE_CULL_MARGIN || py < -NODE_CULL_MARGIN ||
+          px > width + NODE_CULL_MARGIN || py > height + NODE_CULL_MARGIN) {
+        continue;
+      }
+      const selected = this.selectedNodeIdSet.has(node.id);
 
       const nodeState = this.resolveNodeRenderState(node, graph.edges, totalNodes, nodeIndex, exportRange);
       if (nodeState.hidden) continue;
@@ -712,7 +777,7 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     if (!this.visualization?.showNeighborhood || this.selectedNodeIds.length === 0) {
       return "graph-edge";
     }
-    return this.selectedNodeIds.includes(edge.from) || this.selectedNodeIds.includes(edge.to)
+    return this.selectedNodeIdSet.has(edge.from) || this.selectedNodeIdSet.has(edge.to)
       ? "graph-edge is-neighborhood"
       : "graph-edge is-muted";
   }
@@ -732,8 +797,8 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
         toNode,
         graph: this.activeState!.graph,
         execution: this.activeState!.execution,
-        selectedNodeIds: [...this.selectedNodeIds],
-        isNeighborhood: this.selectedNodeIds.includes(edge.from) || this.selectedNodeIds.includes(edge.to),
+        selectedNodeIds: this.selectedNodeIds,
+        isNeighborhood: this.selectedNodeIdSet.has(edge.from) || this.selectedNodeIdSet.has(edge.to),
         defaults,
       });
       return {
@@ -755,8 +820,10 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     nodeIndex: number,
     exportRange?: { min: number; max: number },
   ): ResolvedNodeRenderState {
-    const selectedNode = this.selectedNodeIds.includes(node.id);
-    const labels = buildNodeLabels(node, edges, this.visualization!, selectedNode, totalNodes, nodeIndex);
+    const selectedNode = this.selectedNodeIdSet.has(node.id);
+    // Text rendering is disabled in this renderer, so labels would only be computed and
+    // thrown away; the empty array keeps the `NodeRenderDefaults` shape intact.
+    const labels: string[] = [];
     const nodeVisual = computeNodeVisual(node, this.visualization!, selectedNode, exportRange);
     const defaults: NodeRenderDefaults = {
       fill: nodeVisual.fill,
@@ -775,6 +842,8 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
     if (!this.nodeRenderer) {
       return { ...defaults, hidden: false };
     }
+    const showLinks = this.visualization?.showLinks !== false;
+    const availableSensors = Array.from(this.visualization!.visibleSensors);
     try {
       const output: NodeRenderOutput | void = this.nodeRenderer({
         node,
@@ -783,8 +852,12 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
         selected: selectedNode,
         nodeIndex,
         totalNodes,
-        incidentEdges: (this.visualization?.showLinks !== false) ? edges.filter((edge) => edge.from === node.id || edge.to === node.id) : [],
-        availableSensors: Array.from(this.visualization!.visibleSensors),
+        // Scanning every edge per node is O(nodes x edges); none of the built-in RendererKit
+        // helpers read this, so it is only paid for when a custom renderNode asks for it.
+        get incidentEdges(): GraphEdge[] {
+          return showLinks ? edges.filter((edge) => edge.from === node.id || edge.to === node.id) : [];
+        },
+        availableSensors,
         defaults,
       });
       const renderGradient = typeof output?.renderGradient === "boolean" ? output.renderGradient : defaults.renderGradient;
@@ -940,29 +1013,6 @@ function gradientColor(value: number, min?: number, max?: number): string {
   const t = range <= 0 ? 0.5 : Math.max(0, Math.min(1, (value - min) / range));
   const hue = (1 - t) * 240;
   return `hsl(${Math.round(hue)} 70% 58%)`;
-}
-
-function buildNodeLabels(
-  node: GraphNode,
-  edges: GraphEdge[],
-  visualization: VisualizationState,
-  selectedNode: boolean,
-  totalNodes: number,
-  nodeIndex: number,
-): string[] {
-  const result: string[] = [];
-  if (visualization.showId) {
-    if (selectedNode || totalNodes <= 12 || (totalNodes <= 48 && nodeIndex % 2 === 0)) {
-      result.push(node.id);
-    }
-  }
-  if (visualization.showExport && node.labels.export !== undefined) {
-    const val = node.labels.export;
-    if (selectedNode || totalNodes <= 24) {
-      result.push(typeof val === "number" ? val.toFixed(2) : String(val));
-    }
-  }
-  return result;
 }
 
 function computeNodeVisual(

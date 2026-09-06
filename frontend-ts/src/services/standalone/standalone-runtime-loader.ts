@@ -14,7 +14,14 @@ export class StandaloneRuntimeLoader {
     if (typeof Worker !== "undefined") {
       try {
         return await this.loadWorkerRuntime(javascript);
-      } catch {
+      } catch (error) {
+        // Worth shouting about: the fallback runs the whole simulation on the main thread,
+        // so every tick blocks the UI. Silently degrading made that indistinguishable from
+        // an ordinary slowdown.
+        console.warn(
+          "[ScafiWeb] Could not start the simulation worker; falling back to running it on the main thread. Expect much lower frame rates.",
+          error,
+        );
         return this.loadInlineRuntime(javascript);
       }
     }

@@ -101,6 +101,70 @@ describe("SvgSimulationRenderer", () => {
     renderer.destroy();
   });
 
+  it("reports node clicks through event delegation, including clicks on child shapes", () => {
+    const renderer = new SvgSimulationRenderer();
+    const onNodeClick = vi.fn();
+    renderer.setCallbacks({ onNodeClick });
+    renderer.mount(parent);
+    renderer.update(mockState, [], "selection", { x: 0, y: 0 }, mockVisualization);
+
+    // Nodes carry no listeners of their own any more: the stage resolves them with closest().
+    const node = parent.querySelector<SVGGElement>('[data-node-id="node-2"]')!;
+    node.dispatchEvent(new Event("click", { bubbles: true }));
+    expect(onNodeClick).toHaveBeenCalledWith("node-2", undefined);
+
+    // A click lands on the circle inside the group, never on the group itself.
+    onNodeClick.mockClear();
+    const circle = parent.querySelector<SVGCircleElement>('[data-node-id="node-1"] circle')!;
+    circle.dispatchEvent(new Event("click", { bubbles: true }));
+    expect(onNodeClick).toHaveBeenCalledWith("node-1", undefined);
+
+    renderer.destroy();
+  });
+
+  it("ignores node clicks while in pan mode, and clicks on empty canvas", () => {
+    const renderer = new SvgSimulationRenderer();
+    const onNodeClick = vi.fn();
+    renderer.setCallbacks({ onNodeClick });
+    renderer.mount(parent);
+    renderer.update(mockState, [], "pan", { x: 0, y: 0 }, mockVisualization);
+
+    parent.querySelector<SVGGElement>('[data-node-id="node-1"]')!
+      .dispatchEvent(new Event("click", { bubbles: true }));
+    expect(onNodeClick).not.toHaveBeenCalled();
+
+    renderer.update(mockState, [], "selection", { x: 0, y: 0 }, mockVisualization);
+    parent.querySelector<HTMLElement>("[data-graph-stage]")!
+      .dispatchEvent(new Event("click", { bubbles: true }));
+    expect(onNodeClick).not.toHaveBeenCalled();
+
+    renderer.destroy();
+  });
+
+  it("marks the graph dense only past the paint threshold", () => {
+    const renderer = new SvgSimulationRenderer();
+    renderer.mount(parent);
+
+    renderer.update(mockState, [], "pan", { x: 0, y: 0 }, mockVisualization);
+    expect(parent.querySelector("svg.graph-svg")?.classList.contains("is-dense")).toBe(false);
+
+    const many = {
+      ...mockState,
+      graph: {
+        nodes: Array.from({ length: 400 }, (_, i) => ({
+          id: String(i),
+          position: { x: i, y: i },
+          labels: {},
+        })),
+        edges: [],
+      },
+    } as unknown as AppState;
+    renderer.update(many, [], "pan", { x: 0, y: 0 }, mockVisualization);
+    expect(parent.querySelector("svg.graph-svg")?.classList.contains("is-dense")).toBe(true);
+
+    renderer.destroy();
+  });
+
   it("manages and exposes viewport pan updates correctly", () => {
     const renderer = new SvgSimulationRenderer();
     expect(renderer.getGraphPan()).toEqual({ x: 0, y: 0 });

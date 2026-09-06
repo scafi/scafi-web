@@ -538,12 +538,17 @@ function createMovementRenderer(sensors: string[], overrides: ExampleRendererOve
 }
 
 function buildRendererTemplate(options: ExampleRendererOptions): string {
-  const rendererType = options.rendererType ?? "standard";
+  // An example that names a renderer gets it. Otherwise pick by size: SVG rebuilds a DOM
+  // element per node and per edge, which stops being affordable in the hundreds, whereas the
+  // canvas renderer draws the whole scene in one pass.
+  const rendererTypeExpr = options.rendererType
+    ? `"${options.rendererType}"`
+    : `graph.nodes.length > 400 ? "lightweight" : "standard"`;
   const sections = [
     `  nodeSize: ${options.nodeSizeExpr},`,
     `  fontSize: ${options.fontSizeExpr},`,
     `  showId: ${options.showIdExpr},`,
-    `  rendererType: "${rendererType}",`,
+    `  rendererType: ${rendererTypeExpr},`,
   ];
   const renderNodeSource = createNodeRendererSource(options.renderNodeOptions);
   if (renderNodeSource) {

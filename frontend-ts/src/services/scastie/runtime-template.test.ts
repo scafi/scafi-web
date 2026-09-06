@@ -13,7 +13,7 @@ describe("runtime-template", () => {
     expect(wrapped).toContain("def runtimeWorldDocument: WorldDocumentBuilder = {");
     expect(wrapped).toContain("val world = WorldDocumentBuilder()");
     expect(wrapped).toContain("val builder = runtimeWorldDocument.configTransforms.foldLeft(runtimeWorldDocument)");
-    expect(wrapped).toContain("applySensors(builder)\n    lastTickTime = System.currentTimeMillis().toDouble\n    simulator.getAllNeighbours()");
+    expect(wrapped).toContain("applySensors(builder)\n    lastTickTime = System.currentTimeMillis().toDouble\n    cacheIdStrings()");
     expect(wrapped).toContain("val x = 30");
     expect(wrapped).toContain("world\n      .grid(rows = x, cols = x, stepX = 60, stepY = 60, tolerance = 10)\n      .radius(70)");
     expect(wrapped).toContain("val program = new MyProgram");

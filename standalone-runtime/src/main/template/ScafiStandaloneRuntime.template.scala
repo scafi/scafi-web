@@ -1,6 +1,6 @@
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
-import scala.collection.mutable.{Map => MutableMap}
+import scala.collection.mutable.{ArrayBuffer, Map => MutableMap}
 import it.unibo.scafi.incarnations.BasicAbstractSpatialSimulationIncarnation
 import it.unibo.scafi.config.GridSettings
 import it.unibo.scafi.lib.StandardLibrary
@@ -81,6 +81,86 @@ object ScafiRuntime extends BasicAbstractSpatialSimulationIncarnation with Stand
       case AntiDiagonal =>
         matrix.withPixels((0 until matrix.dimension).map(index => (index, matrix.dimension - index - 1, action.color)))
       case Combine(groups) => groups.foldLeft(matrix) { case (current, group) => apply(action.copy(cells = group), current) }
+    }
+  }
+
+  /**
+   * Uniform-grid ("spatial hash") space: devices are bucketed into square cells whose side is
+   * the communication radius, so a neighbourhood query only has to probe the 3x3 block of cells
+   * around a device instead of scanning the whole network.
+   *
+   * Moving a device just marks the index dirty; the buckets are rebuilt lazily, at most once per
+   * tick, by the first neighbourhood query that follows. That is what makes movement affordable:
+   * the stock `Basic3DSpace` rescans every device on each `setLocation`, which is O(n^2) per tick
+   * once every device moves, whereas one deferred rebuild is O(n + n*k).
+   */
+  class UniformGridSpace(initial: Map[ID, P], radius: Double) extends Space3D[ID](initial, radius) {
+    private val positions: MutableMap[ID, P] = MutableMap.empty[ID, P] ++= initial
+    private val cells: MutableMap[Long, ArrayBuffer[ID]] = MutableMap.empty
+    private val nbrs: MutableMap[ID, ArrayBuffer[ID]] = MutableMap.empty
+    private val cellSize: Double = if (radius > 0) radius else 1.0
+    private val radiusSquared: Double = radius * radius
+    private val noNeighbours: ArrayBuffer[ID] = ArrayBuffer.empty[ID]
+    private var dirty: Boolean = true
+
+    /** Cell coordinates packed into a single Long, so a bucket lookup allocates no tuple key. */
+    private def cellKey(cx: Long, cy: Long): Long = (cx << 32) ^ (cy & 0xffffffffL)
+
+    private def cellOf(value: Double): Long = Math.floor(value / cellSize).toLong
+
+    private def withinRadius(a: P, b: P): Boolean = {
+      val dx = a.x - b.x
+      val dy = a.y - b.y
+      val dz = a.z - b.z
+      ((dx * dx) + (dy * dy) + (dz * dz)) <= radiusSquared
+    }
+
+    private def rebuild(): Unit = {
+      cells.clear()
+      nbrs.clear()
+      positions.foreach { case (id, p) =>
+        cells.getOrElseUpdate(cellKey(cellOf(p.x), cellOf(p.y)), ArrayBuffer.empty[ID]) += id
+      }
+      positions.foreach { case (id, p) =>
+        val found = ArrayBuffer.empty[ID]
+        // Probe by integer cell offset: stepping the coordinate by `cellSize` instead would
+        // skip a bucket whenever the device sits exactly on a cell boundary.
+        val cx = cellOf(p.x)
+        val cy = cellOf(p.y)
+        var dx = -1
+        while (dx <= 1) {
+          var dy = -1
+          while (dy <= 1) {
+            cells.get(cellKey(cx + dx, cy + dy)).foreach { bucket =>
+              bucket.foreach { other =>
+                if (other != id && withinRadius(p, positions(other))) found += other
+              }
+            }
+            dy += 1
+          }
+          dx += 1
+        }
+        nbrs.update(id, found)
+      }
+      dirty = false
+    }
+
+    override def setLocation(e: ID, p: P): Unit = { positions.update(e, p); dirty = true }
+    override def add(e: ID, p: P): Unit = { positions.update(e, p); dirty = true }
+    override def remove(e: ID): Unit = { positions -= e; dirty = true }
+    override def getLocation(e: ID): P = positions(e)
+    override def getAll(): Iterable[ID] = positions.keys
+    override def contains(e: ID): Boolean = positions.contains(e)
+    override def getAt(p: P): Option[ID] = positions.collectFirst { case (id, q) if q == p => id }
+
+    override def getNeighbors(e: ID): Iterable[ID] = {
+      if (dirty) rebuild()
+      nbrs.getOrElse(e, noNeighbours)
+    }
+
+    override def getNeighborsWithDistance(e: ID): Iterable[(ID, D)] = {
+      val p = positions(e)
+      getNeighbors(e).map(other => (other, p.distance(positions(other))))
     }
   }
 
@@ -233,6 +313,10 @@ object ScafiStandalone {
   private var userProgram: AggregateProgram = _
   private var lastTickTime: Double = 0L
   private val velocities: MutableMap[Int, (Double, Double)] = MutableMap.empty
+  /** Actuations from the latest round, flattened once and shared by every consumer. */
+  private val actuations: MutableMap[ID, Seq[RuntimeActuationData]] = MutableMap.empty
+  /** Device ids as strings, indexed by id: `getState` needs one per node and two per edge. */
+  private var idStrings: Array[String] = Array.empty
   private val sensorNames: StandardSensorNames = new StandardSensorNames {}
 
   trait RuntimeValueEncoder[-A] {
@@ -427,10 +511,11 @@ object ScafiStandalone {
     applyPositions(simulator, builder)
     applySensors(builder)
     lastTickTime = System.currentTimeMillis().toDouble
-    simulator.getAllNeighbours()
+    cacheIdStrings()
     simulator.devs.foreach { case (id, _) =>
       simulator.exec(userProgram)
     }
+    collectActuations()
     handleMatrixOps()
     handleMovement(0.0)
   }
@@ -443,13 +528,13 @@ object ScafiStandalone {
         Math.min(raw, 1.0)
       }
       lastTickTime = now
-      simulator.getAllNeighbours()
       val allIds = simulator.devs.keySet
       simulator.chgSensorValue(sensorNames.LSNS_DELTA_TIME, allIds,
         FiniteDuration((deltaSeconds * 1000).toLong, MILLISECONDS))
       simulator.devs.foreach { case (id, dev) =>
         simulator.exec(userProgram)
       }
+      collectActuations()
       handleMatrixOps()
       handleMovement(deltaSeconds)
     }
@@ -478,6 +563,8 @@ object ScafiStandalone {
     userProgram = null
     lastTickTime = 0L
     velocities.clear()
+    actuations.clear()
+    idStrings = Array.empty
   }
 
   def getState(options: js.UndefOr[js.Dynamic] = js.undefined): js.Dynamic = {
@@ -505,35 +592,14 @@ object ScafiStandalone {
       }
       e
     } else {
-      val exports = simulator.exports()
       val devs = simulator.devs
-      val neighbours = if (excludeEdges) Map.empty[ID, Set[ID]] else simulator.getAllNeighbours()
+      val neighbours = if (excludeEdges) Map.empty[ID, Iterable[ID]] else simulator.getAllNeighbours()
 
       if (compact) {
         val nodes = js.Array[js.Any]()
         devs.foreach { case (id, dev) =>
           val position = simulator.space.getLocation(id)
-          val labels = js.Dynamic.literal()
-          dev.lsns.foreach { case (name, value) =>
-            labels.updateDynamic(name)(encodeSensorValue(value))
-          }
-          velocities.get(id).foreach { case (vx, vy) =>
-            labels.updateDynamic("vx")(vx)
-            labels.updateDynamic("vy")(vy)
-          }
-          exports.get(id).flatten.foreach { e =>
-            val rootVal = e.root[scala.Any]()
-            val expVal = displayExport(rootVal)
-            if (expVal != null) {
-              labels.updateDynamic("export")(expVal)
-            }
-            val matrixOps = flattenValues(rootVal).collect { case op: RuntimeMatrixOp => op }
-            val ledAllOp = matrixOps.find(_.cells == All)
-            ledAllOp.foreach { op =>
-              labels.updateDynamic("ledAll")(op.color)
-            }
-          }
-          nodes.push(js.Array[js.Any](id.toString, position.x, position.y, labels))
+          nodes.push(js.Array[js.Any](idString(id), position.x, position.y, buildLabels(id, dev)))
         }
 
         val edges = js.Array[String]()
@@ -541,8 +607,8 @@ object ScafiStandalone {
           neighbours.foreach { case (from, tos) =>
             tos.foreach { to =>
               if (from < to) {
-                edges.push(from.toString)
-                edges.push(to.toString)
+                edges.push(idString(from))
+                edges.push(idString(to))
               }
             }
           }
@@ -559,37 +625,17 @@ object ScafiStandalone {
         devs.foreach { case (id, dev) =>
           val position = simulator.space.getLocation(id)
           val node = js.Dynamic.literal()
-          val labels = js.Dynamic.literal()
-          node.updateDynamic("id")(id.toString)
+          node.updateDynamic("id")(idString(id))
           node.updateDynamic("x")(position.x)
           node.updateDynamic("y")(position.y)
-          dev.lsns.foreach { case (name, value) =>
-            labels.updateDynamic(name)(encodeSensorValue(value))
-          }
-          velocities.get(id).foreach { case (vx, vy) =>
-            labels.updateDynamic("vx")(vx)
-            labels.updateDynamic("vy")(vy)
-          }
-          exports.get(id).flatten.foreach { e =>
-            val rootVal = e.root[scala.Any]()
-            val expVal = displayExport(rootVal)
-            if (expVal != null) {
-              labels.updateDynamic("export")(expVal)
-            }
-            val matrixOps = flattenValues(rootVal).collect { case op: RuntimeMatrixOp => op }
-            val ledAllOp = matrixOps.find(_.cells == All)
-            ledAllOp.foreach { op =>
-              labels.updateDynamic("ledAll")(op.color)
-            }
-          }
-          node.updateDynamic("labels")(labels)
+          node.updateDynamic("labels")(buildLabels(id, dev))
           nodes.push(node.asInstanceOf[js.Any])
         }
         if (!excludeEdges) {
           neighbours.foreach { case (from, tos) =>
             tos.foreach { to =>
               if (from < to) {
-                edges.push(js.Array(from.toString, to.toString))
+                edges.push(js.Array(idString(from), idString(to)))
               }
             }
           }
@@ -600,6 +646,61 @@ object ScafiStandalone {
         result
       }
     }
+  }
+
+  /** Builds the JS label bag for one device: sensors, velocity, exported value and led state. */
+  private def buildLabels(id: ID, dev: DevInfo): js.Dynamic = {
+    val labels = js.Dynamic.literal()
+    dev.lsns.foreach { case (name, value) =>
+      labels.updateDynamic(name)(encodeSensorValue(value))
+    }
+    velocities.get(id).foreach { case (vx, vy) =>
+      labels.updateDynamic("vx")(vx)
+      labels.updateDynamic("vy")(vy)
+    }
+    simulator.getExport(id).foreach { exported =>
+      val displayed = displayExport(exported.root[scala.Any]())
+      if (displayed != null) {
+        labels.updateDynamic("export")(displayed)
+      }
+    }
+    actuations.get(id).foreach { data =>
+      data.collectFirst { case op: RuntimeMatrixOp if op.cells == All => op.color }
+        .foreach(color => labels.updateDynamic("ledAll")(color))
+    }
+    labels
+  }
+
+  private def idString(id: ID): String =
+    if (id >= 0 && id < idStrings.length) idStrings(id) else id.toString
+
+  private def cacheIdStrings(): Unit = {
+    val ids = simulator.devs.keys
+    val highest = if (ids.isEmpty) -1 else ids.max
+    idStrings = new Array[String](highest + 1)
+    ids.foreach(id => idStrings(id) = id.toString)
+  }
+
+  /**
+   * Builds a simulator backed by a [[UniformGridSpace]].
+   *
+   * `simulatorFactory.gridLike` can no longer be used, because it hardcodes `Basic3DSpace`
+   * inside scafi-commons. The grid deployment below therefore reproduces exactly what it did -
+   * the same `SpaceHelper.gridLocations` call with the same seed, and the same 1-based ids - so
+   * that saved sessions keep the node numbering and layout they already have.
+   */
+  private def buildSimulator(
+    points: Seq[Point2D],
+    range: Double,
+    seeds: Seeds,
+    repr: NetworkSimulator => String
+  ): SpaceAwareSimulator = {
+    val devs: Map[ID, DevInfo] = points.zipWithIndex.map { case (point, index) =>
+      val id = lId.fromNum(index + 1)
+      (id, new DevInfo(id, point.asInstanceOf[P], Map.empty, sns => nbr => Map.empty))
+    }.toMap
+    val space = new UniformGridSpace(devs.map { case (id, dev) => (id, dev.pos) }, range)
+    new SpaceAwareSimulator(space, devs, repr, seeds.simulationSeed, seeds.randomSensorSeed)
   }
 
   private def createSimulator(builder: WorldDocumentBuilder): SpaceAwareSimulator = {
@@ -617,50 +718,43 @@ object ScafiStandalone {
       asLong(seeds.selectDynamic("simulationSeed")),
       asLong(seeds.selectDynamic("randomSensorSeed"))
     )
+    val range = asDouble(neighbour.selectDynamic("range"))
+
+    def gridSimulator(settings: GridSettings): SpaceAwareSimulator = buildSimulator(
+      it.unibo.scafi.space.SpaceHelper.gridLocations(settings, simulationSeeds.configSeed),
+      range,
+      simulationSeeds,
+      SpaceAwareSimulator.gridRepr(settings.nrows)
+    )
+
     val simulator = network.selectDynamic("kind").toString match {
       case "grid" =>
-        simulatorFactory.gridLike(
+        gridSimulator(
           GridSettings(
             asInt(network.selectDynamic("cols")),
             asInt(network.selectDynamic("rows")),
             asDouble(network.selectDynamic("stepX")),
             asDouble(network.selectDynamic("stepY")),
             asDouble(network.selectDynamic("tolerance"))
-          ),
-          asDouble(neighbour.selectDynamic("range")),
-          seeds = simulationSeeds
-        ).asInstanceOf[SpaceAwareSimulator]
-      case "random" =>
-        val min = asDouble(network.selectDynamic("min"))
-        val max = asDouble(network.selectDynamic("max"))
-        val howMany = asInt(network.selectDynamic("howMany"))
-        val rng = asDouble(neighbour.selectDynamic("range"))
-
-        val positions = it.unibo.scafi.space.SpaceHelper.randomLocations(
-          it.unibo.scafi.config.SimpleRandomSettings(min, max),
-          howMany,
-          simulationSeeds.configSeed
+          )
         )
-        val ids = for (i <- 1 to howMany) yield i
-        val devs: Map[ID, DevInfo] = ((ids map lId.fromNum) zip positions).map {
-          case (id, pos) =>
-            (id, new DevInfo(id, pos.asInstanceOf[P], Map.empty, sns => nbr => Map.empty))
-        }.toMap
-        val space = new Basic3DSpace[ID](devs.map { case (k, v) => k -> v.pos }.toMap, rng)
-        new SpaceAwareSimulator(
-          space,
-          devs,
-          SpaceAwareSimulator.defaultRepr,
-          simulationSeeds.simulationSeed,
-          simulationSeeds.randomSensorSeed
+      case "random" =>
+        buildSimulator(
+          it.unibo.scafi.space.SpaceHelper.randomLocations(
+            it.unibo.scafi.config.SimpleRandomSettings(
+              asDouble(network.selectDynamic("min")),
+              asDouble(network.selectDynamic("max"))
+            ),
+            asInt(network.selectDynamic("howMany")),
+            simulationSeeds.configSeed
+          ),
+          range,
+          simulationSeeds,
+          SpaceAwareSimulator.defaultRepr
         )
       case unsupported =>
         js.Dynamic.global.console.warn("[ScafiWeb] Unsupported standalone network kind: " + unsupported + ". Falling back to a 10x10 grid.")
-        simulatorFactory.gridLike(
-          GridSettings(10, 10, 60.0, 60.0, 0.0),
-          asDouble(neighbour.selectDynamic("range")),
-          seeds = simulationSeeds
-        ).asInstanceOf[SpaceAwareSimulator]
+        gridSimulator(GridSettings(10, 10, 60.0, 60.0, 0.0))
     }
     simulator
   }
@@ -702,22 +796,39 @@ object ScafiStandalone {
     }
   }
 
-  private def handleMatrixOps(): Unit = {
-    val updates = simulator.exports().flatMap { case (id, exported) =>
-      exported.map(_.root[Any]()).map(flattenValues).map(_.collect { case action: RuntimeMatrixOp => action }).filter(_.nonEmpty).map {
-        actions =>
-          val current = Try(simulator.localSensor[RuntimeMatrix]("matrix")(id)).getOrElse(RuntimeMatrix.fill(3, "#bb86fc"))
-          id -> actions.foldLeft(current) { case (matrix, action) => RuntimeMatrixOp(action, matrix) }
+  /**
+   * Flattens every device's export tree exactly once per round. Matrix actuation, movement and
+   * `getState` all need the same list, and walking the tree once per consumer meant three full
+   * passes over the network per tick.
+   */
+  private def collectActuations(): Unit = {
+    actuations.clear()
+    simulator.devs.foreach { case (id, _) =>
+      simulator.getExport(id).foreach { exported =>
+        val data = flattenValues(exported.root[Any]()).collect { case actuation: RuntimeActuationData => actuation }
+        if (data.nonEmpty) {
+          actuations.update(id, data)
+        }
       }
     }
+  }
 
-    updates.foreach { case (id, matrix) => simulator.chgSensorValue("matrix", Set(id), matrix) }
+  private def handleMatrixOps(): Unit = {
+    actuations.foreach { case (id, data) =>
+      val ops = data.collect { case op: RuntimeMatrixOp => op }
+      if (ops.nonEmpty) {
+        val current = Try(simulator.localSensor[RuntimeMatrix]("matrix")(id)).getOrElse(RuntimeMatrix.fill(3, "#bb86fc"))
+        val updated = ops.foldLeft(current) { case (matrix, op) => RuntimeMatrixOp(op, matrix) }
+        simulator.chgSensorValue("matrix", Set(id), updated)
+      }
+    }
   }
 
   private def handleMovement(deltaSeconds: Double): Unit = {
-    simulator.exports().foreach { case (id, exported) =>
-      exported.map(_.root[Any]()).foreach { rootValue =>
-        flattenValues(rootValue).collect { case movement: RuntimeMovement => movement }.foreach(act(id, _, deltaSeconds))
+    actuations.foreach { case (id, data) =>
+      data.foreach {
+        case movement: RuntimeMovement => act(id, movement, deltaSeconds)
+        case _ =>
       }
     }
   }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   compileRendererDocument,
+  defaultRendererDocument,
   createDefaultVisualizationState,
   normalizeNodeRenderLabels,
   normalizeNodeRenderOverlays,
@@ -359,6 +360,42 @@ describe("renderer-document", () => {
     });
 
     expect(stringExport?.nodeSize).toBeCloseTo(12.12, 1);
+  });
+
+  it("switches the default document to the canvas renderer on large networks", () => {
+    const evaluator = compileRendererDocument(defaultRendererDocument);
+    const evaluateWith = (nodeCount: number) =>
+      evaluator({
+        graph: {
+          nodes: Array.from({ length: nodeCount }, (_, index) => ({
+            id: String(index),
+            position: { x: index, y: 0 },
+            labels: {},
+          })),
+          edges: [],
+        },
+        execution: { status: "ready", generation: 0, warnings: [], problems: [] },
+        selectedNodeIds: [],
+        availableSensors: [],
+        defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),
+      });
+
+    // Small: SVG, with links and ids.
+    const small = evaluateWith(50);
+    expect(small?.rendererType).toBe("standard");
+    expect(small?.showLinks).toBe(true);
+    expect(small?.showId).toBe(true);
+
+    // Dense but still SVG: links off, because SVG cannot afford them.
+    const dense = evaluateWith(300);
+    expect(dense?.rendererType).toBe("standard");
+    expect(dense?.showLinks).toBe(false);
+    expect(dense?.showId).toBe(false);
+
+    // Heavy: canvas takes over, and links come back with it.
+    const heavy = evaluateWith(1000);
+    expect(heavy?.rendererType).toBe("lightweight");
+    expect(heavy?.showLinks).toBe(true);
   });
 
   it("supports rendererType selection in the output", () => {

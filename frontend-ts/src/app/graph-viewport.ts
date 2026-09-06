@@ -56,12 +56,20 @@ export function resolveGraphViewport(
 }
 
 export function computeProjection(nodes: GraphNode[], width: number, height: number, padding: number): GraphProjection {
-  const xs = nodes.map((node) => node.position.x);
-  const ys = nodes.map((node) => node.position.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
+  // A single pass, deliberately not `Math.min(...nodes.map(...))`: that allocated two arrays
+  // per call and passed one argument per node, which throws outright on large networks.
+  // The empty case still yields the same +/-Infinity bounds the spread form produced.
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const node of nodes) {
+    const { x, y } = node.position;
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
   const worldWidth = Math.max(maxX - minX, 1);
   const worldHeight = Math.max(maxY - minY, 1);
   const availableWidth = Math.max(width - padding * 2, 1);
@@ -136,11 +144,17 @@ function interpolateNumber(from: number, to: number, factor: number): number {
 }
 
 function clampPanToViewport(nodes: GraphNode[], projection: GraphProjection, pan: Vec2, visibleMargin: number): Vec2 {
-  const points = nodes.map((node) => projectPoint(node.position, projection));
-  const minX = Math.min(...points.map((point) => point.x));
-  const maxX = Math.max(...points.map((point) => point.x));
-  const minY = Math.min(...points.map((point) => point.y));
-  const maxY = Math.max(...points.map((point) => point.y));
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const node of nodes) {
+    const point = projectPoint(node.position, projection);
+    if (point.x < minX) minX = point.x;
+    if (point.x > maxX) maxX = point.x;
+    if (point.y < minY) minY = point.y;
+    if (point.y > maxY) maxY = point.y;
+  }
   const panX = clampWithinBounds(pan.x, visibleMargin - minX, projection.width - visibleMargin - maxX);
   const panY = clampWithinBounds(pan.y, visibleMargin - minY, projection.height - visibleMargin - maxY);
   return { x: panX, y: panY };

@@ -52,6 +52,22 @@ type ResolvedNodeRenderState = NodeRenderDefaults & {
 
 type ResolvedEdgeRenderState = EdgeRenderDefaults;
 
+/**
+ * Above this many nodes the per-element drop-shadows, stroked text and transitions cost more
+ * than the whole scene is worth; `.graph-svg.is-dense` in styles.css turns them off.
+ */
+const DENSE_PAINT_THRESHOLD = 180;
+
+/** Resolves the `.graph-node` an event landed on, if any. */
+function nodeIdFromEvent(event: Event): string | undefined {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return undefined;
+  }
+  const nodeElement = target.closest<SVGGElement>(".graph-node");
+  return nodeElement?.dataset.nodeId ?? undefined;
+}
+
 export class SvgSimulationRenderer implements SimulationRenderer {
   private parent?: HTMLElement;
   private container?: HTMLDivElement;
@@ -62,6 +78,8 @@ export class SvgSimulationRenderer implements SimulationRenderer {
   private graphProjection?: GraphProjection;
   private graphInteractionMode: "pan" | "selection" = "pan";
   private selectedNodeIds: string[] = [];
+  /** Membership view of `selectedNodeIds`: the array is scanned once per node and per edge. */
+  private selectedNodeIdSet: Set<string> = new Set();
 
   private dragState?: DragState;
   private viewportDragState?: ViewportDragState;
@@ -154,6 +172,7 @@ export class SvgSimulationRenderer implements SimulationRenderer {
   ): void {
     this.activeState = state;
     this.selectedNodeIds = selectedNodeIds;
+    this.selectedNodeIdSet = new Set(selectedNodeIds);
     this.graphInteractionMode = interactionMode;
     this.graphPan = graphPan;
     this.visualization = visualization;
@@ -216,7 +235,7 @@ export class SvgSimulationRenderer implements SimulationRenderer {
         const point = projectPoint(node.position, projection);
         const nodeRenderState = this.resolveNodeRenderState(node, graph.edges, graph.nodes.length, index);
         return `
-          <g class="graph-node ${this.selectedNodeIds.includes(node.id) ? "is-selected" : ""} ${escapeHtml(nodeRenderState.className ?? "")}" ${
+          <g class="graph-node ${this.selectedNodeIdSet.has(node.id) ? "is-selected" : ""} ${escapeHtml(nodeRenderState.className ?? "")}" ${
             nodeRenderState.hidden ? 'display="none" aria-hidden="true"' : ""
           } data-node-id="${escapeHtml(node.id)}" transform="translate(${point.x}, ${point.y})">
             ${this.renderGraphNodeContent(node, nodeRenderState)}
@@ -229,7 +248,7 @@ export class SvgSimulationRenderer implements SimulationRenderer {
 
     this.container.innerHTML = `
       <div class="graph-stage ${this.graphInteractionMode === "pan" ? "is-pan-mode" : "is-selection-mode"}" data-graph-stage>
-        <svg viewBox="0 0 ${projection.width} ${projection.height}" class="graph-svg" data-render-profile="${renderProfile}" aria-label="Simulation graph">
+        <svg viewBox="0 0 ${projection.width} ${projection.height}" class="graph-svg ${graph.nodes.length > DENSE_PAINT_THRESHOLD ? "is-dense" : ""}" data-render-profile="${renderProfile}" aria-label="Simulation graph">
           <g class="graph-viewport" transform="translate(${this.graphPan.x} ${this.graphPan.y})">
             ${edgeMarkup}
             ${nodeMarkup}
@@ -243,18 +262,57 @@ export class SvgSimulationRenderer implements SimulationRenderer {
     this.scheduleGraphViewportAnimation();
   }
 
+  /**
+   * Binds the stage once per render, and reaches nodes by delegation.
+   *
+   * `render()` replaces the whole subtree, so this runs on every frame; attaching a `click`
+   * and a `pointerdown` handler to each `.graph-node` meant two listeners per node per frame,
+   * which is thousands of closures a second on a large network.
+   */
   private attachEventListeners(): void {
     const stage = this.container?.querySelector<HTMLElement>("[data-graph-stage]");
     if (!stage) return;
+
+    stage.addEventListener("click", (event) => {
+      if (this.graphInteractionMode !== "selection") {
+        return;
+      }
+      const nodeId = nodeIdFromEvent(event);
+      if (!nodeId) return;
+      this.callbacks.onNodeClick?.(nodeId, event.shiftKey);
+    });
 
     stage.addEventListener("pointerdown", (event) => {
       if (event.button !== 0) {
         return;
       }
-      const target = event.target;
-      if (target instanceof Element && target.closest(".graph-node")) {
+
+      const nodeId = nodeIdFromEvent(event);
+      if (nodeId !== undefined) {
+        if (this.graphInteractionMode !== "selection") {
+          return;
+        }
+        event.preventDefault();
+
+        // Drag node state setting
+        if (!this.selectedNodeIdSet.has(nodeId)) {
+          this.callbacks.onNodeClick?.(nodeId, event.shiftKey);
+        }
+
+        const nodes = this.activeState?.graph.nodes ?? [];
+        const positions = Object.fromEntries(
+          nodes.filter((n) => this.selectedNodeIdSet.has(n.id) || n.id === nodeId).map((node) => [node.id, { ...node.position }]),
+        );
+
+        this.dragState = {
+          nodeIds: [...this.selectedNodeIds, nodeId],
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          originalPositions: positions,
+        };
         return;
       }
+
       if (this.graphInteractionMode === "pan") {
         event.preventDefault();
         this.cancelGraphViewportAnimation();
@@ -275,43 +333,6 @@ export class SvgSimulationRenderer implements SimulationRenderer {
       };
       this.updateSelectionBoxVisual();
     });
-
-    for (const nodeElement of this.container?.querySelectorAll<SVGGElement>(".graph-node") ?? []) {
-      nodeElement.addEventListener("click", (event) => {
-        if (this.graphInteractionMode !== "selection") {
-          return;
-        }
-        const nodeId = nodeElement.dataset.nodeId;
-        if (!nodeId) return;
-        this.callbacks.onNodeClick?.(nodeId, event.shiftKey);
-      });
-
-      nodeElement.addEventListener("pointerdown", (event) => {
-        if (this.graphInteractionMode !== "selection") {
-          return;
-        }
-        const nodeId = nodeElement.dataset.nodeId;
-        if (!nodeId) return;
-        event.preventDefault();
-
-        // Drag node state setting
-        if (!this.selectedNodeIds.includes(nodeId)) {
-          this.callbacks.onNodeClick?.(nodeId, event.shiftKey);
-        }
-
-        const nodes = this.activeState?.graph.nodes ?? [];
-        const positions = Object.fromEntries(
-          nodes.filter((n) => this.selectedNodeIds.includes(n.id) || n.id === nodeId).map((node) => [node.id, { ...node.position }]),
-        );
-
-        this.dragState = {
-          nodeIds: [...this.selectedNodeIds, nodeId],
-          startClientX: event.clientX,
-          startClientY: event.clientY,
-          originalPositions: positions,
-        };
-      });
-    }
   }
 
   private onPointerMove(event: PointerEvent): void {
@@ -595,7 +616,7 @@ export class SvgSimulationRenderer implements SimulationRenderer {
     if (!this.visualization?.showNeighborhood || this.selectedNodeIds.length === 0) {
       return "graph-edge";
     }
-    return this.selectedNodeIds.includes(edge.from) || this.selectedNodeIds.includes(edge.to)
+    return this.selectedNodeIdSet.has(edge.from) || this.selectedNodeIdSet.has(edge.to)
       ? "graph-edge is-neighborhood"
       : "graph-edge is-muted";
   }
@@ -615,8 +636,8 @@ export class SvgSimulationRenderer implements SimulationRenderer {
         toNode,
         graph: this.activeState!.graph,
         execution: this.activeState!.execution,
-        selectedNodeIds: [...this.selectedNodeIds],
-        isNeighborhood: this.selectedNodeIds.includes(edge.from) || this.selectedNodeIds.includes(edge.to),
+        selectedNodeIds: this.selectedNodeIds,
+        isNeighborhood: this.selectedNodeIdSet.has(edge.from) || this.selectedNodeIdSet.has(edge.to),
         defaults,
       });
       return {
@@ -637,7 +658,7 @@ export class SvgSimulationRenderer implements SimulationRenderer {
     totalNodes: number,
     nodeIndex: number,
   ): ResolvedNodeRenderState {
-    const selectedNode = this.selectedNodeIds.includes(node.id);
+    const selectedNode = this.selectedNodeIdSet.has(node.id);
     const labels = buildNodeLabels(node, edges, this.visualization!, selectedNode, totalNodes, nodeIndex);
     const nodeVisual = computeNodeVisual(node, this.visualization!, selectedNode, this.exportRange);
     const defaults: NodeRenderDefaults = {
@@ -657,6 +678,8 @@ export class SvgSimulationRenderer implements SimulationRenderer {
     if (!this.nodeRenderer) {
       return { ...defaults, hidden: false };
     }
+    const showLinks = this.visualization?.showLinks !== false;
+    const availableSensors = Array.from(this.visualization!.visibleSensors);
     try {
       const output: NodeRenderOutput | void = this.nodeRenderer({
         node,
@@ -665,8 +688,12 @@ export class SvgSimulationRenderer implements SimulationRenderer {
         selected: selectedNode,
         nodeIndex,
         totalNodes,
-        incidentEdges: (this.visualization?.showLinks !== false) ? edges.filter((edge) => edge.from === node.id || edge.to === node.id) : [],
-        availableSensors: Array.from(this.visualization!.visibleSensors),
+        // Scanning every edge per node is O(nodes x edges); none of the built-in RendererKit
+        // helpers read this, so it is only paid for when a custom renderNode asks for it.
+        get incidentEdges(): GraphEdge[] {
+          return showLinks ? edges.filter((edge) => edge.from === node.id || edge.to === node.id) : [];
+        },
+        availableSensors,
         defaults,
       });
       const renderGradient = typeof output?.renderGradient === "boolean" ? output.renderGradient : defaults.renderGradient;
@@ -707,7 +734,7 @@ export class SvgSimulationRenderer implements SimulationRenderer {
     node: GraphNode,
     nodeRenderState: ResolvedNodeRenderState,
   ): string {
-    const selectedNode = this.selectedNodeIds.includes(node.id);
+    const selectedNode = this.selectedNodeIdSet.has(node.id);
     const effectiveVisualization: VisualizationState = {
       ...this.visualization!,
       nodeSize: nodeRenderState.nodeSize,

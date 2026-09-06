@@ -1158,6 +1158,36 @@ textarea {
   filter: drop-shadow(0 0 16px var(--accent-soft));
 }
 
+/*
+ * Dense networks: the per-element filters, stroked text and transitions below are the
+ * dominant paint cost once there are hundreds of nodes on screen, and none of them are
+ * legible at that size anyway. Applied by SvgSimulationRenderer above DENSE_PAINT_THRESHOLD.
+ */
+.graph-svg.is-dense .graph-node {
+  transition: none;
+}
+
+.graph-svg.is-dense .graph-node circle,
+.graph-svg.is-dense .graph-node.is-selected circle,
+.graph-svg.is-dense .graph-node-overlay-ring,
+.graph-svg.is-dense .graph-node-overlay-dot {
+  filter: none;
+}
+
+.graph-svg.is-dense .graph-node circle {
+  stroke-width: 1.5;
+}
+
+.graph-svg.is-dense .graph-node-label,
+.graph-svg.is-dense .graph-node-overlay-text {
+  paint-order: normal;
+  stroke: none;
+}
+
+.graph-svg.is-dense .graph-matrix-cell {
+  stroke: none;
+}
+
 .selection-box {
   fill: var(--accent-soft);
   stroke: var(--accent-cool);

@@ -66,20 +66,25 @@ function parseMatrix(value: unknown): MatrixValue | undefined {
   return Object.keys(pixels).length > 0 ? { dimension, pixels } : undefined;
 }
 
-function parseLabels(node: Record<string, unknown>): Record<string, unknown> {
-  const labelsSource = isRecord(node.labels) ? node.labels : node;
+/** Normalizes an already-isolated label bag. */
+function normalizeLabels(source: Record<string, unknown>, skipCoreKeys: boolean): Record<string, unknown> {
   const labels: Record<string, unknown> = {};
 
-  for (const [key, value] of Object.entries(labelsSource)) {
-    if (!isRecord(node.labels) && CORE_NODE_KEYS.has(key)) {
+  for (const key of Object.keys(source)) {
+    if (skipCoreKeys && CORE_NODE_KEYS.has(key)) {
       continue;
     }
+    const value = source[key];
     if (value !== null && value !== undefined) {
       labels[key] = normalizeLabelValue(value);
     }
   }
 
   return labels;
+}
+
+function parseLabels(node: Record<string, unknown>): Record<string, unknown> {
+  return isRecord(node.labels) ? normalizeLabels(node.labels, false) : normalizeLabels(node, true);
 }
 
 function parseNode(node: unknown): StandaloneNodeState | undefined {
@@ -134,7 +139,7 @@ export class StandaloneStateAdapter {
         if (x === undefined || y === undefined) {
           continue;
         }
-        const labels = (n.length >= 4 && isRecord(n[3])) ? parseLabels({ labels: n[3] }) : {};
+        const labels = (n.length >= 4 && isRecord(n[3])) ? normalizeLabels(n[3], false) : {};
         nodes.push({ id, position: { x, y }, labels });
         knownIds.add(id);
       }

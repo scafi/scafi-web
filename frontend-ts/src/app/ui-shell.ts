@@ -1343,6 +1343,9 @@ export class ScafiWebUiShell {
   }
 
   private reconcileSelection(): void {
+    if (this.selectedNodeIds.length === 0) {
+      return;
+    }
     const available = new Set(this.app.store.getState().graph.nodes.map((node) => node.id));
     this.selectedNodeIds = this.selectedNodeIds.filter((id) => available.has(id));
     if (this.selectedNodeIds.length === 0) {

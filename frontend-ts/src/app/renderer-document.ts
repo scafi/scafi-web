@@ -358,13 +358,18 @@ const RENDERER_KIT_SOURCE = String.raw`const RendererKit = (() => {
 })();`;
 
 export const defaultRendererDocument = `const dense = graph.nodes.length > 180;
+// Past this point SVG cannot keep up: switch to the canvas renderer, which draws the
+// whole scene in one pass instead of rebuilding a DOM element per node and per edge.
+const heavy = graph.nodes.length > 400;
 
 return {
   nodeSize: dense ? 8 : defaults.nodeSize,
   fontSize: dense ? 10 : defaults.fontSize,
   showId: defaults.showId && !dense,
-  showLinks: defaults.showLinks && !dense, // Automatically disable links if too dense to optimize!
-  rendererType: "standard",
+  // SVG cannot afford links past ~180 nodes; canvas batches them into a single path, so
+  // they come back once it takes over.
+  showLinks: defaults.showLinks && (heavy || !dense),
+  rendererType: heavy ? "lightweight" : "standard",
   renderNode(context) {
     return RendererKit.composeNode(
       context,
