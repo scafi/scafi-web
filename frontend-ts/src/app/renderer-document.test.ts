@@ -25,7 +25,7 @@ describe("renderer-document", () => {
 
     const output = evaluator({
       graph: { nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: {} }, { id: "2", position: { x: 1, y: 0 }, labels: {} }, { id: "3", position: { x: 2, y: 0 }, labels: {} }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: [],
       availableSensors: ["source", "obstacle"],
       defaults: visualizationToRendererDefaults(fallback),
@@ -63,7 +63,7 @@ describe("renderer-document", () => {
 
     const output = evaluator({
       graph: { nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: {} }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: [],
       availableSensors: ["source", "obstacle"],
       defaults: visualizationToRendererDefaults(fallback),
@@ -119,7 +119,7 @@ describe("renderer-document", () => {
         nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: { export: 42 } }],
         edges: [{ from: "1", to: "2" }],
       },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: ["1"],
       availableSensors: [],
       defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),
@@ -132,7 +132,7 @@ describe("renderer-document", () => {
     const nodeOutput = output?.renderNode?.({
       node: { id: "1", position: { x: 0, y: 0 }, labels: { export: 42 } },
       graph: { nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: { export: 42 } }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selected: true,
       nodeIndex: 0,
       totalNodes: 1,
@@ -164,7 +164,7 @@ describe("renderer-document", () => {
         ],
         edges: [{ from: "1", to: "2" }],
       },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: ["1"],
       isNeighborhood: true,
       defaults: { hidden: false, className: "graph-edge is-neighborhood", strokeWidth: 1.8 },
@@ -206,7 +206,7 @@ describe("renderer-document", () => {
         nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: { export: 42, source: true } }],
         edges: [{ from: "1", to: "2" }],
       },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: ["1"],
       availableSensors: ["source"],
       defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),
@@ -215,7 +215,7 @@ describe("renderer-document", () => {
     const nodeOutput = output?.renderNode?.({
       node: { id: "1", position: { x: 0, y: 0 }, labels: { export: 42, source: true } },
       graph: { nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: { export: 42, source: true } }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selected: true,
       nodeIndex: 0,
       totalNodes: 1,
@@ -247,7 +247,7 @@ describe("renderer-document", () => {
         ],
         edges: [{ from: "1", to: "2" }],
       },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: ["1"],
       isNeighborhood: true,
       defaults: { hidden: false, className: "graph-edge", strokeWidth: 1.8 },
@@ -263,7 +263,7 @@ describe("renderer-document", () => {
         ],
         edges: [{ from: "1", to: "2" }],
       },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: ["1"],
       isNeighborhood: false,
       defaults: { hidden: false, className: "graph-edge", strokeWidth: 1.8 },
@@ -297,7 +297,7 @@ describe("renderer-document", () => {
         nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: { export: 50 } }],
         edges: [],
       },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: [],
       availableSensors: [],
       defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),
@@ -306,7 +306,7 @@ describe("renderer-document", () => {
     const nodeOutput = output?.renderNode?.({
       node: { id: "1", position: { x: 0, y: 0 }, labels: { export: 50 } },
       graph: { nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: { export: 50 } }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selected: false,
       nodeIndex: 0,
       totalNodes: 1,
@@ -325,7 +325,7 @@ describe("renderer-document", () => {
     const fullRange = output?.renderNode?.({
       node: { id: "2", position: { x: 1, y: 0 }, labels: { export: 100 } },
       graph: { nodes: [{ id: "2", position: { x: 1, y: 0 }, labels: { export: 100 } }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selected: false,
       nodeIndex: 1,
       totalNodes: 2,
@@ -344,7 +344,7 @@ describe("renderer-document", () => {
     const stringExport = output?.renderNode?.({
       node: { id: "3", position: { x: 2, y: 0 }, labels: { export: "25.50" } },
       graph: { nodes: [{ id: "3", position: { x: 2, y: 0 }, labels: { export: "25.50" } }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selected: false,
       nodeIndex: 2,
       totalNodes: 3,
@@ -370,7 +370,7 @@ describe("renderer-document", () => {
 
     const output = evaluator({
       graph: { nodes: [], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: [],
       availableSensors: [],
       defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),

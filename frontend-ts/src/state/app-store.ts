@@ -1,4 +1,5 @@
 import type {
+  CompileProblem,
   CompileResult,
   GraphSnapshot,
   MaybePromise,
@@ -8,7 +9,8 @@ import type {
   SupportConfiguration,
   Vec2,
 } from "../domain/contracts";
-import { ScastieService, type ScalaSourceMode } from "../services/scastie/scastie-service";
+import { CompilationFailedError, ScastieService, type ScalaSourceMode } from "../services/scastie/scastie-service";
+import type { WrappedSource } from "../services/scastie/source-map";
 import { RuntimeConfigSerializer } from "../services/serialization/runtime-config-serializer";
 import { StandaloneRuntimeLoader } from "../services/standalone/standalone-runtime-loader";
 import { StandaloneSessionManager } from "../services/standalone/session-manager";
@@ -38,6 +40,8 @@ export interface AppState {
     lastCompiledJavascript?: string;
     warnings: string[];
     error?: string;
+    /** Positioned compiler messages from the last compilation, for the editor gutter. */
+    problems: CompileProblem[];
     daemonIntervalMs?: number;
   };
   standalone: {
@@ -47,7 +51,7 @@ export interface AppState {
 }
 
 export interface AppStoreDependencies {
-  scastie: Pick<ScastieService, "compile" | "buildPayload"> & {
+  scastie: Pick<ScastieService, "compile" | "buildPayload" | "buildSource"> & {
     getScalaVersion?: () => string;
     setScalaVersion?: (scalaVersion: string) => void;
   };
@@ -96,6 +100,7 @@ export class AppStore {
   private backend: BackendState;
   private state: AppState;
   private daemon?: { cancel(): void };
+  private lastCompileSource?: WrappedSource;
   private pendingSensorChanges = new Map<NodeId, Map<string, unknown>>();
   private pendingPositionChanges = new Map<NodeId, Vec2>();
   private showLinks = true;
@@ -115,6 +120,7 @@ export class AppStore {
         status: "idle",
         generation: 0,
         warnings: [],
+        problems: [],
       },
       standalone: {
         active: false,
@@ -171,7 +177,17 @@ export class AppStore {
   }
 
   previewCompiledSource(code: string, mode: ScalaSourceMode, worldDocument?: string): string {
-    return this.dependencies.scastie.buildPayload(code, mode, worldDocument).SbtInputs.code;
+    return this.buildCompileSource(code, mode, worldDocument).code;
+  }
+
+  /** The wrapped source plus its mapping, for completion offsets and compiler positions. */
+  buildCompileSource(code: string, mode: ScalaSourceMode, worldDocument?: string): WrappedSource {
+    return this.dependencies.scastie.buildSource(code, mode, worldDocument);
+  }
+
+  /** The mapping for the most recent compilation, so its messages can be placed in the editor. */
+  getLastCompileSource(): WrappedSource | undefined {
+    return this.lastCompileSource;
   }
 
   async loadScript(code: string, mode: ScalaSourceMode, worldDocument?: string): Promise<void> {
@@ -198,6 +214,7 @@ export class AppStore {
         generation,
         error: undefined,
         warnings: [],
+        problems: [],
       },
       standalone: {
         active: false,
@@ -205,6 +222,8 @@ export class AppStore {
       },
     });
     await this.sessionManager.clear();
+
+    this.lastCompileSource = this.buildCompileSource(code, mode, worldDocument);
 
     let compiled: CompileResult;
     try {
@@ -218,6 +237,7 @@ export class AppStore {
           ...this.state.execution,
           status: "error",
           error: stringifyError(error),
+          problems: error instanceof CompilationFailedError ? error.problems : [],
         },
       });
       return;
@@ -233,6 +253,7 @@ export class AppStore {
           ...this.state.execution,
           status: "error",
           warnings: compiled.warnings,
+          problems: compiled.problems,
           error: `Compilation returned short content (${compiled.javascript.length} bytes)`,
         },
       });
@@ -255,6 +276,7 @@ export class AppStore {
           ...this.state.execution,
           status: "error",
           warnings: compiled.warnings,
+          problems: compiled.problems,
           error: stringifyError(error),
         },
       });
@@ -332,6 +354,7 @@ export class AppStore {
         status: "idle",
         error: undefined,
         warnings: [],
+        problems: [],
       },
       standalone: {
         active: false,

@@ -228,9 +228,8 @@ export class SvgSimulationRenderer implements SimulationRenderer {
     const selectionBoxHtml = this.renderSelectionBox();
 
     this.container.innerHTML = `
-      <div class="graph-stage ${this.graphInteractionMode === "pan" ? "is-pan-mode" : "is-selection-mode"}" data-graph-stage style="width:100%; height:100%;">
-        <svg viewBox="0 0 ${projection.width} ${projection.height}" class="graph-svg" data-render-profile="${renderProfile}" aria-label="Simulation graph" style="width:100%; height:100%; display:block;">
-          <rect x="0" y="0" width="${projection.width}" height="${projection.height}" rx="26" class="graph-surface" />
+      <div class="graph-stage ${this.graphInteractionMode === "pan" ? "is-pan-mode" : "is-selection-mode"}" data-graph-stage>
+        <svg viewBox="0 0 ${projection.width} ${projection.height}" class="graph-svg" data-render-profile="${renderProfile}" aria-label="Simulation graph">
           <g class="graph-viewport" transform="translate(${this.graphPan.x} ${this.graphPan.y})">
             ${edgeMarkup}
             ${nodeMarkup}

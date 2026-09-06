@@ -46,7 +46,7 @@ describe("world-document", () => {
 world
   .grid(rows = y, cols = y, stepX = 60, stepY = 60, tolerance = 10)
   .radius(70)
-  .matrix(dimension = 3, color = "#bb86fc")
+  .matrix(dimension = 3, color = "#bb66ff")
   .seed(config = 0, simulation = 0, randomSensor = 0)
 `;
 
@@ -59,7 +59,7 @@ world
   .grid(rows = 10, cols = 10, stepX = 60.0, stepY = 60.0, tolerance = 10.0)
   .radius(70)
   .randomSensor("temperature", 10.0, 30.0)
-  .matrix(dimension = 3, color = "#bb86fc")
+  .matrix(dimension = 3, color = "#bb66ff")
   .seed(config = 0L, simulation = 0L, randomSensor = 0L)`;
     const config = parseWorldDocument(document);
     expect(config).toBeDefined();

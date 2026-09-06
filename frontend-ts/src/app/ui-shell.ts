@@ -85,8 +85,10 @@ export class ScafiWebUiShell {
   private selectionPanelOpen = false;
   private visualizationSettingsOpen = false;
   private isEditorCollapsed = false;
+  private mobileView: "code" | "simulation" = "code";
   private isVisualizationCollapsed = false;
   private lastRenderedExecutionStatus: AppState["execution"]["status"] = "idle";
+  private lastRenderedProblems?: AppState["execution"]["problems"];
   private lastRenderedSelectedNodeIds: string[] = [];
   private lastRenderedSelectionPanelOpen = false;
   private lastRenderedDaemonRunning = false;
@@ -124,6 +126,7 @@ export class ScafiWebUiShell {
     this.performanceMetrics.windowStartedAt = nowMs();
     this.themeManager = new ThemeManager(root, app);
     this.codeEditor = new CodeEditorComponent(root, app);
+    this.codeEditor.setMetalsService(app.metals);
     this.simulationControls = new SimulationControlsComponent(root, app);
     this.nodeInspector = new NodeInspectorComponent(root, app);
   }
@@ -188,6 +191,7 @@ export class ScafiWebUiShell {
     this.app.subscribe((event) => {
       if (event.type === "state-changed") {
         this.reconcileSelection();
+        this.syncCompileDiagnostics(event.state);
         const status = event.state.execution.status;
         if (status === "ready" || status === "daemon") {
           this.configurationDraft = configurationToDraft(event.state.configuration);
@@ -359,7 +363,11 @@ export class ScafiWebUiShell {
         </header>
 
         <main class="workspace-grid">
-          <div class="playground ${this.isEditorCollapsed ? "is-editor-collapsed" : ""} ${this.isVisualizationCollapsed ? "is-visualization-collapsed" : ""}">
+          <div class="mobile-view-switch" role="tablist" aria-label="Workspace view">
+            <button id="mobile-view-code" class="mode-chip ${this.mobileView === "code" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.mobileView === "code")}">Code</button>
+            <button id="mobile-view-simulation" class="mode-chip ${this.mobileView === "simulation" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.mobileView === "simulation")}">Simulation</button>
+          </div>
+          <div class="playground ${this.isEditorCollapsed ? "is-editor-collapsed" : ""} ${this.isVisualizationCollapsed ? "is-visualization-collapsed" : ""}" data-mobile-view="${this.mobileView}">
             <section class="panel panel-editor ${this.isEditorCollapsed ? "is-collapsed" : ""}">
               <!-- Collapsed Trigger -->
               <button class="collapsed-panel-trigger collapsed-editor" id="expand-editor" type="button" title="Expand Editor" aria-hidden="${String(!this.isEditorCollapsed)}">
@@ -380,20 +388,20 @@ export class ScafiWebUiShell {
                       </button>
                     </div>
                     <div class="editor-tabbar" role="tablist" aria-label="Playground documents">
-                      <div class="tab-buttons" style="display: flex; gap: 8px;">
+                      <div class="tab-buttons">
                         <button id="document-tab-code" class="editor-tab ${this.activePlaygroundDocument === "code" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "code")}">Code</button>
                         <button id="document-tab-world" class="editor-tab ${this.activePlaygroundDocument === "world" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "world")}">World</button>
                         <button id="document-tab-renderer" class="editor-tab ${this.activePlaygroundDocument === "renderer" ? "is-active" : ""}" type="button" role="tab" aria-selected="${String(this.activePlaygroundDocument === "renderer")}">Renderer (JS)</button>
                       </div>
-                      <div class="field mode-field" style="margin-top: 0; display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 11px;">Scala</span>
-                        <fieldset class="mode-toggle" style="min-height: 32px; height: 32px; border-radius: 8px; padding: 0 8px; gap: 4px;">
-                          <label style="font-size: 11px; gap: 4px; cursor: pointer;">
-                            <input type="radio" name="scala-version" value="2" ${checked(!this.app.getScalaVersion().startsWith("3."))} style="width: 12px; height: 12px; cursor: pointer;" />
+                      <div class="field mode-field scala-version-field">
+                        <span>Scala</span>
+                        <fieldset class="mode-toggle mode-toggle-compact">
+                          <label>
+                            <input type="radio" name="scala-version" value="2" ${checked(!this.app.getScalaVersion().startsWith("3."))} />
                             <span>2</span>
                           </label>
-                          <label style="font-size: 11px; gap: 4px; cursor: pointer;">
-                            <input type="radio" name="scala-version" value="3" ${checked(this.app.getScalaVersion().startsWith("3."))} style="width: 12px; height: 12px; cursor: pointer;" />
+                          <label>
+                            <input type="radio" name="scala-version" value="3" ${checked(this.app.getScalaVersion().startsWith("3."))} />
                             <span>3</span>
                           </label>
                         </fieldset>
@@ -473,7 +481,7 @@ export class ScafiWebUiShell {
                   </div>
                   <div class="viz-toolbar-strip">
                     <div class="viz-control-group viz-control-group-run">
-                      <p class="control-card-title">Execution</p>
+                      <p class="control-card-title">Run</p>
                       <div class="viz-inline-actions viz-inline-actions-run" role="group" aria-label="Execution commands">
                         <button id="load-script" class="primary icon-btn" ${disabled(status === "compiling")}>${iconPlay()} Load</button>
                         <button id="tick-once" class="icon-btn" ${disabled(!(status === "ready" || status === "daemon"))}>${iconSkipForward()} Tick</button>
@@ -490,6 +498,7 @@ export class ScafiWebUiShell {
                       </div>
                     </div>
                     <div class="viz-control-group viz-control-group-graph">
+                      <p class="control-card-title">Graph</p>
                       <div class="viz-inline-actions graph-inline-actions">
                         <div class="interaction-toggle graph-mode-toggle" role="group" aria-label="Graph interaction mode">
                           <button id="interaction-pan" class="mode-chip icon-btn ${this.graphInteractionMode === "pan" ? "is-active" : ""}" type="button">${iconMove()} Pan</button>
@@ -506,7 +515,7 @@ export class ScafiWebUiShell {
                 <section class="panel-section panel-section-tight panel-section-fill graph-pane">
                   <div class="graph-workspace">
                     <div class="graph-main">
-                      <div id="renderer-mount-point" class="graph-stage-wrapper" style="width:100%; height:100%;"></div>
+                      <div id="renderer-mount-point" class="graph-stage-wrapper"></div>
                       <aside class="selection-slot ${selectionPanelVisible ? "is-open" : ""}" data-selection-panel>${this.renderSelectionPanel(state)}</aside>
                       ${status === "compiling" ? `
                         <div class="compiling-overlay">
@@ -625,7 +634,7 @@ export class ScafiWebUiShell {
           </div>
           <div class="selection-tray-actions">
             <p class="muted">${selectedNodes.length} node${selectedNodes.length === 1 ? "" : "s"} selected</p>
-            <div style="display: flex; gap: 8px;">
+            <div class="inspector-action-row">
               <button id="inspector-start-daemon" class="ghost" type="button" ${disabled(state.execution.status !== "ready")}>${iconPlay()} Start</button>
               <button id="inspector-stop-daemon" class="ghost" type="button" ${disabled(state.execution.status !== "daemon")}>${iconSquare()} Stop</button>
               <button class="ghost selection-close" type="button" data-hide-selection-panel>Close</button>
@@ -786,6 +795,15 @@ export class ScafiWebUiShell {
     });
   }
 
+  /** Mirrors the latest compiler messages into the editor gutter. */
+  private syncCompileDiagnostics(state: AppState): void {
+    if (state.execution.problems === this.lastRenderedProblems) {
+      return;
+    }
+    this.lastRenderedProblems = state.execution.problems;
+    this.codeEditor.setCompileProblems(state.execution.problems, this.app.store.getLastCompileSource());
+  }
+
   private renderPerformanceBadge(): string {
     const averageRenderMs = this.performanceMetrics.averageRenderMs;
     const fps = this.performanceMetrics.fps;
@@ -890,18 +908,18 @@ export class ScafiWebUiShell {
         <div class="settings-group">
           <p class="settings-group-title">Performance Options</p>
           <p class="control-card-summary">Disable expensive rendering features to significantly improve simulation speed in dense networks.</p>
-          <label class="settings-switch-label" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); cursor: pointer; margin-top: 8px;">
-            <input id="toggle-render-links" type="checkbox" ${this.visualization.showLinks !== false ? "checked" : ""} style="cursor: pointer; accent-color: var(--accent);" />
+          <label class="settings-switch-label">
+            <input id="toggle-render-links" type="checkbox" ${this.visualization.showLinks !== false ? "checked" : ""} />
             <span>Render neighborhood links (connections)</span>
           </label>
         </div>
         <div class="settings-group">
           <p class="settings-group-title">Renderer (JavaScript)</p>
           <p class="control-card-summary">Use the Renderer tab to script node size, visible sensors, and custom renderers in JavaScript.</p>
-          <div class="viz-inline-actions" style="margin-top: 8px;">
+          <div class="viz-inline-actions">
             <button id="open-renderer-document" class="ghost" type="button">Open Renderer (JS)</button>
           </div>
-          <p class="control-card-summary" style="margin-top: 8px;">Current node size: ${this.visualization.nodeSize}px · font size: ${this.visualization.fontSize}px</p>
+          <p class="control-card-summary">Current node size: ${this.visualization.nodeSize}px · font size: ${this.visualization.fontSize}px</p>
           <p class="control-card-summary">Active renderers: ${escapeHtml(summarizeActiveRenderers(this.visualization))}</p>
         </div>
       </div>
@@ -1245,6 +1263,36 @@ export class ScafiWebUiShell {
       this.isVisualizationCollapsed = false;
       this.updateCollapseClasses();
     });
+
+    this.bindButton("mobile-view-code", () => {
+      this.setMobileView("code");
+    });
+    this.bindButton("mobile-view-simulation", () => {
+      this.setMobileView("simulation");
+    });
+  }
+
+  /**
+   * Swaps the visible pane on phones. A full render() would tear down and rebuild
+   * CodeMirror, so the switch only touches attributes and lets the renderer resize.
+   */
+  private setMobileView(view: "code" | "simulation"): void {
+    if (this.mobileView === view) {
+      return;
+    }
+    this.mobileView = view;
+    this.root.querySelector(".playground")?.setAttribute("data-mobile-view", view);
+    for (const [id, owned] of [
+      ["mobile-view-code", "code"],
+      ["mobile-view-simulation", "simulation"],
+    ] as const) {
+      const button = this.root.querySelector(`#${id}`);
+      button?.classList.toggle("is-active", owned === view);
+      button?.setAttribute("aria-selected", String(owned === view));
+    }
+    if (view === "simulation") {
+      this.animateCollapseResize();
+    }
   }
 
   private updateCollapseClasses(): void {
@@ -1477,7 +1525,7 @@ function configurationToDraft(configuration: SupportConfiguration): Configuratio
     howMany: configuration.network.kind === "random" ? configuration.network.howMany : 100,
     radius: configuration.neighbour.range,
     matrixDimension: matrix?.dimension ?? 3,
-    matrixColor: firstMatrixColor(matrix) ?? "#bb86fc",
+    matrixColor: firstMatrixColor(matrix) ?? "#bb66ff",
     sensors: Object.entries(configuration.deviceShape.sensors)
       .filter(([name]) => name !== "matrix")
       .map(([name, value]) => ({

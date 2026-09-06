@@ -44,7 +44,7 @@ export class ScafiWebEmbedGenerator {
 
   private render(): void {
     const iframeUrl = this.generateUrl();
-    const iframeSnippet = `<iframe src="${escapeHtml(iframeUrl)}" width="100%" height="520px" style="border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden;" allow="clipboard-write"></iframe>`;
+    const iframeSnippet = buildEmbedSnippet(iframeUrl);
 
     this.root.innerHTML = `
       <div class="gen-shell">
@@ -150,7 +150,7 @@ export class ScafiWebEmbedGenerator {
             </div>
 
             <div class="gen-iframe-wrapper">
-              <iframe id="preview-iframe" src="${iframeUrl}" width="100%" height="400px" style="border: none; background: #000;" allow="clipboard-write"></iframe>
+              <iframe id="preview-iframe" src="${iframeUrl}" width="100%" height="400px" style="border: none;" allow="clipboard-write"></iframe>
             </div>
 
             <div class="gen-snippet-box">
@@ -212,7 +212,7 @@ export class ScafiWebEmbedGenerator {
       if (iframe) {
         iframe.src = url;
       }
-      const snippet = `<iframe src="${escapeHtml(url)}" width="100%" height="520px" style="border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden;" allow="clipboard-write"></iframe>`;
+      const snippet = buildEmbedSnippet(url);
       const codeEl = this.root.querySelector<HTMLElement>(".gen-snippet-code code");
       if (codeEl) {
         codeEl.textContent = snippet;
@@ -320,4 +320,12 @@ function iconCopy(): string {
 
 function iconCheck(): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+}
+
+/**
+ * The snippet is pasted into someone else's page, so it must not reference any
+ * ScaFi CSS custom property - only self-contained literal values.
+ */
+function buildEmbedSnippet(url: string): string {
+  return `<iframe src="${escapeHtml(url)}" width="100%" height="520" style="border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 10px; overflow: hidden;" allow="clipboard-write" title="ScaFi simulation"></iframe>`;
 }

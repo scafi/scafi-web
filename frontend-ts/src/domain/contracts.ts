@@ -137,9 +137,43 @@ export interface CompilePayload {
   };
 }
 
+export type CompileSeverity = "error" | "warning" | "info";
+
+/** A text edit proposed by the Scala compiler, in wrapped-source coordinates. */
+export interface CompileEdit {
+  startLine: number;
+  startColumn: number;
+  endLine: number;
+  endColumn: number;
+  newText: string;
+}
+
+/** A compiler quick fix: a title plus the edits that apply it. */
+export interface CompileAction {
+  title: string;
+  description?: string;
+  edits: CompileEdit[];
+}
+
+/**
+ * One compiler message with the position information Scastie already sends.
+ * Positions are 1-based lines / 0-based columns into the wrapped source and are
+ * absent when the compiler could not attribute the message to a location.
+ */
+export interface CompileProblem {
+  severity: CompileSeverity;
+  message: string;
+  line?: number;
+  endLine?: number;
+  startColumn?: number;
+  endColumn?: number;
+  actions: CompileAction[];
+}
+
 export interface CompileDiagnostics {
   warnings: string[];
   errors: string[];
+  problems: CompileProblem[];
   runtimeError?: string;
 }
 
@@ -147,12 +181,35 @@ export interface CompileResult extends CompileDiagnostics {
   javascript: string;
 }
 
+/** Mirrors `org.scastie.api.Severity`, which is encoded as a single-key object. */
+export type ScastieSeverity = { Error?: unknown; Warning?: unknown; Info?: unknown } | unknown;
+
+/** Mirrors `org.scastie.api.Problem`. Optional fields arrive as `null` when empty. */
+export interface ScastieProblem {
+  message?: string;
+  severity?: ScastieSeverity;
+  line?: number | null;
+  endLine?: number | null;
+  startColumn?: number | null;
+  endColumn?: number | null;
+  actions?: Array<{
+    title?: string;
+    description?: string | null;
+    edit?: {
+      changes?: Array<{
+        range?: {
+          start?: { line?: number; character?: number };
+          end?: { line?: number; character?: number };
+        };
+        newText?: string;
+      }>;
+    } | null;
+  }> | null;
+}
+
 export interface SseProgressEvent {
   isDone?: boolean;
-  compilationInfos?: Array<{
-    message?: string;
-    severity?: { Error?: unknown } | unknown;
-  }>;
+  compilationInfos?: ScastieProblem[];
   runtimeError?: { message?: string } | null;
   scalaJsContent?: string | null;
 }

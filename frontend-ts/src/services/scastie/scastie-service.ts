@@ -1,14 +1,140 @@
-import type { CompilePayload, CompileResult, SseProgressEvent } from "../../domain/contracts";
-import { convertEasyScalaToFull } from "./easy-scala";
+import type {
+  CompileAction,
+  CompileEdit,
+  CompilePayload,
+  CompileProblem,
+  CompileResult,
+  CompileSeverity,
+  ScastieProblem,
+  ScastieSeverity,
+  SseProgressEvent,
+} from "../../domain/contracts";
+import { wrapStandaloneRuntimeCodeWithMap } from "./runtime-template";
+import {
+  buildWrappedSource,
+  type RuntimeWrapper,
+  type ScalaSourceMode,
+  type WrappedSource,
+} from "./source-map";
 
-export type ScalaSourceMode = "easy-scala" | "full-scala";
+export type { ScalaSourceMode };
+
+const SCAFI_ARTIFACTS = ["scafi-core", "scafi-commons", "scafi-simulator"] as const;
+
+export interface ScalaJsTarget {
+  Js: { scalaVersion: string; scalaJsVersion: string };
+}
+
+export function buildScalaJsTarget(scalaVersion: string, scalaJsVersion: string): ScalaJsTarget {
+  return { Js: { scalaVersion, scalaJsVersion } };
+}
+
+/**
+ * Builds the scafi dependency set. `target` is the target the artifacts are resolved against,
+ * which is not necessarily the build target: `/api/run` resolves them against `Scala2`/`Scala3`
+ * while the Metals endpoints expect the same `Js` target as the build.
+ */
+export interface ScalaDependency<Target> {
+  groupId: string;
+  artifact: string;
+  target: Target;
+  version: string;
+  isAutoResolve: true;
+}
+
+export function buildScafiDependencies<Target>(
+  target: Target,
+  scafiVersion: string,
+): Array<ScalaDependency<Target>> {
+  return SCAFI_ARTIFACTS.map((artifact) => ({
+    groupId: "it.unibo.scafi",
+    artifact,
+    target,
+    version: scafiVersion,
+    isAutoResolve: true as const,
+  }));
+}
+
+/** Thrown when Scastie finished without producing JavaScript. Carries every positioned message. */
+export class CompilationFailedError extends Error {
+  readonly problems: CompileProblem[];
+  readonly warnings: string[];
+  readonly errors: string[];
+
+  constructor(message: string, problems: CompileProblem[], warnings: string[], errors: string[]) {
+    super(message);
+    this.name = "CompilationFailedError";
+    this.problems = problems;
+    this.warnings = warnings;
+    this.errors = errors;
+  }
+}
+
+function readSeverity(severity: ScastieSeverity): CompileSeverity {
+  if (severity && typeof severity === "object") {
+    if ("Error" in severity) {
+      return "error";
+    }
+    if ("Info" in severity) {
+      return "info";
+    }
+  }
+  return "warning";
+}
+
+function readPosition(value: number | null | undefined): number | undefined {
+  return typeof value === "number" ? value : undefined;
+}
+
+/**
+ * `Problem` positions are 1-based lines and 1-based columns, but the edits inside
+ * `Problem.actions` keep BSP's 0-based lines and characters (scastie's
+ * `BspClient.diagnosticToProblem` adds one to the former and not to the latter).
+ * Both are normalised here to 1-based lines with 0-based columns.
+ */
+function readActions(problem: ScastieProblem): CompileAction[] {
+  return (problem.actions ?? []).flatMap((action) => {
+    const edits: CompileEdit[] = (action.edit?.changes ?? []).flatMap((change) => {
+      const start = change.range?.start;
+      const end = change.range?.end;
+      if (!start || !end || typeof start.line !== "number" || typeof end.line !== "number") {
+        return [];
+      }
+      return [{
+        startLine: start.line + 1,
+        startColumn: start.character ?? 0,
+        endLine: end.line + 1,
+        endColumn: end.character ?? 0,
+        newText: change.newText ?? "",
+      }];
+    });
+    if (!action.title || edits.length === 0) {
+      return [];
+    }
+    return [{ title: action.title, description: action.description ?? undefined, edits }];
+  });
+}
+
+export function toCompileProblem(problem: ScastieProblem): CompileProblem {
+  const startColumn = readPosition(problem.startColumn);
+  const endColumn = readPosition(problem.endColumn);
+  return {
+    severity: readSeverity(problem.severity),
+    message: problem.message ?? "Unknown compiler message",
+    line: readPosition(problem.line),
+    endLine: readPosition(problem.endLine),
+    startColumn: startColumn === undefined ? undefined : Math.max(0, startColumn - 1),
+    endColumn: endColumn === undefined ? undefined : Math.max(0, endColumn - 1),
+    actions: readActions(problem),
+  };
+}
 
 export interface ScastieServiceOptions {
   baseUrl?: string;
   scafiVersion?: string;
   scalaVersion?: string;
   scalaJsVersion?: string;
-  wrapCode?: (code: string, worldDocument?: string) => string;
+  wrapRuntime?: RuntimeWrapper;
   fetchImpl?: typeof fetch;
   eventSourceFactory?: (url: string) => EventSourceLike;
 }
@@ -53,7 +179,7 @@ export class ScastieService {
   private readonly scafiVersion: string;
   private scalaVersion: string;
   private readonly scalaJsVersion: string;
-  private readonly wrapCode: (code: string, worldDocument?: string) => string;
+  private readonly wrapRuntime: RuntimeWrapper;
   private readonly fetchImpl: typeof fetch;
   private readonly eventSourceFactory: (url: string) => EventSourceLike;
 
@@ -62,7 +188,7 @@ export class ScastieService {
     this.scafiVersion = options.scafiVersion ?? DEFAULTS.scafiVersion;
     this.scalaVersion = options.scalaVersion ?? DEFAULTS.scalaVersion;
     this.scalaJsVersion = options.scalaJsVersion ?? DEFAULTS.scalaJsVersion;
-    this.wrapCode = options.wrapCode ?? ((code) => code);
+    this.wrapRuntime = options.wrapRuntime ?? wrapStandaloneRuntimeCodeWithMap;
     this.fetchImpl = resolveFetch(options.fetchImpl);
     this.eventSourceFactory =
       options.eventSourceFactory ??
@@ -77,38 +203,37 @@ export class ScastieService {
     this.scalaVersion = scalaVersion;
   }
 
-  normalizeSource(code: string, mode: ScalaSourceMode): string {
-    const cleanCode = code.replace(/\t/g, "  ");
-    return mode === "easy-scala" ? convertEasyScalaToFull(cleanCode) : cleanCode;
+  /**
+   * The exact source sent to Scastie, together with the mapping back to editor coordinates
+   * so that compiler positions and completion offsets refer to the same text.
+   */
+  buildSource(code: string, mode: ScalaSourceMode, worldDocument?: string): WrappedSource {
+    return buildWrappedSource(code, mode, worldDocument, this.wrapRuntime);
   }
 
-  buildPayload(code: string, mode: ScalaSourceMode, worldDocument?: string): CompilePayload {
-    const normalized = this.normalizeSource(code, mode);
-    const wrapped = this.wrapCode(normalized, worldDocument);
+  getScafiDependencies() {
     const isScala3 = this.scalaVersion.startsWith("3.");
     const targetDependency = isScala3
       ? { Scala3: { scalaVersion: this.scalaVersion } }
       : { Scala2: { scalaVersion: this.scalaVersion } };
+    return buildScafiDependencies(targetDependency, this.scafiVersion);
+  }
 
-    const dependency = (artifact: string) => ({
-      groupId: "it.unibo.scafi",
-      artifact,
-      target: targetDependency,
-      version: this.scafiVersion,
-      isAutoResolve: true as const,
-    });
+  getScafiVersion(): string {
+    return this.scafiVersion;
+  }
 
+  getScalaJsVersion(): string {
+    return this.scalaJsVersion;
+  }
+
+  buildPayload(code: string, mode: ScalaSourceMode, worldDocument?: string): CompilePayload {
     return {
       SbtInputs: {
         isWorksheetMode: false,
-        code: wrapped,
-        target: {
-          Js: {
-            scalaVersion: this.scalaVersion,
-            scalaJsVersion: this.scalaJsVersion,
-          },
-        },
-        libraries: [dependency("scafi-core"), dependency("scafi-commons"), dependency("scafi-simulator")],
+        code: this.buildSource(code, mode, worldDocument).code,
+        target: buildScalaJsTarget(this.scalaVersion, this.scalaJsVersion),
+        libraries: this.getScafiDependencies(),
         librariesFromList: [],
         sbtConfigExtra: 'scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")',
         sbtPluginsConfigExtra: "",
@@ -208,6 +333,7 @@ export class ScastieService {
     return new Promise<CompileResult>((resolve, reject) => {
       const warnings: string[] = [];
       const errors: string[] = [];
+      const problems: CompileProblem[] = [];
       let runtimeError: string | undefined;
       const eventSource = this.eventSourceFactory(`${this.baseUrl}/api/progress-sse/${snippetId}`);
 
@@ -221,12 +347,12 @@ export class ScastieService {
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data) as SseProgressEvent;
         for (const info of data.compilationInfos ?? []) {
-          const message = info.message ?? "Unknown compiler message";
-          const severity = info.severity;
-          if (severity && typeof severity === "object" && "Error" in severity) {
-            errors.push(message);
+          const problem = toCompileProblem(info);
+          problems.push(problem);
+          if (problem.severity === "error") {
+            errors.push(problem.message);
           } else {
-            warnings.push(message);
+            warnings.push(problem.message);
           }
         }
 
@@ -238,14 +364,21 @@ export class ScastieService {
           close();
           const javascript = data.scalaJsContent;
           if (javascript && javascript.length > 0) {
-            resolve({ javascript, warnings, errors, runtimeError });
+            resolve({ javascript, warnings, errors, problems, runtimeError });
             return;
           }
           const allMessages = [...errors, ...warnings].filter(Boolean);
           if (allMessages.length > 0) {
             console.error("[Scastie] Compilation failed with details:", allMessages);
           }
-          reject(new Error(`Compilation failed: ${failureMessage("Unknown error")}`));
+          reject(
+            new CompilationFailedError(
+              `Compilation failed: ${failureMessage("Unknown error")}`,
+              problems,
+              warnings,
+              errors,
+            ),
+          );
         }
       };
 

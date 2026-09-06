@@ -106,11 +106,6 @@ export class LightweightSimulationRenderer implements SimulationRenderer {
 
     this.canvas = document.createElement("canvas");
     this.canvas.className = "graph-canvas";
-    this.canvas.style.display = "block";
-    this.canvas.style.width = "100%";
-    this.canvas.style.height = "100%";
-    this.canvas.style.borderRadius = "14px";
-    this.canvas.style.border = "1px solid var(--line)";
     this.container.appendChild(this.canvas);
     this.ctx = this.canvas.getContext("2d");
 

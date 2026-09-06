@@ -207,7 +207,7 @@ export function parseWorldDocument(document: string): SupportConfiguration {
   }
 
   const network = parseNetwork(trimmed);
-  const radius = capture(trimmed, /\.radius\((?<value>[^)]+)\)/, "World document requires .radius(...)");
+  const radius = capture(trimmed, /\.radius\((?<value>[^)]+)\)/, "World document requires .radius(...)", ".radius(");
   const matrix = parseMatrix(trimmed);
   const parsedSensors = Object.fromEntries(
     Array.from(trimmed.matchAll(/\.sensor\(\s*"(?<name>(?:\\.|[^"\\])*)"\s*,\s*(?<value>[^)]+)\)/g), (match) => [
@@ -239,21 +239,23 @@ export function parseWorldDocument(document: string): SupportConfiguration {
   );
   const seeds = seedMatch?.groups
     ? {
-        configSeed: parseNumericLiteral(seedMatch.groups.config, ".seed(config = ...) requires a numeric literal"),
+        configSeed: parseNumericLiteral(seedMatch.groups.config, ".seed(config = ...) requires a numeric literal", ".seed("),
         simulationSeed: parseNumericLiteral(
           seedMatch.groups.simulation,
           ".seed(simulation = ...) requires a numeric literal",
+          ".seed(",
         ),
         randomSensorSeed: parseNumericLiteral(
           seedMatch.groups.randomSensor,
           ".seed(randomSensor = ...) requires a numeric literal",
+          ".seed(",
         ),
       }
     : { configSeed: 0, simulationSeed: 0, randomSensorSeed: 0 };
 
   return normalizeSupportConfiguration({
     network,
-    neighbour: { range: parseNumericLiteral(radius, ".radius(...) requires a numeric literal") },
+    neighbour: { range: parseNumericLiteral(radius, ".radius(...) requires a numeric literal", ".radius(") },
     deviceShape: {
       sensors: matrix ? { matrix, ...sensors } : sensors,
       initialValues,
@@ -331,11 +333,11 @@ function parseNetwork(document: string): SupportConfiguration["network"] {
   if (grid?.groups) {
     return {
       kind: "grid",
-      rows: parseNumericLiteral(grid.groups.rows, ".grid(rows = ...) requires a numeric literal"),
-      cols: parseNumericLiteral(grid.groups.cols, ".grid(cols = ...) requires a numeric literal"),
-      stepX: parseNumericLiteral(grid.groups.stepX, ".grid(stepX = ...) requires a numeric literal"),
-      stepY: parseNumericLiteral(grid.groups.stepY, ".grid(stepY = ...) requires a numeric literal"),
-      tolerance: parseNumericLiteral(grid.groups.tolerance, ".grid(tolerance = ...) requires a numeric literal"),
+      rows: parseNumericLiteral(grid.groups.rows, ".grid(rows = ...) requires a numeric literal", ".grid("),
+      cols: parseNumericLiteral(grid.groups.cols, ".grid(cols = ...) requires a numeric literal", ".grid("),
+      stepX: parseNumericLiteral(grid.groups.stepX, ".grid(stepX = ...) requires a numeric literal", ".grid("),
+      stepY: parseNumericLiteral(grid.groups.stepY, ".grid(stepY = ...) requires a numeric literal", ".grid("),
+      tolerance: parseNumericLiteral(grid.groups.tolerance, ".grid(tolerance = ...) requires a numeric literal", ".grid("),
     };
   }
   const random = document.match(
@@ -344,12 +346,12 @@ function parseNetwork(document: string): SupportConfiguration["network"] {
   if (random?.groups) {
     return {
       kind: "random",
-      min: parseNumericLiteral(random.groups.min, ".random(min = ...) requires a numeric literal"),
-      max: parseNumericLiteral(random.groups.max, ".random(max = ...) requires a numeric literal"),
-      howMany: parseNumericLiteral(random.groups.howMany, ".random(howMany = ...) requires a numeric literal"),
+      min: parseNumericLiteral(random.groups.min, ".random(min = ...) requires a numeric literal", ".random("),
+      max: parseNumericLiteral(random.groups.max, ".random(max = ...) requires a numeric literal", ".random("),
+      howMany: parseNumericLiteral(random.groups.howMany, ".random(howMany = ...) requires a numeric literal", ".random("),
     };
   }
-  throw new Error("World document requires either .grid(...) or .random(...)");
+  throw new WorldDocumentError("World document requires either .grid(...) or .random(...)");
 }
 
 function parseMatrix(document: string): SupportConfiguration["deviceShape"]["sensors"]["matrix"] | undefined {
@@ -358,7 +360,7 @@ function parseMatrix(document: string): SupportConfiguration["deviceShape"]["sen
   );
   if (matrix?.groups) {
     return createMatrixValue(
-      parseNumericLiteral(matrix.groups.dimension, ".matrix(dimension = ...) requires a numeric literal"),
+      parseNumericLiteral(matrix.groups.dimension, ".matrix(dimension = ...) requires a numeric literal", ".matrix("),
       unescapeScalaString(matrix.groups.color),
     );
   }
@@ -373,21 +375,39 @@ function parseMatrix(document: string): SupportConfiguration["deviceShape"]["sen
     Array.from(
       matrixPixels.groups.pixels.matchAll(/\(\s*(?<i>[^,]+),\s*(?<j>[^,]+),\s*"(?<color>(?:\\.|[^"\\])*)"\s*\)/g),
       (match) => [
-        `${parseNumericLiteral(match.groups?.i ?? "", ".matrixPixels(...) coordinates require numeric literals")}:${parseNumericLiteral(match.groups?.j ?? "", ".matrixPixels(...) coordinates require numeric literals")}`,
+        `${parseNumericLiteral(match.groups?.i ?? "", ".matrixPixels(...) coordinates require numeric literals", ".matrixPixels(")}:${parseNumericLiteral(match.groups?.j ?? "", ".matrixPixels(...) coordinates require numeric literals", ".matrixPixels(")}`,
         unescapeScalaString(match.groups?.color ?? ""),
       ],
     ),
   );
   return {
-    dimension: parseNumericLiteral(matrixPixels.groups.dimension, ".matrixPixels(dimension = ...) requires a numeric literal"),
+    dimension: parseNumericLiteral(matrixPixels.groups.dimension, ".matrixPixels(dimension = ...) requires a numeric literal", ".matrixPixels("),
     pixels,
   };
 }
 
-function capture(document: string, pattern: RegExp, errorMessage: string): string {
+/**
+ * A world-document parse failure, tagged with the DSL call it came from.
+ *
+ * The parser runs on the *preprocessed* document — `val` bindings removed, `for` loops
+ * unrolled, variables substituted — so character offsets in it do not correspond to the
+ * text the user is editing. `anchor` is a literal the editor can search for instead, which
+ * puts the marker on the right line for the calls people actually mistype.
+ */
+export class WorldDocumentError extends Error {
+  readonly anchor?: string;
+
+  constructor(message: string, anchor?: string) {
+    super(message);
+    this.name = "WorldDocumentError";
+    this.anchor = anchor;
+  }
+}
+
+function capture(document: string, pattern: RegExp, errorMessage: string, anchor?: string): string {
   const matched = document.match(pattern)?.groups?.value;
   if (!matched) {
-    throw new Error(errorMessage);
+    throw new WorldDocumentError(errorMessage, anchor);
   }
   return matched;
 }
@@ -420,11 +440,11 @@ function parseScalarLiteral(value: string): unknown {
   return trimmed;
 }
 
-function parseNumericLiteral(value: string, errorMessage: string): number {
+function parseNumericLiteral(value: string, errorMessage: string, anchor?: string): number {
   const cleaned = value.trim().replace(/[Ll]$/, "");
   const numeric = Number(cleaned);
   if (!Number.isFinite(numeric)) {
-    throw new Error(errorMessage);
+    throw new WorldDocumentError(errorMessage, anchor);
   }
   return numeric;
 }
@@ -439,10 +459,10 @@ function unescapeScalaString(value: string): string {
 
 function firstMatrixColor(value: unknown): string {
   if (!value || typeof value !== "object" || !("pixels" in value)) {
-    return "#bb86fc";
+    return "#bb66ff";
   }
   const first = Object.values((value as { pixels: Record<string, string> }).pixels)[0];
-  return first ?? "#bb86fc";
+  return first ?? "#bb66ff";
 }
 
 function isUniformMatrix(value: unknown): value is { dimension: number; pixels: Record<string, string> } {

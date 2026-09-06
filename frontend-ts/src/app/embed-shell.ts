@@ -379,21 +379,21 @@ export class ScafiWebEmbedShell {
           
           ${this.layout !== "code-only" ? `
             <div class="embed-pane-viz ${!isLoaded ? "viz-unloaded" : ""}">
-              <div id="renderer-mount-point" style="width:100%; height:100%;"></div>
+              <div id="renderer-mount-point" class="graph-stage-wrapper"></div>
               
               <div class="embed-viz-controls">
                 ${this.layout !== "sim-only" ? `
-                  <button id="toggle-editor" class="embed-icon-btn" title="${this.isEditorCollapsed ? "Mostra codice" : "Nascondi codice / Ingrandisci"}" style="${this.isEditorCollapsed ? "color: var(--accent);" : ""}">
+                  <button id="toggle-editor" class="embed-icon-btn ${this.isEditorCollapsed ? "is-active" : ""}" title="${this.isEditorCollapsed ? "Show code" : "Hide code"}">
                     ${iconCode()}
                   </button>
                 ` : ""}
-                <button id="toggle-interaction-mode" class="embed-icon-btn" title="${this.graphInteractionMode === "pan" ? "Modalità Selezione (muovi nodi)" : "Modalità Navigazione (pan vista)"}" style="${this.graphInteractionMode === "selection" ? "color: var(--accent-cool); border-color: var(--accent-cool);" : ""}">
+                <button id="toggle-interaction-mode" class="embed-icon-btn ${this.graphInteractionMode === "selection" ? "is-active" : ""}" title="${this.graphInteractionMode === "pan" ? "Selection mode (move nodes)" : "Pan mode (move the view)"}">
                   ${this.graphInteractionMode === "pan" ? iconMove() : iconMousePointer()}
                 </button>
-                 <button id="floating-toggle-daemon" class="embed-icon-btn" title="${status === "daemon" ? "Ferma Simulazione" : "Avvia Simulazione"}" ${disabled(status !== "ready" && status !== "daemon")}>
+                 <button id="floating-toggle-daemon" class="embed-icon-btn" title="${status === "daemon" ? "Stop simulation" : "Start simulation"}" ${disabled(status !== "ready" && status !== "daemon")}>
                   ${status === "daemon" ? iconSquare() : iconPlay()}
                 </button>
-                <button id="restart-simulation" class="embed-icon-btn" title="Riavvia Simulazione" ${disabled(status === "compiling")}>
+                <button id="restart-simulation" class="embed-icon-btn" title="Restart simulation" ${disabled(status === "compiling")}>
                   ${iconRestart()}
                 </button>
                 <button id="reset-view" class="embed-icon-btn" title="Reset view">${iconRotateCcw()}</button>
@@ -793,7 +793,7 @@ function iconCode(): string {
 }
 
 function iconPlayLarge(): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
 }
 
 function iconMove(): string {

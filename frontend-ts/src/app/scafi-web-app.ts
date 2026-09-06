@@ -1,4 +1,6 @@
 import type { EditorDocument, ExampleGroup, SupportConfiguration, Vec2, UserSession } from "../domain/contracts";
+import type { WrappedSource } from "../services/scastie/source-map";
+import type { MetalsService } from "../services/scastie/metals-service";
 import { AppStore, type AppState } from "../state/app-store";
 import { EventBus } from "../state/event-bus";
 import { ConfigRepository } from "../services/config/config-repository";
@@ -16,6 +18,8 @@ export class ScafiWebApp {
     private readonly configRepository: ConfigRepository,
     private readonly exampleService: ExampleService,
     private readonly bus = new EventBus<AppEvent>(),
+    /** Absent in tests and wherever type-aware completion is not wanted. */
+    readonly metals?: MetalsService,
   ) {}
 
 
@@ -81,6 +85,7 @@ export class ScafiWebApp {
 
   setScalaVersion(scalaVersion: string): void {
     this.store.setScalaVersion(scalaVersion);
+    this.metals?.setScalaVersion(scalaVersion);
   }
 
   loadPersistedScalaVersion(fallback: string): string {
@@ -173,6 +178,10 @@ export class ScafiWebApp {
 
   previewCompiledSource(document: EditorDocument, worldDocument?: string): string {
     return this.store.previewCompiledSource(document.code, document.mode, worldDocument);
+  }
+
+  buildCompileSource(code: string, mode: EditorDocument["mode"], worldDocument?: string): WrappedSource {
+    return this.store.buildCompileSource(code, mode, worldDocument);
   }
 
   evolve(configuration: SupportConfiguration): void {

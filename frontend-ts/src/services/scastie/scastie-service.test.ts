@@ -13,7 +13,16 @@ class FakeEventSource implements EventSourceLike {
 
 describe("ScastieService", () => {
   it("builds the Scala.js payload from easy Scala mode", () => {
-    const service = new ScastieService({ wrapCode: (code, world) => `wrapped(${world})(${code})` });
+    const service = new ScastieService({
+      wrapRuntime: (core, world) => ({
+        code: `wrapped(${world})(${core})`,
+        worldStartLine: 1,
+        worldLineCount: 1,
+        worldIndent: 0,
+        userStartLine: 1,
+        userLineCount: core.split("\n").length,
+      }),
+    });
     const payload = service.buildPayload("// using Foo, Bar\nmid()", "easy-scala", "world.dsl");
     expect(payload.SbtInputs.code).toContain("wrapped(world.dsl)");
     expect(payload.SbtInputs.code).toContain("class MyProgram extends AggregateProgram with Foo with Bar");
@@ -37,6 +46,9 @@ describe("ScastieService", () => {
       javascript: "console.log('ok');",
       warnings: ["warn"],
       errors: [],
+      problems: [
+        { severity: "warning", message: "warn", line: undefined, endLine: undefined, startColumn: undefined, endColumn: undefined, actions: [] },
+      ],
       runtimeError: undefined,
     });
   });

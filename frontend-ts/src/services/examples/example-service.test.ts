@@ -207,7 +207,7 @@ describe("ExampleService", () => {
     };
     const output = evaluator({
       graph,
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: ["1"],
       availableSensors: ["source", "obstacle", "target"],
       defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),
@@ -216,7 +216,7 @@ describe("ExampleService", () => {
     const nodeOutput = output?.renderNode?.({
       node: graph.nodes[0],
       graph,
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selected: true,
       nodeIndex: 0,
       totalNodes: 2,
@@ -242,7 +242,7 @@ describe("ExampleService", () => {
       fromNode: graph.nodes[0],
       toNode: graph.nodes[1],
       graph,
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: ["1"],
       isNeighborhood: true,
       defaults: { hidden: false, className: "graph-edge", strokeWidth: 1.8 },
@@ -252,7 +252,7 @@ describe("ExampleService", () => {
       fromNode: graph.nodes[0],
       toNode: graph.nodes[1],
       graph,
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: ["1"],
       isNeighborhood: false,
       defaults: { hidden: false, className: "graph-edge", strokeWidth: 1.8 },
@@ -294,7 +294,7 @@ describe("ExampleService", () => {
     const evaluator = compileRendererDocument(renderer ?? "");
     const output = evaluator({
       graph: { nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: {} }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selectedNodeIds: [],
       availableSensors: ["target"],
       defaults: visualizationToRendererDefaults(createDefaultVisualizationState()),
@@ -302,7 +302,7 @@ describe("ExampleService", () => {
     const nodeOutput = output?.renderNode?.({
       node: { id: "1", position: { x: 0, y: 0 }, labels: {} },
       graph: { nodes: [{ id: "1", position: { x: 0, y: 0 }, labels: {} }], edges: [] },
-      execution: { status: "ready", generation: 0, warnings: [] },
+      execution: { status: "ready", generation: 0, warnings: [], problems: [] },
       selected: false,
       nodeIndex: 0,
       totalNodes: 1,

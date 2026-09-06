@@ -35,6 +35,7 @@ vi.mock("@codemirror/view", () => {
     keymap: {
       of: vi.fn((keys) => ({ _keymap: keys })),
     },
+    hoverTooltip: vi.fn((source) => ({ _hoverTooltip: source })),
   };
 });
 
@@ -57,6 +58,15 @@ vi.mock("@codemirror/state", () => {
       readOnly: {
         of: vi.fn((val) => ({ _readOnly: val })),
       },
+    },
+    StateEffect: {
+      define: vi.fn(() => {
+        const type: any = {
+          of: (value: unknown) => ({ _effectType: type, value }),
+          is: (effect: any) => effect?._effectType === type,
+        };
+        return type;
+      }),
     },
   };
 });
@@ -94,6 +104,17 @@ vi.mock("@codemirror/autocomplete", () => {
       (globalThis as any).mockLastAutocompletionConfig = config;
       return { _autocompletion: config };
     }),
+    // Mirrors the real helper closely enough: it attaches an `apply` and keeps the template.
+    snippetCompletion: vi.fn((template, completion) => ({ ...completion, _snippet: template, apply: vi.fn() })),
+    startCompletion: vi.fn(),
+  };
+});
+
+vi.mock("@codemirror/lint", () => {
+  return {
+    linter: vi.fn((source) => ({ _linter: source })),
+    lintGutter: vi.fn(() => ({ _lintGutter: true })),
+    forceLinting: vi.fn(),
   };
 });
 
@@ -237,315 +258,284 @@ describe("CodeEditorComponent", () => {
     });
   });
 
-  it("provides intelligent context-aware autocompletion hints", () => {
+  function attach(component: CodeEditorComponent) {
+    component.attachCodeEditor("dark");
+    const extensions = (EditorState.create as any).mock.calls[0][0].extensions;
+    const autocompletion = extensions.find((ext: any) => ext && ext._autocompletion);
+    return {
+      extensions,
+      staticSource: autocompletion._autocompletion.override[0],
+      lintSource: extensions.find((ext: any) => ext && ext._linter)?._linter,
+      hoverSource: extensions.find((ext: any) => ext && ext._hoverTooltip)?._hoverTooltip,
+    };
+  }
+
+  /** A `Text`-like stand-in good enough for lineAt/line/toString. */
+  function fakeDoc(text: string) {
+    const lines = text.split("\n");
+    const startOf = (index: number) => lines.slice(0, index).reduce((sum, l) => sum + l.length + 1, 0);
+    return {
+      length: text.length,
+      lines: lines.length,
+      toString: () => text,
+      line: (number: number) => ({
+        number,
+        from: startOf(number - 1),
+        length: lines[number - 1].length,
+        text: lines[number - 1],
+      }),
+      lineAt: (pos: number) => {
+        let index = 0;
+        while (index < lines.length - 1 && startOf(index + 1) <= pos) index += 1;
+        return { number: index + 1, from: startOf(index), length: lines[index].length, text: lines[index] };
+      },
+    };
+  }
+
+  function contextFor(text: string, pos: number, word: { from: number; to: number; text: string }) {
+    return {
+      explicit: true,
+      pos,
+      state: { doc: fakeDoc(text) },
+      matchBefore: vi.fn(() => word),
+      addEventListener: vi.fn(),
+    } as any;
+  }
+
+  it("offers catalog entries keyed by the real identifier so CodeMirror can filter them", () => {
     const component = new CodeEditorComponent(root, mockApp);
     component.initialize(initialConfig);
-    component.attachCodeEditor("dark");
+    const { staticSource } = attach(component);
 
-    const createCall = (EditorState.create as any).mock.calls[0];
-    const extensions = createCall[0].extensions;
-    const autocompleteObj = extensions.find((ext: any) => ext && ext._autocompletion);
-    expect(autocompleteObj).toBeDefined();
-    const provider = autocompleteObj._autocompletion.override[0];
-    expect(provider).toBeDefined();
+    const hints = staticSource(contextFor("rep", 3, { from: 0, to: 3, text: "rep" }));
+    expect(hints.from).toBe(0);
 
-    // 1. Full prefix match: 'RendererKit.node.ma'
+    const rep = hints.options.find((o: any) => o.label === "rep");
+    expect(rep).toBeDefined();
+    expect(rep.displayLabel).toBe("rep(init)(fun)");
+    // The signature lives in displayLabel, never in the label CodeMirror matches against.
+    expect(hints.options.every((o: any) => !o.label.includes("("))).toBe(true);
+  });
+
+  it("keeps dotted namespaces completable", () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    const { staticSource } = attach(component);
     component.setActivePlaygroundDocument("renderer");
-    const mockContext1 = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 17, to: 19, text: "ma" })),
-    };
-    const hints1 = provider(mockContext1);
-    expect(hints1).toBeDefined();
-    expect(hints1.options.length).toBeGreaterThan(0);
 
-    const matrixHint1 = hints1.options.find((o: any) => o.label.includes("matrix"));
-    expect(matrixHint1).toBeDefined();
-    expect(matrixHint1.label).toBe("RendererKit.node.matrix()");
-
-    // 2. Nested substring match: 'node.ma'
-    const mockContext2 = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 5, to: 7, text: "ma" })),
-    };
-    const hints2 = provider(mockContext2);
-    const matrixHint2 = hints2.options.find((o: any) => o.label.includes("matrix"));
-    expect(matrixHint2).toBeDefined();
-    expect(matrixHint2.label).toBe("RendererKit.node.matrix()");
-
-    // 3. Fallback matching when dots are absent: 'sin'
-    component.setActivePlaygroundDocument("code");
-    const mockContext3 = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 3, text: "sin" })),
-    };
-    const hints3 = provider(mockContext3);
-    const sinHint = hints3.options.find((o: any) => o.label.includes("sin"));
-    expect(sinHint).toBeDefined();
-    expect(sinHint.label).toBe("math.sin(x)");
-
-    // 4. Checking 'rep' autocomplete
-    const mockContext4 = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 3, text: "rep" })),
-    };
-    const hints4 = provider(mockContext4);
-    expect(hints4).toBeDefined();
-    const repHints = hints4.options.filter((o: any) => o.label.startsWith("rep"));
-    expect(repHints.length).toBe(2);
-    expect(repHints[0].label).toBe("rep(init)(f)");
-    expect(repHints[1].label).toBe("rep(0) { accum => ... }");
+    const hints = staticSource(contextFor("RendererKit.node.ma", 19, { from: 0, to: 19, text: "RendererKit.node.ma" }));
+    expect(hints.options.some((o: any) => o.label === "RendererKit.node.matrix")).toBe(true);
   });
 
-  it("provides dynamic local suggestions from current code", () => {
+  it("only offers world-document methods that exist on WorldDocumentBuilder", () => {
     const component = new CodeEditorComponent(root, mockApp);
     component.initialize(initialConfig);
-    component.attachCodeEditor("dark");
+    const { staticSource } = attach(component);
+    component.setActivePlaygroundDocument("world");
 
-    const createCall = (EditorState.create as any).mock.calls[0];
-    const extensions = createCall[0].extensions;
-    const autocompleteObj = extensions.find((ext: any) => ext && ext._autocompletion);
-    const provider = autocompleteObj._autocompletion.override[0];
-
-    const customCode = `
-      val mySpecialValue = 100
-      var myMutableVar = 42
-      def myCustomMethod(a: Int, b: String): Double = { a }
-      class MyAmazingClass
-      object MyAwesomeObject
-      trait MyCoolTrait
-    `;
-
-    if ((globalThis as any).mockLastInstance) {
-      (globalThis as any).mockLastInstance.state.doc.toString = () => customCode;
+    const labels = staticSource(contextFor("world.", 6, { from: 6, to: 6, text: "" })).options.map((o: any) => o.label);
+    expect(labels).toEqual(expect.arrayContaining(["grid", "random", "radius", "matrix", "matrixPixels", "randomSensor", "seed"]));
+    // These were offered by the old catalog but are not methods of the builder.
+    for (const ghost of ["uniform", "exponential", "normal", "line", "ring", "clique", "obstacle"]) {
+      expect(labels).not.toContain(ghost);
     }
-
-    component.setActivePlaygroundDocument("code");
-    const mockContext = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 0, text: "" })),
-    };
-
-    const hints = provider(mockContext);
-    expect(hints).toBeDefined();
-
-    const myValHint = hints.options.find((o: any) => o.label === "mySpecialValue");
-    expect(myValHint).toBeDefined();
-    expect(myValHint.detail).toBe("Local immutable value: val mySpecialValue");
-
-    const myMutableHint = hints.options.find((o: any) => o.label === "myMutableVar");
-    expect(myMutableHint).toBeDefined();
-
-    const myMethodHint = hints.options.find((o: any) => o.label === "myCustomMethod");
-    expect(myMethodHint).toBeDefined();
-
-    const classHint = hints.options.find((o: any) => o.label === "MyAmazingClass");
-    expect(classHint).toBeDefined();
-
-    const objectHint = hints.options.find((o: any) => o.label === "MyAwesomeObject");
-    expect(objectHint).toBeDefined();
-
-    const traitHint = hints.options.find((o: any) => o.label === "MyCoolTrait");
-    expect(traitHint).toBeDefined();
   });
 
-  it("suggests newly enriched ScaFi movement, spatial, and actuation APIs", () => {
+  it("completes the //using directive with mixin traits and nothing else", () => {
     const component = new CodeEditorComponent(root, mockApp);
     component.initialize(initialConfig);
-    component.attachCodeEditor("dark");
+    const { staticSource } = attach(component);
 
-    const createCall = (EditorState.create as any).mock.calls[0];
-    const extensions = createCall[0].extensions;
-    const autocompleteObj = extensions.find((ext: any) => ext && ext._autocompletion);
-    const provider = autocompleteObj._autocompletion.override[0];
-
-    component.setActivePlaygroundDocument("code");
-    
-    // Test clockwiseRotation presence
-    const mockContextRot = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 4, text: "cloc" })),
-    };
-    const hintsRot = provider(mockContextRot);
-    const rotHint = hintsRot.options.find((o: any) => o.label.includes("clockwiseRotation"));
-    expect(rotHint).toBeDefined();
-
-    // Test CircularZone presence
-    const mockContextZone = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 4, text: "Circ" })),
-    };
-    const hintsZone = provider(mockContextZone);
-    const zoneHint = hintsZone.options.find((o: any) => o.label.includes("CircularZone"));
-    expect(zoneHint).toBeDefined();
-
-    // Test velocity.set presence
-    const mockContextVelocity = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 9, to: 12, text: "set" })),
-    };
-    const hintsVelocity = provider(mockContextVelocity);
-    const velHint = hintsVelocity.options.find((o: any) => o.label.includes("velocity.set"));
-    expect(velHint).toBeDefined();
+    const hints = staticSource(contextFor("//using Stand\nmid()", 13, { from: 8, to: 13, text: "Stand" }));
+    const labels = hints.options.map((o: any) => o.label);
+    expect(labels).toContain("StandardSensors");
+    expect(labels).toContain("Movement2D");
+    expect(labels).not.toContain("rep");
   });
 
-  it("provides dynamic suggestions for Scala lambda block parameters", () => {
+  it("suggests symbols defined in the buffer and boosts them above the catalog", () => {
     const component = new CodeEditorComponent(root, mockApp);
     component.initialize(initialConfig);
-    component.attachCodeEditor("dark");
+    const { staticSource } = attach(component);
 
-    const createCall = (EditorState.create as any).mock.calls[0];
-    const extensions = createCall[0].extensions;
-    const autocompleteObj = extensions.find((ext: any) => ext && ext._autocompletion);
-    const provider = autocompleteObj._autocompletion.override[0];
+    const code = "val gradient = 1\nvar counter = 0\ndef helper(x: Int) = x\nclass Thing\n";
+    const options = staticSource(contextFor(code, 3, { from: 0, to: 3, text: "gra" })).options;
+    const byLabel = new Map<string, any>(options.map((o: any) => [o.label, o]));
 
-    component.setActivePlaygroundDocument("code");
-
-    const codeWithLambdas = `
-      rep(0) { myAccum =>
-        foldhood(0)(_ + _) { (myAcc, myNbr) =>
-          share(0.0) { (sharedVal: Double, sharedState: String) =>
-            case myPatternMatchedVar =>
-            case PatternWithParams(ignored1, ignored2) =>
-          }
-        }
-      }
-    `;
-
-    if ((globalThis as any).mockLastInstance) {
-      (globalThis as any).mockLastInstance.state.doc.toString = () => codeWithLambdas;
-    }
-
-    const mockContext = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 0, text: "" })),
-    };
-
-    const hints = provider(mockContext);
-    expect(hints).toBeDefined();
-
-    // Verify lambda parameters are extracted
-    const accumHint = hints.options.find((o: any) => o.label === "myAccum");
-    expect(accumHint).toBeDefined();
-    expect(accumHint.detail).toBe("Lambda parameter: myAccum");
-
-    const accHint = hints.options.find((o: any) => o.label === "myAcc");
-    expect(accHint).toBeDefined();
-
-    const nbrHint = hints.options.find((o: any) => o.label === "myNbr");
-    expect(nbrHint).toBeDefined();
-
-    const sharedValHint = hints.options.find((o: any) => o.label === "sharedVal");
-    expect(sharedValHint).toBeDefined();
-
-    const sharedStateHint = hints.options.find((o: any) => o.label === "sharedState");
-    expect(sharedStateHint).toBeDefined();
-
-    // Verify case branch variables are excluded
-    const patternMatchedHint = hints.options.find((o: any) => o.label === "myPatternMatchedVar");
-    expect(patternMatchedHint).toBeUndefined();
-
-    const ignored1Hint = hints.options.find((o: any) => o.label === "ignored1");
-    expect(ignored1Hint).toBeUndefined();
-
-    // Verify wildcards are excluded
-    const wildcardHint = hints.options.find((o: any) => o.label === "_");
-    expect(wildcardHint).toBeUndefined();
+    expect(byLabel.get("gradient")?.detail).toBe("Local value: val gradient");
+    expect(byLabel.get("counter")).toBeDefined();
+    expect(byLabel.get("helper")).toBeDefined();
+    expect(byLabel.get("Thing")).toBeDefined();
+    expect(byLabel.get("gradient")?.boost).toBeGreaterThan(byLabel.get("rep")?.boost);
   });
 
-  it("prioritizes local exact/prefix variable matches at the top of hints", () => {
+  it("extracts lambda parameters but skips case patterns", () => {
     const component = new CodeEditorComponent(root, mockApp);
     component.initialize(initialConfig);
-    component.attachCodeEditor("dark");
+    const { staticSource } = attach(component);
 
-    const createCall = (EditorState.create as any).mock.calls[0];
-    const extensions = createCall[0].extensions;
-    const autocompleteObj = extensions.find((ext: any) => ext && ext._autocompletion);
-    const provider = autocompleteObj._autocompletion.override[0];
-
-    component.setActivePlaygroundDocument("code");
-
-    const codeWithLocalVars = `
-      val gradient = 100.0
-      val color = hsl(0.5, 0.5, 0.5)
-    `;
-
-    if ((globalThis as any).mockLastInstance) {
-      (globalThis as any).mockLastInstance.state.doc.toString = () => codeWithLocalVars;
-    }
-
-    // Simulate typing 'gradient'
-    const mockContextGradient = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 8, text: "gradient" })),
-    };
-
-    const hintsGrad = provider(mockContextGradient);
-    expect(hintsGrad).toBeDefined();
-    
-    // The very first element in the suggestions list MUST be the exact local variable 'gradient' (Priority 1)
-    expect(hintsGrad.options[0].label).toBe("gradient");
-    
-    // Other items like 'gradientCast' (starts with 'gradient') can follow, but are below
-    const gradientCastIndex = hintsGrad.options.findIndex((o: any) => o.label.includes("gradientCast"));
-    expect(gradientCastIndex).toBeGreaterThan(0);
-
-    // Simulate typing 'color'
-    const mockContextColor = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 5, text: "color" })),
-    };
-
-    const hintsColor = provider(mockContextColor);
-    expect(hintsColor).toBeDefined();
-
-    // The very first element in the list MUST be the exact local variable 'color' (Priority 1)
-    expect(hintsColor.options[0].label).toBe("color");
-
-    // Other items matching 'color' only in their description (like hsl or rgb) must be sorted below the local variable
-    const hslIndex = hintsColor.options.findIndex((o: any) => o.label.startsWith("hsl"));
-    expect(hslIndex).toBeGreaterThan(0);
+    const code = "foldhood(0)((acc, nb) => acc + nb)\nrep(0) { self => self }\nx match { case other => 1 }\n";
+    const labels = staticSource(contextFor(code, 1, { from: 0, to: 1, text: "a" })).options.map((o: any) => o.label);
+    expect(labels).toEqual(expect.arrayContaining(["acc", "nb", "self"]));
+    expect(labels).not.toContain("other");
   });
 
-  it("dynamically resolves the current cursor position when applying a hint to avoid trailing duplicated text", () => {
+  function stubCompileSource() {
+    return vi.fn(() => ({
+      code: "wrapped",
+      toWrapped: () => ({ line: 1, ch: 0 }),
+      toEditor: () => undefined,
+      offsetOf: () => 7,
+    }));
+  }
+
+  it("merges type-aware Metals results and drops the catalog duplicate", async () => {
     const component = new CodeEditorComponent(root, mockApp);
     component.initialize(initialConfig);
-    component.attachCodeEditor("dark");
+    mockApp.buildCompileSource = stubCompileSource();
+    const complete = vi.fn(async () => ({
+      isIncomplete: false,
+      items: [{
+        label: "nbrRange",
+        detail: "(): Double",
+        tpe: "method",
+        instructions: { text: "nbrRange()", editRange: { startLine: 1, startChar: 0, endLine: 1, endChar: 4 } },
+        additionalInsertInstructions: [],
+      }],
+    }));
+    component.setMetalsService({ complete } as any);
+    const { staticSource } = attach(component);
 
-    const createCall = (EditorState.create as any).mock.calls[0];
-    const extensions = createCall[0].extensions;
-    const autocompleteObj = extensions.find((ext: any) => ext && ext._autocompletion);
-    const provider = autocompleteObj._autocompletion.override[0];
+    // First query answers from the catalog and starts the lookup.
+    const context = contextFor("nbrR", 4, { from: 0, to: 4, text: "nbrR" });
+    const first = staticSource(context);
+    expect(first.options.filter((o: any) => o.label === "nbrRange")).toHaveLength(1);
+    expect(first.options.find((o: any) => o.label === "nbrRange").detail).not.toBe("(): Double");
 
-    component.setActivePlaygroundDocument("code");
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledWith("wrapped", 7));
 
-    // 1. Trigger autocomplete at prefix "re"
-    const mockContext = {
-      explicit: true,
-      matchBefore: vi.fn(() => ({ from: 0, to: 2, text: "re" })),
-    };
+    // Once it lands, the compiler entry replaces the catalog one rather than joining it.
+    const second = staticSource(context);
+    const matches = second.options.filter((o: any) => o.label === "nbrRange");
+    expect(matches).toHaveLength(1);
+    expect(matches[0].detail).toBe("(): Double");
+    expect(matches[0].boost).toBe(2);
+  });
 
-    const hints = provider(mockContext);
-    expect(hints).toBeDefined();
+  it("falls back to the catalog when Metals is absent or fails", async () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    const { staticSource } = attach(component);
 
-    const repHint = hints.options.find((o: any) => o.label === "rep(init)(f)");
-    expect(repHint).toBeDefined();
+    const context = contextFor("nbrR", 4, { from: 0, to: 4, text: "nbrR" });
+    expect(staticSource(context).options.some((o: any) => o.label === "nbrRange")).toBe(true);
 
-    // 2. Apply the hint
-    const mockView = (globalThis as any).mockLastInstance;
-    repHint.apply(mockView, repHint, 0, 3); // from is 0, to is 3 (typed p)
+    mockApp.buildCompileSource = stubCompileSource();
+    const complete = vi.fn(async () => { throw new Error("offline"); });
+    component.setMetalsService({ complete } as any);
 
-    // 3. Assert view.dispatch was called with the live cursor position parameters
-    expect(mockView.dispatch).toHaveBeenCalledWith({
-      changes: {
-        from: 0,
-        to: 3,
-        insert: "rep() { self => \n  \n}",
-      },
-      selection: {
-        anchor: 4,
-        head: 4,
-      },
+    expect(staticSource(context).options.some((o: any) => o.label === "nbrRange")).toBe(true);
+    await vi.waitFor(() => expect(complete).toHaveBeenCalled());
+    expect(staticSource(context).options.some((o: any) => o.label === "nbrRange")).toBe(true);
+  });
+
+  it("shows the compiler's type and scaladoc on hover", async () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    mockApp.buildCompileSource = stubCompileSource();
+    const hover = vi.fn(async () => ({
+      content: "**Expression type**:\n```scala\nDouble\n```\nDistance to the neighbour.",
+    }));
+    component.setMetalsService({ hover } as any);
+    const { hoverSource } = attach(component);
+
+    const doc = fakeDoc("nbrRange()");
+    const tooltip = await hoverSource({ state: { doc } }, 4, 1);
+
+    expect(hover).toHaveBeenCalledWith("wrapped", 7);
+    expect(tooltip).toMatchObject({ pos: 0, end: 8 });
+    // Markdown fences would only be noise in a plain-text tooltip.
+    expect(tooltip.create().dom.textContent).toBe("Expression type:\nDouble\nDistance to the neighbour.");
+  });
+
+  it("shows no hover when Metals is unavailable", async () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    const { hoverSource } = attach(component);
+
+    expect(await hoverSource({ state: { doc: fakeDoc("nbrRange()") } }, 4, 1)).toBeNull();
+  });
+
+  it("reports unbalanced brackets without compiling", () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    const { lintSource } = attach(component);
+
+    const diagnostics = lintSource({ state: { doc: fakeDoc("rep(0) { x => x\n") } });
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain("Unclosed '{'");
+    expect(diagnostics[0].severity).toBe("error");
+  });
+
+  it("flags an invalid world document on the line that carries the bad call", () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    const { lintSource } = attach(component);
+    component.setActivePlaygroundDocument("world");
+
+    const text = "world\n  .grid(rows = 10, cols = 10, stepX = 60, stepY = 60, tolerance = 10)\n  .radius(abc)";
+    const diagnostics = lintSource({ state: { doc: fakeDoc(text) } });
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain(".radius(...) requires a numeric literal");
+    expect(diagnostics[0].from).toBe(text.indexOf(".radius("));
+  });
+
+  it("reports compiler messages through the same lint source as the local checks", () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    const { lintSource } = attach(component);
+
+    component.setCompileProblems(
+      [{ severity: "error", message: "type mismatch", line: 430, endLine: 430, startColumn: 20, endColumn: 22, actions: [] }],
+      {
+        code: "",
+        toWrapped: () => undefined,
+        // Wrapped line 430 is the second line of the code document.
+        toEditor: ({ ch }: any) => ({ tab: "code" as const, line: 2, ch: Math.max(0, ch - 4) }),
+        offsetOf: () => 0,
+      } as any,
+    );
+
+    const doc = fakeDoc("val a = 1\nval b: String = 42\n");
+    const diagnostics = lintSource({ state: { doc } });
+
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toMatchObject({
+      from: doc.line(2).from + 16,
+      to: doc.line(2).from + 18,
+      severity: "error",
+      message: "type mismatch",
     });
+  });
+
+  it("keeps compiler messages alive across relints, next to the local ones", () => {
+    const component = new CodeEditorComponent(root, mockApp);
+    component.initialize(initialConfig);
+    const { lintSource } = attach(component);
+
+    component.setCompileProblems(
+      [{ severity: "error", message: "type mismatch", line: 1, endLine: 1, startColumn: 0, endColumn: 1, actions: [] }],
+      {
+        code: "",
+        toWrapped: () => undefined,
+        toEditor: () => ({ tab: "code" as const, line: 1, ch: 0 }),
+        offsetOf: () => 0,
+      } as any,
+    );
+
+    const messages = lintSource({ state: { doc: fakeDoc("rep(0) { x => x") } }).map((d: any) => d.message);
+    expect(messages).toHaveLength(2);
+    expect(messages.some((m: string) => m.includes("Unclosed"))).toBe(true);
+    expect(messages).toContain("type mismatch");
   });
 });

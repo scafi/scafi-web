@@ -6,7 +6,9 @@ import { ExampleService } from "../services/examples/example-service";
 import { MemoryKeyValueStore, type KeyValueStore, LocalStorageStore } from "../services/browser/key-value-store";
 import { RuntimeConfigSerializer } from "../services/serialization/runtime-config-serializer";
 import { ScastieService } from "../services/scastie/scastie-service";
-import { wrapStandaloneRuntimeCode } from "../services/scastie/runtime-template";
+import { MetalsService } from "../services/scastie/metals-service";
+import type { RuntimeWrapper } from "../services/scastie/source-map";
+import { wrapStandaloneRuntimeCodeWithMap } from "../services/scastie/runtime-template";
 import { StandaloneRuntimeLoader } from "../services/standalone/standalone-runtime-loader";
 import { StandaloneSessionManager } from "../services/standalone/session-manager";
 import { StandaloneStateAdapter } from "../services/standalone/standalone-state-adapter";
@@ -14,7 +16,7 @@ import { StandaloneStateAdapter } from "../services/standalone/standalone-state-
 export interface CompositionRootOptions {
   store?: KeyValueStore;
   fetchImpl?: typeof fetch;
-  wrapCode?: (code: string, worldDocument?: string) => string;
+  wrapRuntime?: RuntimeWrapper;
   examplesUrl?: string;
   scalaVersion?: string;
   scafiVersion?: string;
@@ -26,9 +28,15 @@ export function createScafiWebApp(options: CompositionRootOptions = {}): ScafiWe
   const sessionManager = new StandaloneSessionManager();
   const scastieService = new ScastieService({
     fetchImpl: options.fetchImpl,
-    wrapCode: options.wrapCode ?? wrapStandaloneRuntimeCode,
+    wrapRuntime: options.wrapRuntime ?? wrapStandaloneRuntimeCodeWithMap,
     scalaVersion: options.scalaVersion,
     scafiVersion: options.scafiVersion,
+  });
+  const metalsService = new MetalsService({
+    scalaVersion: scastieService.getScalaVersion(),
+    scalaJsVersion: scastieService.getScalaJsVersion(),
+    scafiVersion: scastieService.getScafiVersion(),
+    fetchImpl: options.fetchImpl,
   });
   const runtimeLoader = new StandaloneRuntimeLoader();
   const stateAdapter = new StandaloneStateAdapter();
@@ -47,7 +55,7 @@ export function createScafiWebApp(options: CompositionRootOptions = {}): ScafiWe
     fetchImpl: options.fetchImpl,
     examplesUrl: options.examplesUrl,
   });
-  return new ScafiWebApp(appStore, configRepository, exampleService);
+  return new ScafiWebApp(appStore, configRepository, exampleService, undefined, metalsService);
 }
 
 function safeBrowserStore(): KeyValueStore {

@@ -3,6 +3,7 @@ import type { CompilePayload, CompileResult, StandaloneRuntimeApi, SupportConfig
 import { StandaloneRuntimeLoader } from "../services/standalone/standalone-runtime-loader";
 import { StandaloneStateAdapter } from "../services/standalone/standalone-state-adapter";
 import { AppStore } from "./app-store";
+import { buildWrappedSource } from "../services/scastie/source-map";
 
 const baseConfiguration: SupportConfiguration = {
   network: {
@@ -191,8 +192,21 @@ function compileResult(runtime: FakeRuntime): CompileResult {
     javascript: `${" ".repeat(1001)}\nconst scafiStandalone = globalThis.__testRuntime;`,
     warnings: [],
     errors: [],
+    problems: [],
     runtimeError: undefined,
   };
+}
+
+function sourceResult(code: string, mode: string, worldDocument?: string) {
+  // Mirrors payloadResult's stub wrapping so both stay in step.
+  return buildWrappedSource(code, mode as "easy-scala" | "full-scala", worldDocument, (core, world) => ({
+    code: `compiled(${mode})::${world ?? ""}::${core}`,
+    worldStartLine: 1,
+    worldLineCount: 1,
+    worldIndent: 0,
+    userStartLine: 1,
+    userLineCount: core.split("\n").length,
+  }));
 }
 
 function payloadResult(code: string, mode: string, worldDocument?: string): CompilePayload {
@@ -217,6 +231,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -242,6 +257,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -274,6 +290,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -301,6 +318,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: (async (_code, _mode) =>
             new Promise<CompileResult>((resolve) => {
               if (!resolveFirst) {
@@ -342,6 +360,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -374,6 +393,7 @@ describe("AppStore", () => {
         {
           scastie: {
             buildPayload: payloadResult,
+          buildSource: sourceResult,
             compile: async () => compileResult(runtime),
           },
           runtimeLoader: {
@@ -412,6 +432,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtimeLoads === 0 ? firstRuntime : secondRuntime),
         },
         runtimeLoader: {
@@ -448,6 +469,7 @@ describe("AppStore", () => {
     const dependencies = {
       scastie: {
         buildPayload: vi.fn(payloadResult),
+        buildSource: vi.fn(sourceResult),
         compile: vi.fn(async () => compileResult(new FakeRuntime())),
       },
       runtimeLoader: new StandaloneRuntimeLoader(),
@@ -473,6 +495,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: vi.fn(async () => compileResult(new FakeRuntime())),
         },
         runtimeLoader: new StandaloneRuntimeLoader(),
@@ -490,6 +513,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -512,6 +536,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: vi.fn(async () => compileResult(new FakeRuntime())),
         },
         runtimeLoader: new StandaloneRuntimeLoader(),
@@ -530,6 +555,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: vi.fn(async () => compileResult(new FakeRuntime())),
         },
         runtimeLoader: new StandaloneRuntimeLoader(),
@@ -550,6 +576,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -592,6 +619,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -624,6 +652,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -652,6 +681,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -686,6 +716,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => {
             compileCallCount += 1;
             return compileResult(runtime);
@@ -718,6 +749,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -777,6 +809,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
@@ -809,6 +842,7 @@ describe("AppStore", () => {
       {
         scastie: {
           buildPayload: payloadResult,
+          buildSource: sourceResult,
           compile: async () => compileResult(runtime),
         },
         runtimeLoader: {
