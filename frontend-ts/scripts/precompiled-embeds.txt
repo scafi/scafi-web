@@ -1,7 +1,5 @@
-# Embeds to precompile (the ones used on https://scafi.github.io), one query string per line.
-# Only the program parameters matter: example, code/code_b64, mode, world/world_b64, grid, rows, cols.
-example=Gradient
-example=Block S
+# Embeds to precompile besides the built-in examples and the default program (always precompiled),
+# one query string per line. Only the program parameters matter: code/code_b64, mode, world/world_b64, grid, rows, cols.
 grid=5x5&code_b64=MSArIDI=
 grid=5x5&code_b64=bWlkKCk=
 grid=5x5&code_b64=cmVwKDApKHggPT4geCsxKQ==
