@@ -128,6 +128,7 @@ export class ScafiWebEmbedShell {
       code: initialCode,
       mode: initialMode,
       configuration: initialConfig,
+      worldDocument: initialWorld,
       renderer: customRendererDoc,
     } = resolveEmbedProgram(params, examples);
 
@@ -139,7 +140,7 @@ export class ScafiWebEmbedShell {
     this.codeEditor.loadExample({
       name: exampleName ?? "Custom Embed",
       body: initialCode,
-      world: serializeWorldDocument(initialConfig),
+      world: initialWorld,
       renderer: customRendererDoc
     }, initialConfig);
 
@@ -162,7 +163,7 @@ export class ScafiWebEmbedShell {
     setTimeout(() => {
       void (async () => {
         try {
-          await this.app.loadScript({ code: initialCode, mode: initialMode }, serializeWorldDocument(initialConfig));
+          await this.app.loadScript({ code: initialCode, mode: initialMode }, initialWorld);
           if (this.autoPlay) {
             this.app.startDaemon(this.daemonInterval);
           }
