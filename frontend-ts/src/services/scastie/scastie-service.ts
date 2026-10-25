@@ -131,6 +131,8 @@ export function toCompileProblem(problem: ScastieProblem): CompileProblem {
 
 export interface ScastieServiceOptions {
   baseUrl?: string;
+  /** Where `<scafiVersion>/<scalaVersion>/<compilationKey>.json` files are served, if any. */
+  precompiledUrl?: string;
   scafiVersion?: string;
   scalaVersion?: string;
   scalaJsVersion?: string;
@@ -174,8 +176,14 @@ function cyrb53(str: string, seed = 0): string {
   return (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0");
 }
 
+/** Identifies a compilation input; used by the local cache and by precompiled results. */
+export function compilationKey(code: string, mode: ScalaSourceMode, worldDocument?: string): string {
+  return cyrb53(`${mode}:${worldDocument ?? ""}:${code}`);
+}
+
 export class ScastieService {
   private readonly baseUrl: string;
+  private readonly precompiledUrl?: string;
   private readonly scafiVersion: string;
   private scalaVersion: string;
   private readonly scalaJsVersion: string;
@@ -185,6 +193,7 @@ export class ScastieService {
 
   constructor(options: ScastieServiceOptions = {}) {
     this.baseUrl = options.baseUrl ?? DEFAULTS.baseUrl;
+    this.precompiledUrl = options.precompiledUrl;
     this.scafiVersion = options.scafiVersion ?? DEFAULTS.scafiVersion;
     this.scalaVersion = options.scalaVersion ?? DEFAULTS.scalaVersion;
     this.scalaJsVersion = options.scalaJsVersion ?? DEFAULTS.scalaJsVersion;
@@ -243,8 +252,7 @@ export class ScastieService {
   }
 
   async compile(code: string, mode: ScalaSourceMode, worldDocument?: string): Promise<CompileResult> {
-    const serializedInput = `${mode}:${worldDocument ?? ""}:${code}`;
-    const hash = cyrb53(serializedInput);
+    const hash = compilationKey(code, mode, worldDocument);
     const cacheKey = `scafi_compiled_${hash}`;
 
     try {
@@ -290,6 +298,12 @@ export class ScastieService {
       console.warn("[ScastieService] Failed to read from localStorage cache", e);
     }
 
+    const precompiled = await this.loadPrecompiled(hash);
+    if (precompiled) {
+      console.log(`[ScastieService] Serving precompiled compilation for ${hash}`);
+      return precompiled;
+    }
+
     console.log(`[ScastieService] Cache miss for hash ${hash}. Compiling via Scastie...`);
 
     const payload = this.buildPayload(code, mode, worldDocument);
@@ -306,6 +320,23 @@ export class ScastieService {
     }
 
     return result;
+  }
+
+  /** Path of the precompiled result for a compilation key, relative to `precompiledUrl`. */
+  precompiledPath(hash: string): string {
+    return `${this.scafiVersion}/${this.scalaVersion}/${hash}.json`;
+  }
+
+  private async loadPrecompiled(hash: string): Promise<CompileResult | undefined> {
+    if (!this.precompiledUrl) {
+      return undefined;
+    }
+    try {
+      const response = await this.fetchImpl(`${this.precompiledUrl}/${this.precompiledPath(hash)}`);
+      return response.ok ? ((await response.json()) as CompileResult) : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   async postRun(payload: CompilePayload): Promise<string> {

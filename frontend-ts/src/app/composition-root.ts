@@ -18,6 +18,7 @@ export interface CompositionRootOptions {
   fetchImpl?: typeof fetch;
   wrapRuntime?: RuntimeWrapper;
   examplesUrl?: string;
+  precompiledUrl?: string;
   scalaVersion?: string;
   scafiVersion?: string;
 }
@@ -28,6 +29,7 @@ export function createScafiWebApp(options: CompositionRootOptions = {}): ScafiWe
   const sessionManager = new StandaloneSessionManager();
   const scastieService = new ScastieService({
     fetchImpl: options.fetchImpl,
+    precompiledUrl: options.precompiledUrl,
     wrapRuntime: options.wrapRuntime ?? wrapStandaloneRuntimeCodeWithMap,
     scalaVersion: options.scalaVersion,
     scafiVersion: options.scafiVersion,
