@@ -15,7 +15,7 @@ export function renderBootstrap(root: HTMLElement): void {
   }
 
   const scalaVersion = isScala3 ? "3.7.4" : "2.13.18";
-  const app = createScafiWebApp({ scalaVersion });
+  const app = createScafiWebApp({ scalaVersion, precompiledUrl: `${import.meta.env.BASE_URL}precompiled` });
 
   if (typeof window !== "undefined" && window.localStorage) {
     window.localStorage.setItem("scala-version", scalaVersion);

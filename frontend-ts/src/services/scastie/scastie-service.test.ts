@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ScastieService, type EventSourceLike } from "./scastie-service";
+import { ScastieService, compilationKey, type EventSourceLike } from "./scastie-service";
 
 class FakeEventSource implements EventSourceLike {
   onmessage: ((event: { data: string }) => void) | null = null;
@@ -280,5 +280,40 @@ describe("ScastieService", () => {
         delete (globalThis as any).localStorage;
       }
     }
+  });
+  it("serves a precompiled compilation without calling Scastie", async () => {
+    const requested: string[] = [];
+    const service = new ScastieService({
+      precompiledUrl: "/web/precompiled",
+      fetchImpl: (async (url: string) => {
+        requested.push(url);
+        return new Response(JSON.stringify({ javascript: "precompiled-js", warnings: [], errors: [], problems: [] }));
+      }) as typeof fetch,
+    });
+    service.postRun = async () => {
+      throw new Error("Scastie must not be called");
+    };
+
+    const result = await service.compile("mid()", "easy-scala", "world");
+
+    expect(result.javascript).toBe("precompiled-js");
+    expect(requested).toEqual([`/web/precompiled/1.8.0/2.13.18/${compilationKey("mid()", "easy-scala", "world")}.json`]);
+  });
+
+  it("falls back to Scastie when no precompiled compilation exists", async () => {
+    const fakeEventSource = new FakeEventSource();
+    const service = new ScastieService({
+      precompiledUrl: "/web/precompiled",
+      fetchImpl: (async () => new Response("not found", { status: 404 })) as typeof fetch,
+      eventSourceFactory: () => fakeEventSource,
+    });
+    service.postRun = async () => {
+      setTimeout(() => fakeEventSource.emitMessage({ isDone: true, scalaJsContent: "scastie-js" }), 0);
+      return "snippet";
+    };
+
+    const result = await service.compile("mid()", "easy-scala", "world");
+
+    expect(result.javascript).toBe("scastie-js");
   });
 });

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "precompile": "vite-node scripts/precompile.ts"
   },
   "devDependencies": {
     "happy-dom": "^20.9.0",

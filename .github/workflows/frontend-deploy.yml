@@ -40,6 +40,9 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm --prefix frontend-ts install
+      - name: Precompile the examples and site embeds
+        run: npm --prefix frontend-ts run precompile
+        continue-on-error: true
       - name: Build frontend
         run: npm --prefix frontend-ts run build
       - name: Deploy to GitHub Pages
