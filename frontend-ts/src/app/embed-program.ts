@@ -7,6 +7,8 @@ export interface EmbedProgram {
   code: string;
   mode: EditorDocument["mode"];
   configuration: SupportConfiguration;
+  /** The world as compiled: an example's own text (as in the playground), else the serialized configuration. */
+  worldDocument: string;
   renderer: string;
 }
 
@@ -16,6 +18,7 @@ export function resolveEmbedProgram(params: URLSearchParams, examples: ExampleGr
   let initialCode = defaultEditorDocument.code;
   let initialMode: EditorDocument["mode"] = "easy-scala";
   let customRendererDoc = defaultRendererDocument;
+  let exampleWorld: { text: string; configuration: SupportConfiguration } | undefined;
 
   // A. Check for predefined example
   const exampleName = params.get("example");
@@ -26,6 +29,7 @@ export function resolveEmbedProgram(params: URLSearchParams, examples: ExampleGr
     if (found) {
       initialCode = found.body;
       initialConfig = buildExampleConfiguration(found);
+      exampleWorld = { text: found.world ?? serializeWorldDocument(initialConfig), configuration: initialConfig };
       customRendererDoc = found.renderer ?? defaultRendererDocument;
     }
   }
@@ -95,7 +99,8 @@ export function resolveEmbedProgram(params: URLSearchParams, examples: ExampleGr
     }
   }
 
-  return { code: initialCode, mode: initialMode, configuration: initialConfig, renderer: customRendererDoc };
+  const worldDocument = exampleWorld?.configuration === initialConfig ? exampleWorld.text : serializeWorldDocument(initialConfig);
+  return { code: initialCode, mode: initialMode, configuration: initialConfig, worldDocument, renderer: customRendererDoc };
 }
 
 function buildExampleConfiguration(example: ExampleDefinition): SupportConfiguration {
